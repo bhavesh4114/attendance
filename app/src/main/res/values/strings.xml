@@ -18,7 +18,7 @@
     <string name="hint_password">Enter your password</string>
     <string name="login_button">Login →</string>
     <string name="forgot_password">Forgot Password?</string>
-    <string name="dont_have_account">Don\'t have an account?</string>
+    <string name="dont_have_account">"Don't have an account?"</string>
     <string name="register_new_worker">Register as New Worker</string>
     <string name="secure_attendance">SECURE ATTENDANCE SYSTEM</string>
 
