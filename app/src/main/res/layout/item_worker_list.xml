@@ -1,0 +1,133 @@
+<?xml version="1.0" encoding="utf-8"?>
+<com.google.android.material.card.MaterialCardView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_marginBottom="@dimen/spacing_16"
+    app:cardBackgroundColor="@color/card_white"
+    app:cardCornerRadius="@dimen/report_card_radius"
+    app:cardElevation="@dimen/workers_list_card_elevation">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:padding="20dp">
+
+        <!-- Left: profile + online dot -->
+        <FrameLayout
+            android:layout_width="@dimen/workers_list_avatar"
+            android:layout_height="@dimen/workers_list_avatar">
+
+            <ImageView
+                android:id="@+id/workerAvatar"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:background="@drawable/bg_avatar_placeholder"
+                android:contentDescription="@string/worker_photo"
+                android:scaleType="centerCrop" />
+
+            <View
+                android:layout_width="12dp"
+                android:layout_height="12dp"
+                android:layout_gravity="bottom|end"
+                android:layout_marginEnd="2dp"
+                android:layout_marginBottom="2dp"
+                android:background="@drawable/bg_online_dot_green" />
+        </FrameLayout>
+
+        <!-- Center: name+chip, role, phone -->
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:layout_marginStart="16dp"
+            android:orientation="vertical">
+
+            <LinearLayout
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:gravity="center_vertical"
+                android:orientation="horizontal">
+
+                <TextView
+                    android:id="@+id/workerName"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:fontFamily="sans-serif"
+                    android:textColor="@color/dark_navy"
+                    android:textSize="20sp"
+                    android:textStyle="bold"
+                    tools:text="John Doe" />
+
+                <TextView
+                    android:id="@+id/statusChip"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="8dp"
+                    android:background="@drawable/bg_chip_active"
+                    android:paddingStart="10dp"
+                    android:paddingEnd="10dp"
+                    android:paddingTop="4dp"
+                    android:paddingBottom="4dp"
+                    android:fontFamily="sans-serif"
+                    android:text="@string/active"
+                    android:textColor="@color/active_green"
+                    android:textSize="12sp"
+                    android:textStyle="bold"
+                    tools:text="ACTIVE" />
+            </LinearLayout>
+
+            <TextView
+                android:id="@+id/workerRole"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="4dp"
+                android:fontFamily="sans-serif"
+                android:textColor="@color/medium_grey"
+                android:textSize="16sp"
+                tools:text="Lead Carpenter" />
+
+            <LinearLayout
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="4dp"
+                android:gravity="center_vertical"
+                android:orientation="horizontal">
+
+                <ImageView
+                    android:layout_width="14dp"
+                    android:layout_height="14dp"
+                    android:contentDescription="@null"
+                    android:src="@drawable/ic_phone" />
+
+                <TextView
+                    android:id="@+id/workerPhone"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="6dp"
+                    android:fontFamily="sans-serif"
+                    android:textColor="@color/light_grey_divider"
+                    android:textSize="14sp"
+                    tools:text="(555) 0123" />
+            </LinearLayout>
+        </LinearLayout>
+
+        <!-- Right: View button -->
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnView"
+            android:layout_width="wrap_content"
+            android:layout_height="@dimen/view_button_height"
+            android:background="@drawable/bg_view_button"
+            android:paddingStart="16dp"
+            android:paddingEnd="16dp"
+            android:text="@string/view"
+            android:textColor="@color/primary_blue"
+            android:textSize="14sp"
+            android:textStyle="bold"
+            app:backgroundTint="@null"
+            app:cornerRadius="@dimen/radius_small" />
+    </LinearLayout>
+</com.google.android.material.card.MaterialCardView>

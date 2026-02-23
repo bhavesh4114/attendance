@@ -1,0 +1,231 @@
+<resources>
+    <string name="app_name">Majuri-App</string>
+
+    <!-- Login screen -->
+    <string name="icon_app">App icon</string>
+    <string name="language_english">English</string>
+    <string name="language_hindi">हिन्दी</string>
+    <string name="app_title">Majduri Hajri</string>
+    <string name="splash_labor_management">LABOR MANAGEMENT</string>
+    <string name="splash_tagline">Empowering Labor Management</string>
+    <string name="splash_secure_trusted">SECURE &amp; TRUSTED</string>
+    <string name="subtitle">Track your daily attendance easily</string>
+    <string name="login">Login</string>
+    <string name="mobile_number">Mobile Number</string>
+    <string name="hint_mobile">e.g. 9876543210</string>
+    <string name="password">Password</string>
+    <string name="show">Show</string>
+    <string name="hint_password">Enter your password</string>
+    <string name="login_button">Login →</string>
+    <string name="forgot_password">Forgot Password?</string>
+    <string name="dont_have_account">Don\'t have an account?</string>
+    <string name="register_new_worker">Register as New Worker</string>
+    <string name="secure_attendance">SECURE ATTENDANCE SYSTEM</string>
+
+    <!-- Create Admin screen -->
+    <string name="back">Back</string>
+    <string name="create_admin_account">Create Admin Account</string>
+    <string name="admin_icon">Admin</string>
+    <string name="welcome_admin">Welcome, Admin</string>
+    <string name="welcome_admin_subtitle">Set up your profile to start managing your workforce and attendance efficiently.</string>
+    <string name="full_name">Full Name</string>
+    <string name="hint_full_name">Enter your full name</string>
+    <string name="country_code">+91</string>
+    <string name="business_firm_name">Business/Firm Name</string>
+    <string name="hint_business_name">e.g. Apex Constructions</string>
+    <string name="terms_text">By creating an account, you agree to our Terms of Service and Privacy Policy.</string>
+    <string name="create_account">Create Account</string>
+    <string name="already_have_account">Already have an account? </string>
+    <string name="agree_terms_hint">Please agree to the Terms of Service and Privacy Policy</string>
+
+    <!-- Worker Management -->
+    <string name="worker_management_icon">Worker management</string>
+    <string name="worker_management">Worker Management</string>
+    <string name="menu">Menu</string>
+    <string name="search_workers_hint">Search by name or mobile…</string>
+    <string name="total_active">TOTAL ACTIVE</string>
+    <string name="workers_count_24">24 Workers</string>
+    <string name="present_today">PRESENT TODAY</string>
+    <string name="present_count_18">18</string>
+    <string name="worker_directory">WORKER DIRECTORY</string>
+    <string name="sort_by_recent">Sort by: Recent</string>
+    <string name="worker_photo">Worker photo</string>
+    <string name="edit">Edit</string>
+    <string name="view">View</string>
+    <string name="active">ACTIVE</string>
+    <string name="inactive">INACTIVE</string>
+
+    <!-- Workers List screen -->
+    <string name="workers_title">Workers</string>
+    <string name="search_by_name_or_role">Search by name or role…</string>
+    <string name="active_workers_count">ACTIVE WORKERS (24)</string>
+    <string name="sort_recent">SORT: RECENT</string>
+    <string name="filter">Filter</string>
+    <string name="nav_schedule">Schedule</string>
+    <string name="add_new_worker">Add New Worker</string>
+
+    <!-- Add New Worker screen -->
+    <string name="info">Info</string>
+    <string name="add_worker_info_text">Enter worker details below to add them to your daily attendance list.</string>
+    <string name="worker_name">Worker Name</string>
+    <string name="hint_enter_full_name">Enter full name</string>
+    <string name="hint_10_digit">10-digit number</string>
+    <string name="daily_wage_hajri">Daily Wage (Hajri)</string>
+    <string name="hint_amount_rupee">Amount in ₹</string>
+    <string name="skill_type">Skill Type</string>
+    <string name="hint_select_category">Select category</string>
+    <string name="select_category">Select category</string>
+    <string name="save_worker">Save Worker</string>
+
+    <!-- Daily Attendance -->
+    <string name="calendar">Calendar</string>
+    <string name="daily_attendance">Daily Attendance</string>
+    <string name="majduri_hajri">MAJDURI HAJRI</string>
+    <string name="worker_list">Worker List</string>
+    <string name="workers_total_24">24 Workers Total</string>
+    <string name="mark_all_present">Mark All Present</string>
+    <string name="ot_hrs">OT (HRS)</string>
+    <string name="decrease">Decrease</string>
+    <string name="increase">Increase</string>
+    <string name="present">PRESENT</string>
+    <string name="absent">ABSENT</string>
+    <string name="half_day">HALF DAY</string>
+    <string name="total_ot_hrs">4.5 Total OT Hrs</string>
+    <string name="save_attendance">Save Attendance</string>
+
+    <!-- Attendance Management -->
+    <string name="attendance_title">Attendance</string>
+    <string name="month_october_2023">OCTOBER 2023</string>
+    <string name="day_mon">MON</string>
+    <string name="day_tue">TUE</string>
+    <string name="day_wed">WED</string>
+    <string name="day_thu">THU</string>
+    <string name="day_fri">FRI</string>
+    <string name="day_sat">SAT</string>
+    <string name="day_sun">SUN</string>
+    <string name="staff_list">Staff List</string>
+    <string name="total_29_workers">Total: 29 Workers</string>
+    <string name="nav_staff">STAFF</string>
+
+    <string name="nav_home">HOME</string>
+    <string name="nav_attendance">ATTENDANCE</string>
+    <string name="nav_workers">WORKERS</string>
+    <string name="nav_reports">REPORTS</string>
+
+    <!-- Worker Payment -->
+    <string name="worker_payment">Worker Payment</string>
+    <string name="rajesh_kumar">Rajesh Kumar</string>
+    <string name="worker_id_mason">ID: #88291 • Mason</string>
+    <string name="daily_wage_500">₹500 / Day</string>
+    <string name="earnings_summary">EARNINGS SUMMARY</string>
+    <string name="total_attendance">Total Attendance</string>
+    <string name="attendance_24_days">24 Days</string>
+    <string name="gross_wage">Gross Wage</string>
+    <string name="gross_wage_value">₹12,000</string>
+    <string name="advance_deductions">Advance Deductions</string>
+    <string name="advance_deductions_value">-₹2,000</string>
+    <string name="net_payable_amount">NET PAYABLE AMOUNT</string>
+    <string name="net_payable_value">10,000</string>
+    <string name="select_payment_method">SELECT PAYMENT METHOD</string>
+    <string name="cash">Cash</string>
+    <string name="bank">Bank</string>
+    <string name="upi">UPI</string>
+    <string name="mark_as_paid">Mark as Paid</string>
+
+    <!-- Reports screen -->
+    <string name="reports">Reports</string>
+    <string name="reports_analytics_title">Reports &amp; Analytics</string>
+    <string name="management_reports">Management Reports</string>
+    <string name="management_reports_subtitle">Access and export your workforce data</string>
+    <string name="select_report">Select Report</string>
+    <string name="reports_subtitle">Track attendance and payments easily.</string>
+    <string name="worker_report">Worker Report</string>
+    <string name="worker_report_subtitle">Individual performance logs</string>
+    <string name="worker_report_subtitle_long">Detailed performance metrics and attendance logs</string>
+    <string name="monthly_report">Monthly Report</string>
+    <string name="monthly_summary">Monthly Summary</string>
+    <string name="monthly_report_subtitle">Full attendance summary</string>
+    <string name="monthly_summary_subtitle">Consolidated summary of labor hours and site efficiency</string>
+    <string name="pending_payment">Pending Payment</string>
+    <string name="payment_logs">Payment Logs</string>
+    <string name="pending_payment_subtitle">Owed wages and advances</string>
+    <string name="payment_logs_subtitle">Financial breakdown of wages and pending disbursements</string>
+    <string name="insight_quote_text">Insights are the key to efficient site management.</string>
+    <string name="download_all_pdf_reports">Download All PDF Reports</string>
+    <string name="quick_insights">QUICK INSIGHTS</string>
+    <string name="last_updated_today">Last updated: Today, 8:00 AM</string>
+    <string name="nav_labor">LABOR</string>
+    <string name="add">ADD</string>
+    <string name="nav_profile">PROFILE</string>
+
+    <!-- Settings screen -->
+    <string name="settings">Settings</string>
+    <string name="settings_subtitle">Manage your labor app preferences</string>
+    <string name="account_security_section">ACCOUNT &amp; SECURITY</string>
+    <string name="system_section">SYSTEM</string>
+    <string name="notifications_subtitle_push">Push &amp; email alerts</string>
+    <string name="language_english_us">English (US)</string>
+    <string name="logout">Logout</string>
+    <string name="version_build">VERSION 2.4.1 (BUILD 108)</string>
+    <string name="nav_tasks">TASKS</string>
+    <string name="profile">Profile</string>
+    <string name="site_manager_id">Site Manager • ID: MH-8821</string>
+    <string name="security">SECURITY</string>
+    <string name="change_password">Change Password</string>
+    <string name="change_password_subtitle">Update your login security</string>
+    <string name="biometric_login">Biometric Login</string>
+    <string name="biometric_subtitle">Use Face ID or Fingerprint</string>
+    <string name="system_and_data">SYSTEM &amp; DATA</string>
+    <string name="backup_data">Backup Data</string>
+    <string name="backup_subtitle">Last synced: 2 hours ago</string>
+    <string name="language">Language</string>
+    <string name="language_subtitle">English (Hindi available)</string>
+    <string name="notifications">Notifications</string>
+    <string name="notifications_subtitle">Attendance and report alerts</string>
+    <string name="support">SUPPORT</string>
+    <string name="help_center">Help Center</string>
+    <string name="logout_account">Logout Account</string>
+    <string name="app_version">Majduri Hajri v2.4.0 (Build 102)</string>
+    <string name="copyright">© 2024 TechLabour Systems</string>
+    <string name="nav_settings">SETTINGS</string>
+
+    <!-- Dashboard -->
+    <string name="dashboard_label">DASHBOARD</string>
+    <string name="total_workers">Total Workers</string>
+    <string name="stats_workers_value">1,248</string>
+    <string name="stats_workers_pct">+12%</string>
+    <string name="stats_attendance_value">92%</string>
+    <string name="stats_attendance_pct">+3%</string>
+    <string name="pending_pay">Pending Pay</string>
+    <string name="stats_pending_value">₹45K</string>
+    <string name="stats_pending_pct">-5%</string>
+    <string name="monthly_cost">Monthly Cost</string>
+    <string name="stats_monthly_value">₹8.2L</string>
+    <string name="stats_monthly_pct">+8%</string>
+    <string name="quick_actions">Quick Actions</string>
+    <string name="view_all">VIEW ALL</string>
+    <string name="add_worker">Add Worker</string>
+    <string name="payments">Payments</string>
+    <string name="payments_title">Payments</string>
+    <string name="search_payments_hint">Search worker, ID or project…</string>
+    <string name="chip_all">All</string>
+    <string name="chip_overdue">Overdue</string>
+    <string name="chip_this_week">This Week</string>
+    <string name="chip_pending">Pending</string>
+    <string name="pending_total_label">PENDING TOTAL</string>
+    <string name="paid_total_label">PAID TOTAL</string>
+    <string name="payment_queue_12">Payment Queue (12)</string>
+    <string name="mark_all_as_paid">Mark all as paid</string>
+    <string name="due_date_label">DUE DATE</string>
+    <string name="pending_amount_label">Pending Amount</string>
+    <string name="mark_as_paid">Mark as Paid</string>
+    <string name="overdue_label">OVERDUE</string>
+    <string name="recent_transactions">Recent Transactions</string>
+    <string name="transaction_history">Transaction History</string>
+    <string name="completed_oct_21">Completed · Oct 21</string>
+    <string name="attendance_trends">Attendance Trends</string>
+    <string name="last_7_days">Last 7 Days</string>
+    <string name="nav_dashboard">DASHBOARD</string>
+    <string name="nav_payments">PAYMENTS</string>
+    <string name="nav_analytics">ANALYTICS</string>
+</resources>

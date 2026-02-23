@@ -1,0 +1,85 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <dimen name="spacing_16">16dp</dimen>
+    <dimen name="spacing_24">24dp</dimen>
+    <dimen name="radius_small">20dp</dimen>
+    <dimen name="radius_medium">25dp</dimen>
+    <dimen name="radius_large">30dp</dimen>
+    <dimen name="card_elevation">8dp</dimen>
+    <dimen name="login_button_height">56dp</dimen>
+    <dimen name="icon_circle_size">72dp</dimen>
+    <dimen name="admin_icon_container_size">80dp</dimen>
+    <dimen name="radius_card_24">24dp</dimen>
+    <dimen name="radius_input_20">20dp</dimen>
+    <dimen name="button_elevation_6">6dp</dimen>
+    <dimen name="search_bar_height">56dp</dimen>
+    <dimen name="add_worker_button_height">60dp</dimen>
+    <dimen name="worker_card_elevation">6dp</dimen>
+    <dimen name="worker_avatar_size">64dp</dimen>
+    <dimen name="edit_icon_circle_size">48dp</dimen>
+    <dimen name="form_input_height">56dp</dimen>
+    <dimen name="back_button_circle_size">48dp</dimen>
+    <dimen name="date_circle_size">40dp</dimen>
+    <dimen name="date_circle_radius">40dp</dimen>
+    <dimen name="pill_radius">50dp</dimen>
+    <dimen name="attendance_avatar_size">56dp</dimen>
+    <dimen name="worker_payment_photo_size">80dp</dimen>
+    <dimen name="report_card_radius">28dp</dimen>
+    <dimen name="report_card_height">96dp</dimen>
+    <dimen name="report_icon_circle_size">72dp</dimen>
+    <dimen name="report_card_elevation">6dp</dimen>
+    <dimen name="report_card_margin_bottom">20dp</dimen>
+    <dimen name="chart_placeholder_height">140dp</dimen>
+    <dimen name="fab_elevation">12dp</dimen>
+    <dimen name="settings_profile_circle">80dp</dimen>
+    <dimen name="settings_row_icon_circle">56dp</dimen>
+    <dimen name="settings_row_height">72dp</dimen>
+    <dimen name="logout_button_height">72dp</dimen>
+    <dimen name="dashboard_profile_size">60dp</dimen>
+    <dimen name="stats_card_height">150dp</dimen>
+    <dimen name="stats_icon_circle">56dp</dimen>
+    <dimen name="quick_action_circle">72dp</dimen>
+    <dimen name="trends_card_height">260dp</dimen>
+    <dimen name="workers_list_card_elevation">4dp</dimen>
+    <dimen name="workers_list_avatar">64dp</dimen>
+    <dimen name="view_button_height">40dp</dimen>
+    <dimen name="search_radius_28">28dp</dimen>
+
+    <!-- Attendance Management -->
+    <dimen name="attendance_summary_card_height">100dp</dimen>
+    <dimen name="attendance_summary_radius">50dp</dimen>
+    <dimen name="segment_control_height">56dp</dimen>
+    <dimen name="segment_radius">30dp</dimen>
+    <dimen name="save_attendance_btn_height">64dp</dimen>
+    <dimen name="save_attendance_radius">32dp</dimen>
+    <dimen name="attendance_mgmt_card_elevation">4dp</dimen>
+    <dimen name="date_pill_radius">28dp</dimen>
+
+    <!-- Reports & Analytics -->
+    <dimen name="reports_app_bar_height">64dp</dimen>
+    <dimen name="reports_quote_card_radius">36dp</dimen>
+    <dimen name="reports_download_btn_height">64dp</dimen>
+    <dimen name="reports_download_radius">32dp</dimen>
+
+    <!-- Payments -->
+    <dimen name="payments_app_bar_height">64dp</dimen>
+    <dimen name="payments_search_radius">16dp</dimen>
+    <dimen name="payments_chip_height">40dp</dimen>
+    <dimen name="payments_chip_radius">20dp</dimen>
+    <dimen name="payments_card_radius">20dp</dimen>
+    <dimen name="payments_card_elevation">4dp</dimen>
+    <dimen name="payments_avatar_size">48dp</dimen>
+    <dimen name="payments_mark_paid_btn_height">48dp</dimen>
+    <dimen name="payments_mark_paid_radius">12dp</dimen>
+
+    <!-- Settings screen (premium) -->
+    <dimen name="settings_card_radius">24dp</dimen>
+    <dimen name="settings_card_elevation">6dp</dimen>
+    <dimen name="settings_icon_circle_44">44dp</dimen>
+    <dimen name="settings_header_icon_size">56dp</dimen>
+    <dimen name="settings_logout_btn_height">64dp</dimen>
+
+    <!-- Splash -->
+    <dimen name="splash_logo_size">120dp</dimen>
+    <dimen name="splash_logo_elevation">8dp</dimen>
+</resources>

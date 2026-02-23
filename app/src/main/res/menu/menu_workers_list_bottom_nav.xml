@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+    <item
+        android:id="@+id/nav_dashboard"
+        android:icon="@drawable/ic_dashboard_grid"
+        android:title="@string/nav_dashboard" />
+    <item
+        android:id="@+id/nav_workers"
+        android:checked="true"
+        android:icon="@drawable/ic_worker_management"
+        android:title="@string/nav_workers" />
+    <item
+        android:id="@+id/nav_schedule"
+        android:icon="@drawable/ic_calendar"
+        android:title="@string/nav_schedule" />
+    <item
+        android:id="@+id/nav_settings"
+        android:icon="@drawable/ic_admin_settings"
+        android:title="@string/nav_settings" />
+</menu>

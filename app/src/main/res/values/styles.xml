@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Reusable rounded input style for Add New Worker form -->
+    <style name="RoundedInputStyle" parent="Widget.Material3.TextInputLayout.OutlinedBox">
+        <item name="boxBackgroundColor">@color/input_bg</item>
+        <item name="boxCornerRadiusTopStart">24dp</item>
+        <item name="boxCornerRadiusTopEnd">24dp</item>
+        <item name="boxCornerRadiusBottomStart">24dp</item>
+        <item name="boxCornerRadiusBottomEnd">24dp</item>
+        <item name="boxStrokeWidth">0dp</item>
+    </style>
+
+    <!-- Daily Attendance: reusable pill button styles (50dp radius) -->
+    <style name="AttendancePillPresent" parent="">
+        <item name="android:background">@drawable/bg_pill_present</item>
+        <item name="android:minHeight">36dp</item>
+    </style>
+    <style name="AttendancePillAbsent" parent="">
+        <item name="android:background">@drawable/bg_pill_absent</item>
+        <item name="android:minHeight">36dp</item>
+    </style>
+    <style name="AttendancePillHalfDay" parent="">
+        <item name="android:background">@drawable/bg_pill_halfday</item>
+        <item name="android:minHeight">36dp</item>
+    </style>
+    <style name="AttendancePillUnselected" parent="">
+        <item name="android:background">@drawable/bg_pill_unselected</item>
+        <item name="android:minHeight">36dp</item>
+    </style>
+
+    <!-- Worker Payment: reusable rounded card styles -->
+    <style name="WorkerPaymentCardStyle" parent="">
+        <item name="cardBackgroundColor">@color/card_white</item>
+        <item name="cardCornerRadius">24dp</item>
+        <item name="cardElevation">6dp</item>
+    </style>
+    <style name="PaymentOptionCardSelected" parent="">
+        <item name="android:background">@drawable/bg_payment_option_selected</item>
+        <item name="android:padding">16dp</item>
+    </style>
+    <style name="PaymentOptionCardUnselected" parent="">
+        <item name="android:background">@drawable/bg_payment_option_unselected</item>
+        <item name="android:padding">16dp</item>
+    </style>
+</resources>

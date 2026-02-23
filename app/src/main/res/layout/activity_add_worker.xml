@@ -1,0 +1,242 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/worker_mgmt_bg"
+    tools:context=".AddWorkerActivity">
+
+    <!-- Scrollable content -->
+    <androidx.core.widget.NestedScrollView
+        android:id="@+id/scrollContent"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:fillViewport="true"
+        android:overScrollMode="never"
+        app:layout_constraintBottom_toTopOf="@id/btnSaveWorker"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:padding="@dimen/spacing_16">
+
+            <!-- Top app bar -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:gravity="center_vertical"
+                android:orientation="horizontal">
+
+                <FrameLayout
+                    android:id="@+id/btnBack"
+                    android:layout_width="@dimen/back_button_circle_size"
+                    android:layout_height="@dimen/back_button_circle_size"
+                    android:background="@drawable/bg_circle_light_grey"
+                    android:clickable="true"
+                    android:focusable="true">
+
+                    <ImageView
+                        android:layout_width="24dp"
+                        android:layout_height="24dp"
+                        android:layout_gravity="center"
+                        android:contentDescription="@string/back"
+                        android:src="@drawable/ic_arrow_back" />
+                </FrameLayout>
+
+                <TextView
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:fontFamily="sans-serif"
+                    android:gravity="center"
+                    android:text="@string/add_new_worker"
+                    android:textColor="@color/dark_navy"
+                    android:textSize="20sp"
+                    android:textStyle="bold" />
+            </LinearLayout>
+
+            <!-- Divider below header -->
+            <View
+                android:layout_width="match_parent"
+                android:layout_height="1dp"
+                android:layout_marginTop="@dimen/spacing_16"
+                android:background="@color/input_bg"
+                android:alpha="0.8" />
+
+            <!-- Info card -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/spacing_24"
+                android:background="@drawable/bg_info_card"
+                android:gravity="center_vertical"
+                android:orientation="horizontal"
+                android:padding="@dimen/spacing_16">
+
+                <FrameLayout
+                    android:layout_width="40dp"
+                    android:layout_height="40dp"
+                    android:background="@drawable/bg_circle_blue_small">
+
+                    <ImageView
+                        android:layout_width="22dp"
+                        android:layout_height="22dp"
+                        android:layout_gravity="center"
+                        android:contentDescription="@string/info"
+                        android:src="@drawable/ic_info_white" />
+                </FrameLayout>
+
+                <TextView
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:layout_marginStart="@dimen/spacing_16"
+                    android:fontFamily="sans-serif"
+                    android:lineSpacingExtra="4dp"
+                    android:text="@string/add_worker_info_text"
+                    android:textColor="@color/medium_grey"
+                    android:textSize="16sp" />
+            </LinearLayout>
+
+            <!-- Form fields -->
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/spacing_24"
+                android:fontFamily="sans-serif"
+                android:text="@string/worker_name"
+                android:textColor="@color/dark_navy"
+                android:textSize="18sp"
+                android:textStyle="bold" />
+
+            <EditText
+                android:id="@+id/etWorkerName"
+                android:layout_width="match_parent"
+                android:layout_height="@dimen/form_input_height"
+                android:layout_marginTop="@dimen/spacing_16"
+                android:background="@drawable/bg_input_rounded_24"
+                android:drawableStart="@drawable/ic_person"
+                android:drawablePadding="12dp"
+                android:gravity="center_vertical"
+                android:hint="@string/hint_enter_full_name"
+                android:inputType="textPersonName"
+                android:paddingStart="16dp"
+                android:paddingEnd="16dp"
+                android:textColor="@color/dark_navy"
+                android:textColorHint="@color/medium_grey"
+                android:textSize="16sp" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/spacing_24"
+                android:fontFamily="sans-serif"
+                android:text="@string/mobile_number"
+                android:textColor="@color/dark_navy"
+                android:textSize="18sp"
+                android:textStyle="bold" />
+
+            <EditText
+                android:id="@+id/etMobileNumber"
+                android:layout_width="match_parent"
+                android:layout_height="@dimen/form_input_height"
+                android:layout_marginTop="@dimen/spacing_16"
+                android:background="@drawable/bg_input_rounded_24"
+                android:drawableStart="@drawable/ic_phone"
+                android:drawablePadding="12dp"
+                android:gravity="center_vertical"
+                android:hint="@string/hint_10_digit"
+                android:inputType="phone"
+                android:paddingStart="16dp"
+                android:paddingEnd="16dp"
+                android:textColor="@color/dark_navy"
+                android:textColorHint="@color/medium_grey"
+                android:textSize="16sp"
+                android:maxLength="10" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/spacing_24"
+                android:fontFamily="sans-serif"
+                android:text="@string/daily_wage_hajri"
+                android:textColor="@color/dark_navy"
+                android:textSize="18sp"
+                android:textStyle="bold" />
+
+            <EditText
+                android:id="@+id/etDailyWage"
+                android:layout_width="match_parent"
+                android:layout_height="@dimen/form_input_height"
+                android:layout_marginTop="@dimen/spacing_16"
+                android:background="@drawable/bg_input_rounded_24"
+                android:drawableStart="@drawable/ic_money"
+                android:drawablePadding="12dp"
+                android:gravity="center_vertical"
+                android:hint="@string/hint_amount_rupee"
+                android:inputType="number"
+                android:paddingStart="16dp"
+                android:paddingEnd="16dp"
+                android:textColor="@color/dark_navy"
+                android:textColorHint="@color/medium_grey"
+                android:textSize="16sp" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/spacing_24"
+                android:fontFamily="sans-serif"
+                android:text="@string/skill_type"
+                android:textColor="@color/dark_navy"
+                android:textSize="18sp"
+                android:textStyle="bold" />
+
+            <AutoCompleteTextView
+                android:id="@+id/actvSkillType"
+                android:layout_width="match_parent"
+                android:layout_height="@dimen/form_input_height"
+                android:layout_marginTop="@dimen/spacing_16"
+                android:background="@drawable/bg_input_rounded_24"
+                android:drawableStart="@drawable/ic_tools"
+                android:drawableEnd="@drawable/ic_dropdown_arrow"
+                android:drawablePadding="12dp"
+                android:gravity="center_vertical"
+                android:hint="@string/hint_select_category"
+                android:inputType="none"
+                android:paddingStart="16dp"
+                android:paddingEnd="16dp"
+                android:textColor="@color/dark_navy"
+                android:textColorHint="@color/medium_grey"
+                android:textSize="16sp"
+                android:focusable="false"
+                android:clickable="true" />
+        </LinearLayout>
+    </androidx.core.widget.NestedScrollView>
+
+    <!-- Bottom button: Save Worker -->
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/btnSaveWorker"
+        android:layout_width="0dp"
+        android:layout_height="@dimen/add_worker_button_height"
+        android:layout_marginStart="@dimen/spacing_16"
+        android:layout_marginEnd="@dimen/spacing_16"
+        android:layout_marginBottom="@dimen/spacing_24"
+        android:background="@drawable/bg_button_primary"
+        android:drawableStart="@drawable/ic_person_add"
+        android:drawablePadding="12dp"
+        android:text="@string/save_worker"
+        android:textColor="@color/white"
+        android:textSize="16sp"
+        android:textStyle="bold"
+        app:backgroundTint="@null"
+        app:cornerRadius="@dimen/radius_large"
+        app:elevation="@dimen/card_elevation"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent" />
+</androidx.constraintlayout.widget.ConstraintLayout>
