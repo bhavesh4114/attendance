@@ -75,7 +75,12 @@
     <color name="inactive_chip_bg">#F1F5F9</color>
     <color name="online_dot_green">#10B981</color>
 
-    <!-- Splash screen -->
+    <!-- Splash screen (image style: dark navy, blue accent) -->
+    <color name="splash_bg_dark">#1A1D2B</color>
+    <color name="splash_blue">#4285F4</color>
+    <color name="splash_blue_dark">#2A56C4</color>
+    <color name="splash_text_white">#FFFFFFFF</color>
+    <color name="splash_tagline_grey">#E0E0E0</color>
     <color name="splash_gradient_top">#F3F4F6</color>
     <color name="splash_gradient_bottom">#E5E7EB</color>
     <color name="splash_primary_purple">#6D4AFF</color>

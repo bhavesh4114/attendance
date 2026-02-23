@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Worker + gear + check - white icon for splash hexagon -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="56dp"
+    android:height="56dp"
+    android:viewportWidth="56"
+    android:viewportHeight="56">
+    <!-- Person (head & shoulders) -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M28,14c-4.4,0 -8,3.6 -8,8s3.6,8 8,8s8,-3.6 8,-8S32.4,14 28,14zM28,28c-5.5,0 -10,3.4 -12,8v6h24v-6C38,31.4 33.5,28 28,28z" />
+    <!-- Hard hat curve -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M18,16 L38,16 L38,17.5 Q28,21 18,17.5 Z" />
+    <!-- Gear (circle with teeth) -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M42,24 m-4,0 a4,4 0,1 1,8 0 a4,4 0,1 1,-8 0 M42,22 L42,26 M40,24 L44,24 M41,21.3 L43,26.7 M41,26.7 L43,21.3" />
+    <!-- Check circle (white circle, blue check tick) -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M42,42 m-5,0 a5,5 0,1 1,10 0 a5,5 0,1 1,-10 0" />
+    <path
+        android:strokeColor="#4285F4"
+        android:strokeWidth="1.8"
+        android:strokeLineCap="round"
+        android:strokeLineJoin="round"
+        android:fillColor="#00000000"
+        android:pathData="M39.5,42 L41.2,43.8 L44.5,40" />
+</vector>
