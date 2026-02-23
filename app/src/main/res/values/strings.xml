@@ -219,7 +219,6 @@
     <string name="mark_all_as_paid">Mark all as paid</string>
     <string name="due_date_label">DUE DATE</string>
     <string name="pending_amount_label">Pending Amount</string>
-    <string name="mark_as_paid">Mark as Paid</string>
     <string name="overdue_label">OVERDUE</string>
     <string name="recent_transactions">Recent Transactions</string>
     <string name="transaction_history">Transaction History</string>

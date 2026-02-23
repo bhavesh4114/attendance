@@ -66,9 +66,9 @@ public class PaymentsActivity extends AppCompatActivity {
 
     private List<PaymentQueueItem> getDummyPaymentQueue() {
         List<PaymentQueueItem> list = new ArrayList<>();
-        list.add(new PaymentQueueItem("Marco Rossi", "Site Supervisor • ID: 8821", "24 Oct, 2023", "$2,450.00", false));
-        list.add(new PaymentQueueItem("Elena Gilbert", "Electrician • ID: 8822", "Today", "$1,820.00", false));
-        list.add(new PaymentQueueItem("James Anderson", "Mason • ID: 8823", "18 Oct, 2023", "$5,920.00", true));
+        list.add(new PaymentQueueItem("Marco Rossi", "Site Supervisor • ID: 8821", "24 Oct, 2023", "₹2,450.00", false));
+        list.add(new PaymentQueueItem("Elena Gilbert", "Electrician • ID: 8822", "Today", "₹1,820.00", false));
+        list.add(new PaymentQueueItem("James Anderson", "Mason • ID: 8823", "18 Oct, 2023", "₹5,920.00", true));
         return list;
     }
 }

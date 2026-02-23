@@ -1,0 +1,110 @@
+<?xml version="1.0" encoding="utf-8"?>
+<com.google.android.material.card.MaterialCardView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_marginBottom="@dimen/spacing_16"
+    app:cardBackgroundColor="@color/card_white"
+    app:cardCornerRadius="@dimen/report_card_radius"
+    app:cardElevation="@dimen/workers_list_card_elevation">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:padding="20dp">
+
+        <!-- Left: profile + online dot -->
+        <FrameLayout
+            android:layout_width="@dimen/workers_list_avatar"
+            android:layout_height="@dimen/workers_list_avatar">
+
+            <ImageView
+                android:id="@+id/workerAvatar"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:background="@drawable/bg_avatar_placeholder"
+                android:contentDescription="@string/worker_photo"
+                android:scaleType="centerCrop" />
+
+            <View
+                android:layout_width="12dp"
+                android:layout_height="12dp"
+                android:layout_gravity="bottom|end"
+                android:layout_marginEnd="2dp"
+                android:layout_marginBottom="2dp"
+                android:background="@drawable/bg_online_dot_green" />
+        </FrameLayout>
+
+        <!-- Center: name, phone, salary -->
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:layout_marginStart="16dp"
+            android:orientation="vertical">
+
+            <TextView
+                android:id="@+id/workerName"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:fontFamily="sans-serif"
+                android:textColor="@color/dark_navy"
+                android:textSize="20sp"
+                android:textStyle="bold"
+                tools:text="Rajesh Kumar" />
+
+            <LinearLayout
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="4dp"
+                android:gravity="center_vertical"
+                android:orientation="horizontal">
+
+                <ImageView
+                    android:layout_width="14dp"
+                    android:layout_height="14dp"
+                    android:contentDescription="@null"
+                    android:src="@drawable/ic_phone" />
+
+                <TextView
+                    android:id="@+id/workerPhone"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="6dp"
+                    android:fontFamily="sans-serif"
+                    android:textColor="@color/light_grey_divider"
+                    android:textSize="14sp"
+                    tools:text="+91 98765 43210" />
+            </LinearLayout>
+
+            <TextView
+                android:id="@+id/workerSalary"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="4dp"
+                android:fontFamily="sans-serif"
+                android:textColor="@color/medium_grey"
+                android:textSize="16sp"
+                tools:text="₹ 600 / day" />
+        </LinearLayout>
+
+        <!-- Right: Edit button -->
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnEditWorker"
+            android:layout_width="wrap_content"
+            android:layout_height="@dimen/view_button_height"
+            android:background="@drawable/bg_view_button"
+            android:paddingStart="16dp"
+            android:paddingEnd="16dp"
+            android:text="@string/edit"
+            android:textColor="@color/primary_blue"
+            android:textSize="14sp"
+            android:textStyle="bold"
+            app:backgroundTint="@null"
+            app:cornerRadius="@dimen/radius_small" />
+    </LinearLayout>
+</com.google.android.material.card.MaterialCardView>
+

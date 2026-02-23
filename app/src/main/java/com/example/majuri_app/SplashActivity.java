@@ -14,7 +14,7 @@ import androidx.appcompat.app.AppCompatActivity;
 
 /**
  * Premium animated splash screen with logo scale/fade, notification dot pulse,
- * app name and subtitle reveal, then exit to MainActivity after 2.5s.
+ * app name and subtitle reveal, then exit to LoginActivity after 2.5s.
  */
 public class SplashActivity extends AppCompatActivity {
 
@@ -145,7 +145,7 @@ public class SplashActivity extends AppCompatActivity {
                 .alpha(0f)
                 .setDuration(EXIT_DURATION_MS)
                 .withEndAction(() -> {
-                    startActivity(new Intent(this, MainActivity.class));
+                    startActivity(new Intent(this, LoginActivity.class));
                     overridePendingTransition(android.R.anim.fade_in, android.R.anim.fade_out);
                     finish();
                 })

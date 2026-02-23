@@ -133,7 +133,7 @@
                     android:textColor="@color/red_status"
                     android:textSize="22sp"
                     android:textStyle="bold"
-                    tools:text="$2,450.00" />
+                    tools:text="₹2,450.00" />
             </LinearLayout>
 
             <com.google.android.material.button.MaterialButton
