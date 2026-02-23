@@ -36,7 +36,7 @@
     <dimen name="settings_row_height">72dp</dimen>
     <dimen name="logout_button_height">72dp</dimen>
     <dimen name="dashboard_profile_size">60dp</dimen>
-    <dimen name="stats_card_height">150dp</dimen>
+    <dimen name="stats_card_height">188dp</dimen>
     <dimen name="stats_icon_circle">56dp</dimen>
     <dimen name="quick_action_circle">72dp</dimen>
     <dimen name="trends_card_height">260dp</dimen>

@@ -191,6 +191,7 @@
 
     <!-- Dashboard -->
     <string name="dashboard_label">DASHBOARD</string>
+    <string name="attendance">Attendance</string>
     <string name="total_workers">Total Workers</string>
     <string name="stats_workers_value">1,248</string>
     <string name="stats_workers_pct">+12%</string>
