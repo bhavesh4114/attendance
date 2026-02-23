@@ -1,5 +1,14 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <!-- Bottom nav bar: same design across Dashboard, Payments, Reports, Settings, etc. -->
+    <style name="Widget.MajuriApp.BottomNavigation" parent="Widget.Material3.BottomNavigationView">
+        <item name="android:background">@color/card_white</item>
+        <item name="elevation">8dp</item>
+        <item name="itemIconTint">@color/reports_nav_colors</item>
+        <item name="itemTextColor">@color/reports_nav_colors</item>
+        <item name="labelVisibilityMode">labeled</item>
+    </style>
+
     <!-- Reusable rounded input style for Add New Worker form -->
     <style name="RoundedInputStyle" parent="Widget.Material3.TextInputLayout.OutlinedBox">
         <item name="boxBackgroundColor">@color/input_bg</item>
