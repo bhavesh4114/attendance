@@ -10,6 +10,15 @@ import com.google.android.material.bottomnavigation.BottomNavigationView;
 
 public class SettingsActivity extends AppCompatActivity {
 
+    private void doLogout() {
+        new SessionManager(this).clearSession();
+        Toast.makeText(this, R.string.logout, Toast.LENGTH_SHORT).show();
+        Intent i = new Intent(this, LoginActivity.class);
+        i.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+        startActivity(i);
+        finish();
+    }
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -21,8 +30,7 @@ public class SettingsActivity extends AppCompatActivity {
                 Toast.makeText(this, R.string.backup_data, Toast.LENGTH_SHORT).show());
         findViewById(R.id.rowLanguage).setOnClickListener(v ->
                 Toast.makeText(this, R.string.language, Toast.LENGTH_SHORT).show());
-        findViewById(R.id.btnLogout).setOnClickListener(v ->
-                Toast.makeText(this, R.string.logout, Toast.LENGTH_SHORT).show());
+        findViewById(R.id.btnLogout).setOnClickListener(v -> doLogout());
 
         BottomNavigationView bottomNav = findViewById(R.id.bottomNav);
         bottomNav.setOnItemSelectedListener(item -> {

@@ -1,5 +1,6 @@
 package com.example.majuri_app;
 
+import android.content.Intent;
 import android.os.Bundle;
 import android.text.SpannableString;
 import android.text.Spanned;
@@ -21,11 +22,16 @@ import com.google.android.material.button.MaterialButton;
 public class CreateAdminActivity extends AppCompatActivity {
 
     private boolean passwordVisible = false;
+    private AuthHelper authHelper;
+    private SessionManager sessionManager;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_create_admin);
+
+        authHelper = new AuthHelper(this);
+        sessionManager = new SessionManager(this);
 
         ImageButton btnBack = findViewById(R.id.btnBack);
         btnBack.setOnClickListener(v -> finish());
@@ -42,7 +48,7 @@ public class CreateAdminActivity extends AppCompatActivity {
 
         View btnLoginLink = findViewById(R.id.btnLoginLink);
         if (btnLoginLink != null) {
-            btnLoginLink.setOnClickListener(v -> finish());
+            btnLoginLink.setOnClickListener(v -> goToLogin());
         }
 
         setupTermsClickableSpans();
@@ -50,7 +56,6 @@ public class CreateAdminActivity extends AppCompatActivity {
 
     private void togglePasswordVisibility(ImageView btnTogglePassword) {
         passwordVisible = !passwordVisible;
-        // Toggle input type and icon - would need to reference etPassword
         View parent = (View) btnTogglePassword.getParent();
         if (parent != null) {
             EditText etPassword = parent.findViewById(R.id.etPassword);
@@ -67,13 +72,55 @@ public class CreateAdminActivity extends AppCompatActivity {
     }
 
     private void onCreateAccountClick() {
+        EditText etFullName = findViewById(R.id.etFullName);
+        EditText etMobile = findViewById(R.id.etMobile);
+        EditText etBusinessName = findViewById(R.id.etBusinessName);
+        EditText etPassword = findViewById(R.id.etPassword);
         CheckBox checkTerms = findViewById(R.id.checkTerms);
-        if (checkTerms != null && !checkTerms.isChecked()) {
+
+        String fullName = etFullName.getText() != null ? etFullName.getText().toString().trim() : "";
+        String mobile = etMobile.getText() != null ? etMobile.getText().toString().trim() : "";
+        String password = etPassword.getText() != null ? etPassword.getText().toString() : "";
+
+        if (fullName.isEmpty()) {
+            etFullName.setError(getString(R.string.hint_full_name));
+            etFullName.requestFocus();
+            return;
+        }
+        String digitsOnly = mobile.replaceAll("[^0-9]", "");
+        if (digitsOnly.length() != 10) {
+            etMobile.setError(getString(R.string.error_invalid_mobile));
+            etMobile.requestFocus();
+            return;
+        }
+        if (password.isEmpty()) {
+            etPassword.setError(getString(R.string.error_enter_password));
+            etPassword.requestFocus();
+            return;
+        }
+        if (checkTerms == null || !checkTerms.isChecked()) {
             Toast.makeText(this, R.string.agree_terms_hint, Toast.LENGTH_SHORT).show();
             return;
         }
-        // TODO: Validate fields and create account
-        Toast.makeText(this, R.string.create_account, Toast.LENGTH_SHORT).show();
+
+        etFullName.setError(null);
+        etMobile.setError(null);
+        etPassword.setError(null);
+
+        if (authHelper.registerUser(mobile, password, fullName)) {
+            sessionManager.saveSession(digitsOnly, fullName);
+            Toast.makeText(this, R.string.account_created, Toast.LENGTH_SHORT).show();
+            startActivity(new Intent(this, DashboardActivity.class));
+            finish();
+        } else {
+            Toast.makeText(this, R.string.mobile_already_registered, Toast.LENGTH_LONG).show();
+            goToLogin();
+        }
+    }
+
+    private void goToLogin() {
+        startActivity(new Intent(this, LoginActivity.class));
+        finish();
     }
 
     private void setupTermsClickableSpans() {
@@ -94,7 +141,6 @@ public class CreateAdminActivity extends AppCompatActivity {
             spannable.setSpan(new ClickableSpan() {
                 @Override
                 public void onClick(@NonNull View widget) {
-                    // TODO: Open Terms of Service
                     Toast.makeText(CreateAdminActivity.this, "Terms of Service", Toast.LENGTH_SHORT).show();
                 }
             }, termsStart, termsEnd, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
@@ -107,7 +153,6 @@ public class CreateAdminActivity extends AppCompatActivity {
             spannable.setSpan(new ClickableSpan() {
                 @Override
                 public void onClick(@NonNull View widget) {
-                    // TODO: Open Privacy Policy
                     Toast.makeText(CreateAdminActivity.this, "Privacy Policy", Toast.LENGTH_SHORT).show();
                 }
             }, privacyStart, privacyEnd, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);

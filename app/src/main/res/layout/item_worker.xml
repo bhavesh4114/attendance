@@ -1,24 +1,51 @@
 <?xml version="1.0" encoding="utf-8"?>
-        android:layout_width="match_parent"
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:padding="16dp">
+
+    <ImageView
+        android:id="@+id/workerAvatar"
+        android:layout_width="40dp"
+        android:layout_height="40dp"
+        android:layout_marginEnd="16dp"
+        android:background="@drawable/bg_avatar_placeholder"
+        android:contentDescription="@string/worker_photo" />
+
+    <TextView
+        android:id="@+id/workerSalary"
+        android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        android:layout_alignParentEnd="true"
+        android:layout_centerVertical="true"
+        android:text="@string/worker_salary" />
 
-            <ImageView
-                android:id="@+id/workerAvatar"
+    <TextView
+        android:id="@+id/workerName"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_toEndOf="@id/workerAvatar"
+        android:layout_toStartOf="@id/workerSalary"
+        android:layout_marginEnd="16dp"
+        android:text="@string/worker_name"
+        android:textAppearance="@style/TextAppearance.AppCompat.Body2" />
 
-            <TextView
-                android:id="@+id/workerName"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
+    <TextView
+        android:id="@+id/workerPhone"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_below="@id/workerName"
+        android:layout_toEndOf="@id/workerAvatar"
+        android:text="@string/worker_phone" />
 
-                <TextView
-                    android:id="@+id/workerPhone"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
+    <ImageButton
+        android:id="@+id/btnEditWorker"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentEnd="true"
+        android:layout_below="@id/workerSalary"
+        android:background="?attr/selectableItemBackgroundBorderless"
+        android:contentDescription="@string/edit"
+        android:src="@android:drawable/ic_menu_edit" />
 
-            <TextView
-                android:id="@+id/workerSalary"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-
-            android:id="@+id/btnEditWorker"
-            android:layout_width="wrap_content"
+</RelativeLayout>
