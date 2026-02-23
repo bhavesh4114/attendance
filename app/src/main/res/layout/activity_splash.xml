@@ -5,119 +5,114 @@
     android:id="@+id/splashRoot"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@drawable/splash_gradient_bg"
-    android:paddingStart="24dp"
-    android:paddingEnd="24dp"
+    android:background="@color/splash_bg_dark"
+    android:paddingStart="32dp"
+    android:paddingEnd="32dp"
     tools:context=".SplashActivity">
 
-    <!-- Logo container (120dp) with tools icon + notification dot -->
-    <FrameLayout
-        android:id="@+id/logoContainer"
-        android:layout_width="@dimen/splash_logo_size"
-        android:layout_height="@dimen/splash_logo_size"
-        android:alpha="0"
-        android:background="@drawable/splash_logo_container"
-        android:elevation="@dimen/splash_logo_elevation"
-        app:layout_constraintBottom_toTopOf="@id/appName"
+    <!-- Centered content block: logo + title + tagline -->
+    <LinearLayout
+        android:id="@+id/splashContentBlock"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:gravity="center_horizontal"
+        android:orientation="vertical"
+        app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintVertical_bias="0.35"
-        app:layout_constraintVertical_chainStyle="packed">
+        app:layout_constraintTop_toTopOf="parent">
 
-        <ImageView
-            android:id="@+id/logoIcon"
-            android:layout_width="56dp"
-            android:layout_height="56dp"
-            android:layout_gravity="center"
-            android:contentDescription="@null"
-            android:src="@drawable/ic_tools_purple" />
-
-        <View
-            android:id="@+id/notificationDot"
-            android:layout_width="16dp"
-            android:layout_height="16dp"
-            android:layout_gravity="top|end"
-            android:layout_marginTop="8dp"
-            android:layout_marginEnd="8dp"
+        <!-- Hexagon logo + white icon -->
+        <FrameLayout
+            android:id="@+id/logoContainer"
+            android:layout_width="@dimen/splash_logo_size"
+            android:layout_height="@dimen/splash_logo_size"
             android:alpha="0"
-            android:background="@drawable/splash_dot" />
-    </FrameLayout>
+            android:elevation="@dimen/splash_logo_elevation">
 
-    <!-- App name -->
-    <TextView
-        android:id="@+id/appName"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="24dp"
-        android:alpha="0"
-        android:fontFamily="sans-serif"
-        android:text="@string/app_title"
-        android:textColor="@color/splash_primary_purple"
-        android:textSize="34sp"
-        android:textStyle="bold"
-        app:layout_constraintEnd_toEndOf="parent"
+            <ImageView
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:contentDescription="@null"
+                android:src="@drawable/splash_hexagon_bg"
+                android:scaleType="fitCenter" />
+
+            <ImageView
+                android:id="@+id/logoIcon"
+                android:layout_width="56dp"
+                android:layout_height="56dp"
+                android:layout_gravity="center"
+                android:contentDescription="@null"
+                android:src="@drawable/splash_logo_icon_white" />
+
+            <View
+                android:id="@+id/notificationDot"
+                android:layout_width="0dp"
+                android:layout_height="0dp"
+                android:visibility="gone" />
+        </FrameLayout>
+
+        <!-- Labour Management - main title -->
+        <TextView
+            android:id="@+id/appName"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="28dp"
+            android:alpha="0"
+            android:fontFamily="sans-serif"
+            android:gravity="center"
+            android:letterSpacing="0.18"
+            android:lineSpacingExtra="2dp"
+            android:text="@string/splash_labour_management"
+            android:textColor="@color/splash_text_white"
+            android:textSize="28sp"
+            android:textStyle="bold"
+            android:shadowColor="#40000000"
+            android:shadowDx="0"
+            android:shadowDy="2"
+            android:shadowRadius="4" />
+
+        <!-- ADVANCED LABOR MANAGEMENT - tagline -->
+        <TextView
+            android:id="@+id/tagline"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:alpha="0"
+            android:fontFamily="sans-serif"
+            android:gravity="center"
+            android:letterSpacing="0.3"
+            android:text="@string/splash_tagline"
+            android:textColor="@color/splash_tagline_grey"
+            android:textSize="11sp" />
+    </LinearLayout>
+
+    <!-- Hidden; kept for SplashActivity animation ref -->
+    <View
+        android:id="@+id/hajriRow"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:visibility="gone"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/logoContainer" />
+        app:layout_constraintTop_toTopOf="parent" />
 
-    <!-- Subtitle -->
-    <TextView
+    <!-- Dummy for SplashActivity animation ref -->
+    <View
         android:id="@+id/subtitle"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="8dp"
-        android:alpha="0"
-        android:fontFamily="sans-serif"
-        android:letterSpacing="0.2"
-        android:text="@string/splash_labor_management"
-        android:textColor="@color/splash_text_grey"
-        android:textSize="14sp"
-        app:layout_constraintEnd_toEndOf="parent"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:visibility="gone"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/appName" />
+        app:layout_constraintTop_toTopOf="parent" />
 
-    <!-- Bottom tagline -->
-    <TextView
-        android:id="@+id/tagline"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:alpha="0"
-        android:fontFamily="sans-serif"
-        android:text="@string/splash_tagline"
-        android:textColor="@color/splash_text_grey"
-        android:textSize="15sp"
-        app:layout_constraintBottom_toTopOf="@id/securityRow"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent" />
-
-    <!-- Security row: shield + SECURE & TRUSTED -->
+    <!-- Kept for animation ref; not visible -->
     <LinearLayout
         android:id="@+id/securityRow"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginBottom="32dp"
         android:alpha="0"
-        android:gravity="center_vertical"
-        android:orientation="horizontal"
+        android:visibility="gone"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent">
-
-        <ImageView
-            android:layout_width="14dp"
-            android:layout_height="14dp"
-            android:contentDescription="@null"
-            android:src="@drawable/ic_shield"
-            app:tint="@color/splash_text_light_grey" />
-
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginStart="6dp"
-            android:fontFamily="sans-serif"
-            android:letterSpacing="0.1"
-            android:text="@string/splash_secure_trusted"
-            android:textColor="@color/splash_text_light_grey"
-            android:textSize="11sp" />
-    </LinearLayout>
+        app:layout_constraintStart_toStartOf="parent" />
 </androidx.constraintlayout.widget.ConstraintLayout>

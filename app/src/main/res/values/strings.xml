@@ -6,8 +6,12 @@
     <string name="language_english">English</string>
     <string name="language_hindi">हिन्दी</string>
     <string name="app_title">Majduri Hajri</string>
+    <string name="splash_majduri">MAJDURI</string>
+    <string name="splash_hajri">HAJRI</string>
+    <string name="splash_labour_management">LABOUR MANAGEMENT</string>
+    <string name="splash_tagline">ADVANCED LABOR MANAGEMENT</string>
     <string name="splash_labor_management">LABOR MANAGEMENT</string>
-    <string name="splash_tagline">Empowering Labor Management</string>
+    <string name="splash_tagline_legacy">Empowering Labor Management</string>
     <string name="splash_secure_trusted">SECURE &amp; TRUSTED</string>
     <string name="subtitle">Track your daily attendance easily</string>
     <string name="login">Login</string>

@@ -32,6 +32,7 @@ public class SplashActivity extends AppCompatActivity {
     private View logoContainer;
     private View notificationDot;
     private View appName;
+    private View hajriRow;
     private View subtitle;
     private View tagline;
     private View securityRow;
@@ -46,6 +47,7 @@ public class SplashActivity extends AppCompatActivity {
         logoContainer = findViewById(R.id.logoContainer);
         notificationDot = findViewById(R.id.notificationDot);
         appName = findViewById(R.id.appName);
+        hajriRow = findViewById(R.id.hajriRow);
         subtitle = findViewById(R.id.subtitle);
         tagline = findViewById(R.id.tagline);
         securityRow = findViewById(R.id.securityRow);
@@ -87,13 +89,16 @@ public class SplashActivity extends AppCompatActivity {
                     .start();
         }, APP_NAME_DELAY_MS);
 
-        // 4) Subtitle: delay 700ms, fade in
+        // 4) HAJRI row: delay 650ms, fade in
+        hajriRow.postDelayed(() -> hajriRow.animate().alpha(1f).setDuration(400).start(), 650);
+
+        // 5) Subtitle (dummy): delay 700ms
         subtitle.postDelayed(() -> subtitle.animate().alpha(1f).setDuration(400).start(), SUBTITLE_DELAY_MS);
 
-        // 5) Tagline: delay 900ms, fade in
+        // 6) Tagline (ADVANCED LABOR MANAGEMENT): delay 900ms, fade in
         tagline.postDelayed(() -> tagline.animate().alpha(1f).setDuration(400).start(), TAGLINE_DELAY_MS);
 
-        // 6) Security row: subtle fade after 1000ms
+        // 7) Security row (hidden): no visible change
         securityRow.postDelayed(() -> securityRow.animate().alpha(1f).setDuration(500).start(), SECURITY_DELAY_MS);
     }
 
