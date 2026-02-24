@@ -40,28 +40,8 @@ public class PaymentsActivity extends AppCompatActivity {
                 Toast.makeText(this, R.string.transaction_history, Toast.LENGTH_SHORT).show());
 
         BottomNavigationView bottomNav = findViewById(R.id.bottomNav);
-        bottomNav.setOnItemSelectedListener(item -> {
-            int id = item.getItemId();
-            if (id == R.id.nav_dashboard) {
-                startActivity(new Intent(this, DashboardActivity.class));
-                finish();
-                return true;
-            }
-            if (id == R.id.nav_workers) {
-                startActivity(new Intent(this, WorkersListActivity.class));
-                finish();
-                return true;
-            }
-            if (id == R.id.nav_payments) {
-                return true;
-            }
-            if (id == R.id.nav_settings) {
-                startActivity(new Intent(this, SettingsActivity.class));
-                finish();
-                return true;
-            }
-            return false;
-        });
+        bottomNav.setSelectedItemId(R.id.nav_payments);
+        bottomNav.setOnItemSelectedListener(item -> onNavItemSelected(item.getItemId()));
     }
 
     private List<PaymentQueueItem> getDummyPaymentQueue() {
@@ -70,5 +50,30 @@ public class PaymentsActivity extends AppCompatActivity {
         list.add(new PaymentQueueItem("Elena Gilbert", "Electrician • ID: 8822", "Today", "₹1,820.00", false));
         list.add(new PaymentQueueItem("James Anderson", "Mason • ID: 8823", "18 Oct, 2023", "₹5,920.00", true));
         return list;
+    }
+
+    private boolean onNavItemSelected(int id) {
+        if (id == R.id.nav_dashboard) {
+            startActivity(new Intent(this, DashboardActivity.class));
+            finish();
+            return true;
+        }
+        if (id == R.id.nav_workers) {
+            startActivity(new Intent(this, WorkersListActivity.class));
+            finish();
+            return true;
+        }
+        if (id == R.id.nav_payments) return true;
+        if (id == R.id.nav_analytics) {
+            startActivity(new Intent(this, ReportsActivity.class));
+            finish();
+            return true;
+        }
+        if (id == R.id.nav_settings) {
+            startActivity(new Intent(this, SettingsActivity.class));
+            finish();
+            return true;
+        }
+        return false;
     }
 }

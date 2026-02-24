@@ -30,27 +30,32 @@ public class ReportsActivity extends AppCompatActivity {
                 Toast.makeText(this, R.string.download_all_pdf_reports, Toast.LENGTH_SHORT).show());
 
         BottomNavigationView bottomNav = findViewById(R.id.bottomNav);
-        bottomNav.setOnItemSelectedListener(item -> {
-            int id = item.getItemId();
-            if (id == R.id.nav_dashboard) {
-                startActivity(new Intent(this, DashboardActivity.class));
-                finish();
-                return true;
-            }
-            if (id == R.id.nav_workers) {
-                startActivity(new Intent(this, WorkersListActivity.class));
-                finish();
-                return true;
-            }
-            if (id == R.id.nav_reports) {
-                return true;
-            }
-            if (id == R.id.nav_settings) {
-                startActivity(new Intent(this, SettingsActivity.class));
-                finish();
-                return true;
-            }
-            return false;
-        });
+        bottomNav.setSelectedItemId(R.id.nav_analytics);
+        bottomNav.setOnItemSelectedListener(item -> onNavItemSelected(item.getItemId()));
+    }
+
+    private boolean onNavItemSelected(int id) {
+        if (id == R.id.nav_dashboard) {
+            startActivity(new Intent(this, DashboardActivity.class));
+            finish();
+            return true;
+        }
+        if (id == R.id.nav_workers) {
+            startActivity(new Intent(this, WorkersListActivity.class));
+            finish();
+            return true;
+        }
+        if (id == R.id.nav_payments) {
+            startActivity(new Intent(this, PaymentsActivity.class));
+            finish();
+            return true;
+        }
+        if (id == R.id.nav_analytics) return true;
+        if (id == R.id.nav_settings) {
+            startActivity(new Intent(this, SettingsActivity.class));
+            finish();
+            return true;
+        }
+        return false;
     }
 }

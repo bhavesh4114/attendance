@@ -10,10 +10,11 @@ import androidx.appcompat.app.AppCompatActivity;
 
 import com.google.android.material.button.MaterialButton;
 
+import com.example.majuri_app.BuilderDbHelper;
+
 public class LoginActivity extends AppCompatActivity {
 
     private EditText etMobile, etPassword;
-    private AuthHelper authHelper;
     private SessionManager sessionManager;
     private boolean passwordVisible = false;
 
@@ -22,7 +23,6 @@ public class LoginActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_login);
 
-        authHelper = new AuthHelper(this);
         sessionManager = new SessionManager(this);
 
         etMobile = findViewById(R.id.etMobile);
@@ -71,16 +71,20 @@ public class LoginActivity extends AppCompatActivity {
         etMobile.setError(null);
         etPassword.setError(null);
 
-        if (authHelper.validateUser(mobile, password)) {
-            String name = authHelper.getUserName(mobile);
-            sessionManager.saveSession(digitsOnly, name);
+        BuilderDbHelper builderDb = new BuilderDbHelper(this);
+        String name = builderDb.getBuilderNameIfValid(digitsOnly, password);
+        builderDb.close();
+
+        if (!name.isEmpty()) {
+            boolean isAdmin = true;
+            sessionManager.saveSession(digitsOnly, name, isAdmin);
             Toast.makeText(this, R.string.login_success, Toast.LENGTH_SHORT).show();
-            startActivity(new Intent(this, DashboardActivity.class));
+            Intent target = new Intent(this, isAdmin ? DashboardActivity.class : UserDashboardActivity.class);
+            startActivity(target);
             finish();
         } else {
-            // No account or wrong password → redirect to Sign up
-            Toast.makeText(this, R.string.no_account_sign_up, Toast.LENGTH_LONG).show();
-            openSignUp();
+            // Wrong mobile / password → stay on login
+            Toast.makeText(this, R.string.error_invalid_credentials, Toast.LENGTH_LONG).show();
         }
     }
 

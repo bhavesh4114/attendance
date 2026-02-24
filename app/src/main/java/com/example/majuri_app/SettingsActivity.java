@@ -33,27 +33,32 @@ public class SettingsActivity extends AppCompatActivity {
         findViewById(R.id.btnLogout).setOnClickListener(v -> doLogout());
 
         BottomNavigationView bottomNav = findViewById(R.id.bottomNav);
-        bottomNav.setOnItemSelectedListener(item -> {
-            int id = item.getItemId();
-            if (id == R.id.nav_dashboard) {
-                startActivity(new Intent(this, DashboardActivity.class));
-                finish();
-                return true;
-            }
-            if (id == R.id.nav_staff) {
-                startActivity(new Intent(this, WorkersListActivity.class));
-                finish();
-                return true;
-            }
-            if (id == R.id.nav_tasks) {
-                startActivity(new Intent(this, AttendanceManagementActivity.class));
-                finish();
-                return true;
-            }
-            if (id == R.id.nav_settings) {
-                return true;
-            }
-            return false;
-        });
+        bottomNav.setSelectedItemId(R.id.nav_settings);
+        bottomNav.setOnItemSelectedListener(item -> onNavItemSelected(item.getItemId()));
+    }
+
+    private boolean onNavItemSelected(int id) {
+        if (id == R.id.nav_dashboard) {
+            startActivity(new Intent(this, DashboardActivity.class));
+            finish();
+            return true;
+        }
+        if (id == R.id.nav_workers) {
+            startActivity(new Intent(this, WorkersListActivity.class));
+            finish();
+            return true;
+        }
+        if (id == R.id.nav_payments) {
+            startActivity(new Intent(this, PaymentsActivity.class));
+            finish();
+            return true;
+        }
+        if (id == R.id.nav_analytics) {
+            startActivity(new Intent(this, ReportsActivity.class));
+            finish();
+            return true;
+        }
+        if (id == R.id.nav_settings) return true;
+        return false;
     }
 }

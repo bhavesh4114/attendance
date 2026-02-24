@@ -22,16 +22,11 @@ import com.google.android.material.button.MaterialButton;
 public class CreateAdminActivity extends AppCompatActivity {
 
     private boolean passwordVisible = false;
-    private AuthHelper authHelper;
-    private SessionManager sessionManager;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_create_admin);
-
-        authHelper = new AuthHelper(this);
-        sessionManager = new SessionManager(this);
 
         ImageButton btnBack = findViewById(R.id.btnBack);
         btnBack.setOnClickListener(v -> finish());
@@ -75,11 +70,14 @@ public class CreateAdminActivity extends AppCompatActivity {
         EditText etFullName = findViewById(R.id.etFullName);
         EditText etMobile = findViewById(R.id.etMobile);
         EditText etBusinessName = findViewById(R.id.etBusinessName);
+        EditText etEmail = findViewById(R.id.etEmail);
         EditText etPassword = findViewById(R.id.etPassword);
         CheckBox checkTerms = findViewById(R.id.checkTerms);
 
         String fullName = etFullName.getText() != null ? etFullName.getText().toString().trim() : "";
         String mobile = etMobile.getText() != null ? etMobile.getText().toString().trim() : "";
+        String businessName = etBusinessName.getText() != null ? etBusinessName.getText().toString().trim() : "";
+        String email = etEmail.getText() != null ? etEmail.getText().toString().trim() : "";
         String password = etPassword.getText() != null ? etPassword.getText().toString() : "";
 
         if (fullName.isEmpty()) {
@@ -105,17 +103,24 @@ public class CreateAdminActivity extends AppCompatActivity {
 
         etFullName.setError(null);
         etMobile.setError(null);
+        etEmail.setError(null);
         etPassword.setError(null);
 
-        if (authHelper.registerUser(mobile, password, fullName)) {
-            sessionManager.saveSession(digitsOnly, fullName);
-            Toast.makeText(this, R.string.account_created, Toast.LENGTH_SHORT).show();
-            startActivity(new Intent(this, DashboardActivity.class));
-            finish();
-        } else {
+        BuilderDbHelper builderDb = new BuilderDbHelper(this);
+        boolean exists = builderDb.isBuilderExists(digitsOnly);
+        if (exists) {
+            builderDb.close();
             Toast.makeText(this, R.string.mobile_already_registered, Toast.LENGTH_LONG).show();
             goToLogin();
+            return;
         }
+
+        builderDb.insertBuilder(fullName, digitsOnly, businessName, email, password);
+        builderDb.close();
+
+        Toast.makeText(this, R.string.registration_successful, Toast.LENGTH_SHORT).show();
+        startActivity(new Intent(this, LoginActivity.class));
+        finish();
     }
 
     private void goToLogin() {

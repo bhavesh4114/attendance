@@ -150,9 +150,7 @@ public class SplashActivity extends AppCompatActivity {
                 .alpha(0f)
                 .setDuration(EXIT_DURATION_MS)
                 .withEndAction(() -> {
-                    SessionManager session = new SessionManager(this);
-                    Intent next = new Intent(this, session.isLoggedIn() ? DashboardActivity.class : LoginActivity.class);
-                    startActivity(next);
+                    startActivity(new Intent(this, LoginActivity.class));
                     overridePendingTransition(android.R.anim.fade_in, android.R.anim.fade_out);
                     finish();
                 })
