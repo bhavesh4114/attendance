@@ -106,6 +106,7 @@
             android:orientation="horizontal">
 
             <TextView
+                android:id="@+id/tvActiveWorkersCount"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
@@ -140,25 +141,11 @@
         android:paddingStart="@dimen/spacing_16"
         android:paddingEnd="@dimen/spacing_16"
         android:paddingBottom="16dp"
-        app:layout_constraintBottom_toTopOf="@id/fab"
+        app:layout_constraintBottom_toTopOf="@id/bottomNav"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@id/topContent"
         tools:listitem="@layout/item_worker_list" />
-
-    <!-- FAB -->
-    <com.google.android.material.floatingactionbutton.FloatingActionButton
-        android:id="@+id/fab"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:contentDescription="@string/add_worker"
-        android:src="@drawable/ic_plus_white"
-        app:backgroundTint="@color/primary_blue"
-        app:elevation="@dimen/fab_elevation"
-        app:layout_constraintBottom_toTopOf="@id/bottomNav"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:maxImageSize="24dp"
-        app:tint="@color/white" />
 
     <!-- Bottom navigation -->
     <com.google.android.material.bottomnavigation.BottomNavigationView
@@ -169,5 +156,5 @@
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:menu="@menu/menu_workers_list_bottom_nav" />
+        app:menu="@menu/menu_dashboard_bottom_nav" />
 </androidx.constraintlayout.widget.ConstraintLayout>

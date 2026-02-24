@@ -59,7 +59,8 @@ public class AddWorkerActivity extends AppCompatActivity {
             etWorkerName.setError(getString(R.string.hint_enter_full_name));
             return;
         }
-        if (mobile.length() != 10) {
+        String mobileDigits = mobile.replaceAll("[^0-9]", "");
+        if (mobileDigits.length() != 10) {
             etMobileNumber.setError(getString(R.string.hint_10_digit));
             return;
         }
@@ -72,8 +73,15 @@ public class AddWorkerActivity extends AppCompatActivity {
             return;
         }
 
-        // TODO: Persist worker and return to list
-        Toast.makeText(this, getString(R.string.save_worker), Toast.LENGTH_SHORT).show();
-        finish();
+        WorkerDbHelper dbHelper = new WorkerDbHelper(this);
+        long rowId = dbHelper.insertWorker(name, mobile, wage, skill);
+        dbHelper.close();
+
+        if (rowId != -1) {
+            Toast.makeText(this, R.string.add_worker_successfully, Toast.LENGTH_SHORT).show();
+            finish();
+        } else {
+            Toast.makeText(this, R.string.save_worker, Toast.LENGTH_SHORT).show();
+        }
     }
 }
