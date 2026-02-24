@@ -48,7 +48,14 @@
     <color name="purple_icon_bg">#E9D5FF</color>
     <color name="settings_logout_stroke">#FCA5A5</color>
 
-    <!-- Dashboard -->
+    <!-- Dashboard (premium 2025 SaaS) -->
+    <color name="dashboard_bg">#F4F6F8</color>
+    <color name="dashboard_blue_gradient_start">#4F8DFD</color>
+    <color name="dashboard_dark_text">#111827</color>
+    <color name="dashboard_divider">#E5E7EB</color>
+    <color name="dashboard_purple">#8B5CF6</color>
+    <color name="dashboard_avatar_orange">#FFEDD5</color>
+    <color name="dashboard_badge_green">#22C55E</color>
     <color name="success_green">#22C55E</color>
     <color name="danger_orange">#F97316</color>
     <color name="soft_icon_orange">#FFEDD5</color>

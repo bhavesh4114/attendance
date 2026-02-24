@@ -240,6 +240,37 @@
     <string name="nav_dashboard">DASHBOARD</string>
     <string name="nav_payments">PAYMENTS</string>
     <string name="nav_analytics">ANALYTICS</string>
+    <string name="nav_home">HOME</string>
+    <string name="nav_history">HISTORY</string>
+    <string name="nav_staff">STAFF</string>
+    <string name="nav_profile">PROFILE</string>
+    <string name="welcome_back">Welcome back,</string>
+    <string name="dashboard_title">Dashboard</string>
+    <string name="dashboard_date">Monday, 24 May 2024</string>
+    <string name="total_workers_label">TOTAL WORKERS</string>
+    <string name="today_present_label">TODAY PRESENT</string>
+    <string name="pending_dues_label">PENDING DUES</string>
+    <string name="monthly_spend_label">MONTHLY SPEND</string>
+    <string name="manage_staff">Manage Staff</string>
+    <string name="daily_marking">Daily Marking</string>
+    <string name="track_dues">Track Dues</string>
+    <string name="analytics">Analytics</string>
+    <string name="recent_activity">Recent Activity</string>
+    <string name="see_all">See All</string>
+    <string name="daily_attendance_done">Daily Attendance Done</string>
+    <string name="today_930">Today, 9:30 AM</string>
+    <string name="payment_paid_5000">₹5,000 Payment Paid</string>
+    <string name="yesterday_645">Yesterday, 6:45 PM</string>
     <string name="worker_phone">(123) 456-7890</string>
     <string name="worker_salary">$100/day</string>
+
+    <!-- User Dashboard (worker view) -->
+    <string name="user_dashboard_title">My Dashboard</string>
+    <string name="user_dashboard_hello">Hello,</string>
+    <string name="user_dashboard_today_status">TODAY\'S STATUS</string>
+    <string name="user_dashboard_present">Present</string>
+    <string name="user_dashboard_absent">Absent</string>
+    <string name="user_dashboard_my_attendance">MY ATTENDANCE</string>
+    <string name="user_dashboard_my_dues">MY DUES</string>
+    <string name="user_dashboard_payslips">Payslips</string>
 </resources>
