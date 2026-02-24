@@ -25,7 +25,7 @@ public class WorkersListActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_workers_list);
+        setContentView(R.layout.activity_workers_list_builder);
 
         loadWorkersFromDb();
         adapter = new WorkersListAdapter();
@@ -57,8 +57,8 @@ public class WorkersListActivity extends AppCompatActivity {
                 Toast.makeText(this, R.string.filter, Toast.LENGTH_SHORT).show());
 
         BottomNavigationView bottomNav = findViewById(R.id.bottomNav);
-        bottomNav.setSelectedItemId(R.id.nav_workers);
-        bottomNav.setOnItemSelectedListener(item -> onNavItemSelected(item.getItemId()));
+        bottomNav.setSelectedItemId(R.id.nav_user_home);
+        bottomNav.setOnItemSelectedListener(item -> onUserNavItemSelected(item.getItemId()));
     }
 
     @Override
@@ -97,26 +97,22 @@ public class WorkersListActivity extends AppCompatActivity {
         adapter.setItems(filtered);
     }
 
-    private boolean onNavItemSelected(int id) {
-        if (id == R.id.nav_dashboard) {
-            startActivity(new Intent(this, DashboardActivity.class));
+    private boolean onUserNavItemSelected(int id) {
+        if (id == R.id.nav_user_home) {
+            startActivity(new Intent(this, UserDashboardActivity.class));
             finish();
             return true;
         }
-        if (id == R.id.nav_workers) return true;
-        if (id == R.id.nav_payments) {
-            startActivity(new Intent(this, PaymentsActivity.class));
-            finish();
+        if (id == R.id.nav_user_attendance) {
+            Toast.makeText(this, getString(R.string.nav_attendance), Toast.LENGTH_SHORT).show();
             return true;
         }
-        if (id == R.id.nav_analytics) {
-            startActivity(new Intent(this, ReportsActivity.class));
-            finish();
+        if (id == R.id.nav_user_payslips) {
+            Toast.makeText(this, getString(R.string.user_dashboard_payslips), Toast.LENGTH_SHORT).show();
             return true;
         }
-        if (id == R.id.nav_settings) {
-            startActivity(new Intent(this, SettingsActivity.class));
-            finish();
+        if (id == R.id.nav_user_profile) {
+            Toast.makeText(this, getString(R.string.nav_profile), Toast.LENGTH_SHORT).show();
             return true;
         }
         return false;

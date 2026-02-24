@@ -51,6 +51,19 @@ public class LoginActivity extends AppCompatActivity {
         String mobile = etMobile.getText() != null ? etMobile.getText().toString().trim() : "";
         String password = etPassword.getText() != null ? etPassword.getText().toString() : "";
 
+
+        // builder mobile nomber 7600485458
+        // builder password builder@123
+
+        // TEMPORARY: test-only builder login override.
+        if ("7600485458".equals(mobile) && "builder@123".equals(password)) {
+            sessionManager.saveSession("7600485458", "Builder", false);
+            Toast.makeText(this, R.string.login_success, Toast.LENGTH_SHORT).show();
+            startActivity(new Intent(this, UserDashboardActivity.class));
+            finish();
+            return;
+        }
+
         if (mobile.isEmpty()) {
             etMobile.setError(getString(R.string.error_enter_mobile));
             etMobile.requestFocus();

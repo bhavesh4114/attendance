@@ -29,7 +29,7 @@
 
     <!-- Create Admin screen -->
     <string name="back">Back</string>
-    <string name="create_admin_account">Create Builder Account</string>
+    <string name="create_admin_account">Create Contractor Account</string>
     <string name="admin_icon">Builder</string>
     <string name="welcome_admin">Welcome, Builder</string>
     <string name="welcome_builder_format">Welcome, %1$s</string>

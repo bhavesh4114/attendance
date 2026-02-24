@@ -2,6 +2,7 @@ package com.example.majuri_app;
 
 import android.content.Intent;
 import android.os.Bundle;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
@@ -18,6 +19,7 @@ public class UserDashboardActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_user_dashboard);
+        bindLoggedInUserName();
 
         BottomNavigationView bottomNav = findViewById(R.id.bottomNav);
         bottomNav.setOnItemSelectedListener(item -> {
@@ -44,12 +46,24 @@ public class UserDashboardActivity extends AppCompatActivity {
                 Toast.makeText(this, getString(R.string.menu), Toast.LENGTH_SHORT).show());
 
         findViewById(R.id.cardViewWorkers).setOnClickListener(v ->
-                Toast.makeText(this, getString(R.string.nav_workers), Toast.LENGTH_SHORT).show());
+                startActivity(new Intent(UserDashboardActivity.this, WorkersListActivity.class)));
         findViewById(R.id.cardViewAttendance).setOnClickListener(v ->
                 Toast.makeText(this, getString(R.string.nav_attendance), Toast.LENGTH_SHORT).show());
         findViewById(R.id.cardViewPayments).setOnClickListener(v ->
                 Toast.makeText(this, getString(R.string.nav_payments), Toast.LENGTH_SHORT).show());
         findViewById(R.id.cardViewReports).setOnClickListener(v ->
                 Toast.makeText(this, getString(R.string.nav_reports), Toast.LENGTH_SHORT).show());
+    }
+
+    private void bindLoggedInUserName() {
+        TextView tvUserName = findViewById(R.id.tvUserName);
+        if (tvUserName == null) return;
+
+        SessionManager sessionManager = new SessionManager(this);
+        String userName = sessionManager.getLoggedInUserName();
+        if (userName == null || userName.trim().isEmpty()) {
+            userName = "Builder";
+        }
+        tvUserName.setText(userName.trim());
     }
 }
