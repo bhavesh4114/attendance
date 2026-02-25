@@ -9,6 +9,7 @@ public class AttendanceStaffItem {
     public static final int STATUS_HALF_DAY = 1;
     public static final int STATUS_ABSENT = 2;
 
+    private final long workerDbId;
     private final String name;
     private final String role;
     private final String workerId;
@@ -16,6 +17,11 @@ public class AttendanceStaffItem {
     private int status;
 
     public AttendanceStaffItem(String name, String role, String workerId, int status) {
+        this(-1L, name, role, workerId, status);
+    }
+
+    public AttendanceStaffItem(long workerDbId, String name, String role, String workerId, int status) {
+        this.workerDbId = workerDbId;
         this.name = name;
         this.role = role;
         this.workerId = workerId;
@@ -32,6 +38,7 @@ public class AttendanceStaffItem {
         return parts[0].length() >= 2 ? parts[0].substring(0, 2).toUpperCase() : parts[0].toUpperCase();
     }
 
+    public long getWorkerDbId() { return workerDbId; }
     public String getName() { return name; }
     public String getRole() { return role; }
     public String getWorkerId() { return workerId; }

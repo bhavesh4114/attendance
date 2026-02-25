@@ -21,6 +21,7 @@ public class AttendanceManagementAdapter extends RecyclerView.Adapter<Attendance
 
     private final List<AttendanceStaffItem> items = new ArrayList<>();
     private OnSummaryChangedListener summaryListener;
+    private boolean editable = true;
 
     public interface OnSummaryChangedListener {
         void onSummaryChanged(int present, int halfDay, int absent);
@@ -41,6 +42,15 @@ public class AttendanceManagementAdapter extends RecyclerView.Adapter<Attendance
 
     public List<AttendanceStaffItem> getItems() {
         return new ArrayList<>(items);
+    }
+
+    public void setEditable(boolean editable) {
+        this.editable = editable;
+        notifyDataSetChanged();
+    }
+
+    public boolean isEditable() {
+        return editable;
     }
 
     private void notifySummary() {
@@ -71,14 +81,29 @@ public class AttendanceManagementAdapter extends RecyclerView.Adapter<Attendance
         holder.staffName.setText(item.getName());
         holder.staffSubtitle.setText(item.getRole() + " • " + item.getWorkerId());
 
-        holder.optionPresent.setOnClickListener(v -> setStatus(holder.getAdapterPosition(), AttendanceStaffItem.STATUS_PRESENT));
-        holder.optionHalfDay.setOnClickListener(v -> setStatus(holder.getAdapterPosition(), AttendanceStaffItem.STATUS_HALF_DAY));
-        holder.optionAbsent.setOnClickListener(v -> setStatus(holder.getAdapterPosition(), AttendanceStaffItem.STATUS_ABSENT));
+        holder.optionPresent.setOnClickListener(editable
+                ? v -> setStatus(holder.getAdapterPosition(), AttendanceStaffItem.STATUS_PRESENT)
+                : null);
+        holder.optionHalfDay.setOnClickListener(editable
+                ? v -> setStatus(holder.getAdapterPosition(), AttendanceStaffItem.STATUS_HALF_DAY)
+                : null);
+        holder.optionAbsent.setOnClickListener(editable
+                ? v -> setStatus(holder.getAdapterPosition(), AttendanceStaffItem.STATUS_ABSENT)
+                : null);
+
+        holder.optionPresent.setClickable(editable);
+        holder.optionHalfDay.setClickable(editable);
+        holder.optionAbsent.setClickable(editable);
+        float alpha = editable ? 1f : 0.8f;
+        holder.optionPresent.setAlpha(alpha);
+        holder.optionHalfDay.setAlpha(alpha);
+        holder.optionAbsent.setAlpha(alpha);
 
         updateSegmentUi(holder, item.getStatus());
     }
 
     private void setStatus(int position, int status) {
+        if (!editable) return;
         if (position < 0 || position >= items.size()) return;
         items.get(position).setStatus(status);
         notifyItemChanged(position);
