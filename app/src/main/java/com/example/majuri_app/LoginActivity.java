@@ -69,12 +69,6 @@ public class LoginActivity extends AppCompatActivity {
             etMobile.requestFocus();
             return;
         }
-        String digitsOnly = mobile.replaceAll("[^0-9]", "");
-        if (digitsOnly.length() != 10) {
-            etMobile.setError(getString(R.string.error_invalid_mobile));
-            etMobile.requestFocus();
-            return;
-        }
         if (password.isEmpty()) {
             etPassword.setError(getString(R.string.error_enter_password));
             etPassword.requestFocus();
@@ -85,12 +79,25 @@ public class LoginActivity extends AppCompatActivity {
         etPassword.setError(null);
 
         BuilderDbHelper builderDb = new BuilderDbHelper(this);
-        String name = builderDb.getBuilderNameIfValid(digitsOnly, password);
+        String name;
+        boolean isEmailLogin = mobile.contains("@");
+        if (isEmailLogin) {
+            name = builderDb.getBuilderNameIfValidByEmail(mobile, password);
+        } else {
+            String digitsOnly = mobile.replaceAll("[^0-9]", "");
+            if (digitsOnly.length() != 10) {
+                etMobile.setError(getString(R.string.error_invalid_mobile));
+                etMobile.requestFocus();
+                builderDb.close();
+                return;
+            }
+            name = builderDb.getBuilderNameIfValid(digitsOnly, password);
+        }
         builderDb.close();
 
         if (!name.isEmpty()) {
             boolean isAdmin = true;
-            sessionManager.saveSession(digitsOnly, name, isAdmin);
+            sessionManager.saveSession(mobile, name, isAdmin);
             Toast.makeText(this, R.string.login_success, Toast.LENGTH_SHORT).show();
             Intent target = new Intent(this, isAdmin ? DashboardActivity.class : UserDashboardActivity.class);
             startActivity(target);

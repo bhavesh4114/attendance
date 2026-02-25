@@ -57,6 +57,9 @@
             android:name=".WorkersListActivity"
             android:exported="false" />
         <activity
+            android:name=".WorkerProfileActivity"
+            android:exported="false" />
+        <activity
             android:name=".AttendanceManagementActivity"
             android:exported="false" />
         <activity

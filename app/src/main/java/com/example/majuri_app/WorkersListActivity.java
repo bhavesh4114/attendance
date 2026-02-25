@@ -30,8 +30,7 @@ public class WorkersListActivity extends AppCompatActivity {
         loadWorkersFromDb();
         adapter = new WorkersListAdapter();
         if (allItems != null) adapter.setItems(allItems);
-        adapter.setOnViewClickListener((item, position) ->
-                Toast.makeText(this, getString(R.string.view) + " " + item.getName(), Toast.LENGTH_SHORT).show());
+        adapter.setOnViewClickListener((item, position) -> openWorkerProfile(item));
 
         RecyclerView recyclerWorkers = findViewById(R.id.recyclerWorkers);
         recyclerWorkers.setLayoutManager(new LinearLayoutManager(this));
@@ -104,7 +103,8 @@ public class WorkersListActivity extends AppCompatActivity {
             return true;
         }
         if (id == R.id.nav_user_attendance) {
-            Toast.makeText(this, getString(R.string.nav_attendance), Toast.LENGTH_SHORT).show();
+            startActivity(new Intent(this, AttendanceManagementActivity.class));
+            finish();
             return true;
         }
         if (id == R.id.nav_user_payslips) {
@@ -116,5 +116,15 @@ public class WorkersListActivity extends AppCompatActivity {
             return true;
         }
         return false;
+    }
+
+    private void openWorkerProfile(WorkerListItem item) {
+        if (item == null || item.getId() <= 0L) {
+            Toast.makeText(this, getString(R.string.worker_not_found), Toast.LENGTH_SHORT).show();
+            return;
+        }
+        Intent intent = new Intent(this, WorkerProfileActivity.class);
+        intent.putExtra(WorkerProfileActivity.EXTRA_WORKER_ID, item.getId());
+        startActivity(intent);
     }
 }

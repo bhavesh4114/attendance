@@ -81,6 +81,15 @@
     <string name="filter">Filter</string>
     <string name="nav_schedule">Schedule</string>
     <string name="add_new_worker">Add New Worker</string>
+    <string name="worker_profile">Worker Profile</string>
+    <string name="phone_number">Phone Number</string>
+    <string name="email_label">Email</string>
+    <string name="status_label">Status</string>
+    <string name="join_date">Join Date</string>
+    <string name="address">Address</string>
+    <string name="documents">Documents</string>
+    <string name="worker_not_found">Worker not found</string>
+    <string name="error_loading_worker_profile">Unable to load worker profile</string>
 
     <!-- Add New Worker screen -->
     <string name="info">Info</string>

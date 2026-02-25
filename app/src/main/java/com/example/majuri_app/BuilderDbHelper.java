@@ -13,7 +13,7 @@ import androidx.annotation.Nullable;
 public class BuilderDbHelper extends SQLiteOpenHelper {
 
     private static final String DB_NAME = "majuri_builders.db";
-    private static final int DB_VERSION = 3;
+    private static final int DB_VERSION = 4;
     private static final String TABLE_BUILDERS = "builders";
 
     private static final String COL_ID = "id";
@@ -34,14 +34,20 @@ public class BuilderDbHelper extends SQLiteOpenHelper {
                 + COL_FULL_NAME + " TEXT NOT NULL, "
                 + COL_MOBILE + " TEXT NOT NULL, "
                 + COL_BUSINESS_NAME + " TEXT, "
+                + COL_EMAIL + " TEXT, "
                 + COL_PASSWORD + " TEXT NOT NULL)";
         db.execSQL(sql);
     }
 
     @Override
     public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
-        db.execSQL("DROP TABLE IF EXISTS " + TABLE_BUILDERS);
-        onCreate(db);
+        if (oldVersion < 4) {
+            try {
+                db.execSQL("ALTER TABLE " + TABLE_BUILDERS + " ADD COLUMN " + COL_EMAIL + " TEXT");
+            } catch (Exception ignored) {
+                // Column may already exist on some installs.
+            }
+        }
     }
 
     /**
@@ -53,7 +59,7 @@ public class BuilderDbHelper extends SQLiteOpenHelper {
         cv.put(COL_FULL_NAME, fullName != null ? fullName : "");
         cv.put(COL_MOBILE, mobile != null ? mobile : "");
         cv.put(COL_BUSINESS_NAME, businessName != null ? businessName : "");
-        cv.put(COL_EMAIL, email != null ? email : "");
+        cv.put(COL_EMAIL, email != null ? email.trim().toLowerCase() : "");
         cv.put(COL_PASSWORD, password != null ? password : "");
         long id = db.insert(TABLE_BUILDERS, null, cv);
         db.close();
@@ -85,6 +91,34 @@ public class BuilderDbHelper extends SQLiteOpenHelper {
         android.database.Cursor cursor = db.query(TABLE_BUILDERS, columns,
                 COL_MOBILE + "=? AND " + COL_PASSWORD + "=?", args,
                 null, null, null);
+        String name = "";
+        if (cursor != null && cursor.moveToFirst()) {
+            int idx = cursor.getColumnIndex(COL_FULL_NAME);
+            if (idx >= 0) {
+                name = cursor.getString(idx);
+            }
+        }
+        if (cursor != null) cursor.close();
+        db.close();
+        return name != null ? name : "";
+    }
+
+    /**
+     * Validate login and return full name if email+password are correct, otherwise empty string.
+     */
+    public String getBuilderNameIfValidByEmail(String email, String password) {
+        SQLiteDatabase db = getReadableDatabase();
+        String[] columns = { COL_FULL_NAME };
+        String[] args = { email != null ? email.trim().toLowerCase() : "", password };
+        android.database.Cursor cursor = db.query(
+                TABLE_BUILDERS,
+                columns,
+                "LOWER(" + COL_EMAIL + ")=? AND " + COL_PASSWORD + "=?",
+                args,
+                null,
+                null,
+                null
+        );
         String name = "";
         if (cursor != null && cursor.moveToFirst()) {
             int idx = cursor.getColumnIndex(COL_FULL_NAME);

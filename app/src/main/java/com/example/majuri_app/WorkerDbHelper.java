@@ -85,18 +85,58 @@ public class WorkerDbHelper extends SQLiteOpenHelper {
         SQLiteDatabase db = getReadableDatabase();
         Cursor c = db.query(TABLE_WORKERS, null, null, null, null, null, COL_ID + " DESC");
         if (c != null) {
+            int iId = c.getColumnIndex(COL_ID);
             int iName = c.getColumnIndex(COL_NAME);
             int iMobile = c.getColumnIndex(COL_MOBILE);
             int iSkill = c.getColumnIndex(COL_SKILL);
             while (c.moveToNext()) {
+                long id = iId >= 0 ? c.getLong(iId) : -1L;
                 String name = iName >= 0 ? c.getString(iName) : "";
                 String mobile = iMobile >= 0 ? c.getString(iMobile) : "";
                 String skill = iSkill >= 0 ? c.getString(iSkill) : "";
-                list.add(new WorkerListItem(name, skill, mobile, true));
+                list.add(new WorkerListItem(id, name, skill, mobile, true));
             }
             c.close();
         }
         db.close();
         return list;
+    }
+
+    /**
+     * Returns a single worker by primary key id, or null if not found.
+     */
+    public WorkerProfile getWorkerProfileById(long workerId) {
+        SQLiteDatabase db = getReadableDatabase();
+        String[] args = { String.valueOf(workerId) };
+        Cursor c = db.query(TABLE_WORKERS, null, COL_ID + "=?", args, null, null, null, "1");
+
+        WorkerProfile profile = null;
+        if (c != null) {
+            int iId = c.getColumnIndex(COL_ID);
+            int iName = c.getColumnIndex(COL_NAME);
+            int iMobile = c.getColumnIndex(COL_MOBILE);
+            int iSkill = c.getColumnIndex(COL_SKILL);
+            if (c.moveToFirst()) {
+                long id = iId >= 0 ? c.getLong(iId) : workerId;
+                String name = iName >= 0 ? c.getString(iName) : "";
+                String mobile = iMobile >= 0 ? c.getString(iMobile) : "";
+                String skill = iSkill >= 0 ? c.getString(iSkill) : "";
+                profile = new WorkerProfile(
+                        id,
+                        name,
+                        skill,
+                        mobile,
+                        "",
+                        true,
+                        "",
+                        "",
+                        "",
+                        ""
+                );
+            }
+            c.close();
+        }
+        db.close();
+        return profile;
     }
 }

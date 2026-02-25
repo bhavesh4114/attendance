@@ -22,13 +22,14 @@ public class UserDashboardActivity extends AppCompatActivity {
         bindLoggedInUserName();
 
         BottomNavigationView bottomNav = findViewById(R.id.bottomNav);
+        bottomNav.setSelectedItemId(R.id.nav_user_home);
         bottomNav.setOnItemSelectedListener(item -> {
             int id = item.getItemId();
             if (id == R.id.nav_user_home) {
                 return true;
             }
             if (id == R.id.nav_user_attendance) {
-                Toast.makeText(this, getString(R.string.nav_attendance), Toast.LENGTH_SHORT).show();
+                startActivity(new Intent(UserDashboardActivity.this, AttendanceManagementActivity.class));
                 return true;
             }
             if (id == R.id.nav_user_payslips) {
@@ -48,7 +49,7 @@ public class UserDashboardActivity extends AppCompatActivity {
         findViewById(R.id.cardViewWorkers).setOnClickListener(v ->
                 startActivity(new Intent(UserDashboardActivity.this, WorkersListActivity.class)));
         findViewById(R.id.cardViewAttendance).setOnClickListener(v ->
-                Toast.makeText(this, getString(R.string.nav_attendance), Toast.LENGTH_SHORT).show());
+                startActivity(new Intent(UserDashboardActivity.this, AttendanceManagementActivity.class)));
         findViewById(R.id.cardViewPayments).setOnClickListener(v ->
                 Toast.makeText(this, getString(R.string.nav_payments), Toast.LENGTH_SHORT).show());
         findViewById(R.id.cardViewReports).setOnClickListener(v ->

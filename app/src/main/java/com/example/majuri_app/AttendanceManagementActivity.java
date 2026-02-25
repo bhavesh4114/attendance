@@ -11,7 +11,6 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.google.android.material.bottomnavigation.BottomNavigationView;
 
-import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.List;
 import java.util.Locale;
@@ -41,7 +40,7 @@ public class AttendanceManagementActivity extends AppCompatActivity {
         setupMonthArrows();
 
         adapter = new AttendanceManagementAdapter();
-        adapter.setItems(getDummyStaff());
+        adapter.setItems(getStaffFromBackend());
         adapter.setOnSummaryChangedListener((present, halfDay, absent) -> {
             summaryPresent.setText(String.valueOf(present));
             summaryHalfDay.setText(String.valueOf(halfDay));
@@ -60,24 +59,23 @@ public class AttendanceManagementActivity extends AppCompatActivity {
         });
 
         BottomNavigationView bottomNav = findViewById(R.id.bottomNav);
+        bottomNav.setSelectedItemId(R.id.nav_user_attendance);
         bottomNav.setOnItemSelectedListener(item -> {
             int id = item.getItemId();
-            if (id == R.id.nav_dashboard) {
-                startActivity(new Intent(this, DashboardActivity.class));
+            if (id == R.id.nav_user_home) {
+                startActivity(new Intent(this, UserDashboardActivity.class));
                 finish();
                 return true;
             }
-            if (id == R.id.nav_attendance) {
+            if (id == R.id.nav_user_attendance) {
                 return true;
             }
-            if (id == R.id.nav_staff) {
-                startActivity(new Intent(this, WorkersListActivity.class));
-                finish();
+            if (id == R.id.nav_user_payslips) {
+                Toast.makeText(this, getString(R.string.user_dashboard_payslips), Toast.LENGTH_SHORT).show();
                 return true;
             }
-            if (id == R.id.nav_settings) {
-                startActivity(new Intent(this, SettingsActivity.class));
-                finish();
+            if (id == R.id.nav_user_profile) {
+                Toast.makeText(this, getString(R.string.nav_profile), Toast.LENGTH_SHORT).show();
                 return true;
             }
             return false;
@@ -112,13 +110,26 @@ public class AttendanceManagementActivity extends AppCompatActivity {
         }
     }
 
-    private List<AttendanceStaffItem> getDummyStaff() {
-        List<AttendanceStaffItem> list = new ArrayList<>();
-        list.add(new AttendanceStaffItem("Jordan Henderson", "Site Supervisor", "#WR-2034", AttendanceStaffItem.STATUS_PRESENT));
-        list.add(new AttendanceStaffItem("Marcus Sterling", "Electrician", "#WR-2035", AttendanceStaffItem.STATUS_HALF_DAY));
-        list.add(new AttendanceStaffItem("David Lee", "Lead Carpenter", "#WR-2036", AttendanceStaffItem.STATUS_PRESENT));
-        list.add(new AttendanceStaffItem("Rajesh Kumar", "Mason", "#WR-2037", AttendanceStaffItem.STATUS_ABSENT));
-        list.add(new AttendanceStaffItem("Amit Singh", "Plumber", "#WR-2038", AttendanceStaffItem.STATUS_PRESENT));
+    private List<AttendanceStaffItem> getStaffFromBackend() {
+        WorkerDbHelper dbHelper = new WorkerDbHelper(this);
+        List<WorkerListItem> workers = dbHelper.getAllWorkers();
+        dbHelper.close();
+
+        List<AttendanceStaffItem> list = new java.util.ArrayList<>();
+        for (WorkerListItem worker : workers) {
+            String workerCode = "#WR-" + Math.max(worker.getId(), 0L);
+            list.add(new AttendanceStaffItem(
+                    worker.getName(),
+                    worker.getRole(),
+                    workerCode,
+                    AttendanceStaffItem.STATUS_PRESENT
+            ));
+        }
+
+        TextView tvTotalWorkers = findViewById(R.id.tvTotalWorkers);
+        if (tvTotalWorkers != null) {
+            tvTotalWorkers.setText("Total: " + list.size() + " Workers");
+        }
         return list;
     }
 }

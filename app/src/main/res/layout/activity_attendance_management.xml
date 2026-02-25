@@ -503,5 +503,5 @@
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:menu="@menu/menu_attendance_management_bottom_nav" />
+        app:menu="@menu/menu_user_dashboard_nav" />
 </androidx.constraintlayout.widget.ConstraintLayout>
