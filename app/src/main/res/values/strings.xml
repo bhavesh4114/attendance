@@ -193,6 +193,9 @@
     <string name="no_sites_found">No sites found</string>
     <string name="unable_to_load_workers">Unable to load workers</string>
     <string name="unable_to_load_sites">Unable to load sites</string>
+    <string name="storage_permission_required">Storage permission is required to save PDF on this Android version.</string>
+    <string name="pdf_saved_success">PDF saved to Downloads: %1$s</string>
+    <string name="failed_to_save_pdf">Failed to save PDF report.</string>
     <string name="quick_insights">QUICK INSIGHTS</string>
     <string name="last_updated_today">Last updated: Today, 8:00 AM</string>
     <string name="nav_labor">LABOR</string>
