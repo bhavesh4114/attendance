@@ -168,6 +168,7 @@
 
     <!-- Reports screen -->
     <string name="reports">Reports</string>
+    <string name="worker_reports_title">Worker Reports</string>
     <string name="reports_analytics_title">Reports &amp; Analytics</string>
     <string name="management_reports">Management Reports</string>
     <string name="management_reports_subtitle">Access and export your workforce data</string>
@@ -186,6 +187,11 @@
     <string name="payment_logs_subtitle">Financial breakdown of wages and pending disbursements</string>
     <string name="insight_quote_text">Insights are the key to efficient site management.</string>
     <string name="download_all_pdf_reports">Download All PDF Reports</string>
+    <string name="no_workers_found">No workers found</string>
+    <string name="no_skill_types_found">No skill types found</string>
+    <string name="no_sites_found">No sites found</string>
+    <string name="unable_to_load_workers">Unable to load workers</string>
+    <string name="unable_to_load_sites">Unable to load sites</string>
     <string name="quick_insights">QUICK INSIGHTS</string>
     <string name="last_updated_today">Last updated: Today, 8:00 AM</string>
     <string name="nav_labor">LABOR</string>

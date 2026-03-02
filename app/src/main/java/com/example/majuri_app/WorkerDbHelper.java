@@ -148,6 +148,66 @@ public class WorkerDbHelper extends SQLiteOpenHelper {
     }
 
     /**
+     * Returns only worker names for lightweight dropdown use-cases.
+     */
+    public List<String> getAllWorkerNames() {
+        List<String> names = new ArrayList<>();
+        SQLiteDatabase db = getReadableDatabase();
+        Cursor c = db.query(
+                TABLE_WORKERS,
+                new String[]{COL_NAME},
+                null,
+                null,
+                null,
+                null,
+                COL_NAME + " COLLATE NOCASE ASC"
+        );
+        if (c != null) {
+            int iName = c.getColumnIndex(COL_NAME);
+            while (c.moveToNext()) {
+                String name = iName >= 0 ? c.getString(iName) : "";
+                if (name != null && !name.trim().isEmpty()) {
+                    names.add(name.trim());
+                }
+            }
+            c.close();
+        }
+        db.close();
+        return names;
+    }
+
+    /**
+     * Returns distinct worker skill types for dropdowns.
+     */
+    public List<String> getAllSkillTypes() {
+        List<String> skills = new ArrayList<>();
+        SQLiteDatabase db = getReadableDatabase();
+        Cursor c = db.query(
+                true,
+                TABLE_WORKERS,
+                new String[]{COL_SKILL},
+                COL_SKILL + " IS NOT NULL AND TRIM(" + COL_SKILL + ") != ''",
+                null,
+                null,
+                null,
+                COL_SKILL + " COLLATE NOCASE ASC",
+                null
+        );
+        if (c != null) {
+            int iSkill = c.getColumnIndex(COL_SKILL);
+            while (c.moveToNext()) {
+                String skill = iSkill >= 0 ? c.getString(iSkill) : "";
+                if (skill != null && !skill.trim().isEmpty()) {
+                    skills.add(skill.trim());
+                }
+            }
+            c.close();
+        }
+        db.close();
+        return skills;
+    }
+
+    /**
      * Returns a single worker by primary key id, or null if not found.
      */
     public WorkerProfile getWorkerProfileById(long workerId) {

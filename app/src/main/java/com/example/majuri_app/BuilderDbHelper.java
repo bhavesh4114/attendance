@@ -2,10 +2,14 @@ package com.example.majuri_app;
 
 import android.content.ContentValues;
 import android.content.Context;
+import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
 
 import androidx.annotation.Nullable;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * SQLite helper for saving builder/admin registration data.
@@ -129,5 +133,36 @@ public class BuilderDbHelper extends SQLiteOpenHelper {
         if (cursor != null) cursor.close();
         db.close();
         return name != null ? name : "";
+    }
+
+    /**
+     * Returns distinct business/site names for dropdown use.
+     */
+    public List<String> getAllBusinessNames() {
+        List<String> sites = new ArrayList<>();
+        SQLiteDatabase db = getReadableDatabase();
+        Cursor cursor = db.query(
+                true,
+                TABLE_BUILDERS,
+                new String[]{COL_BUSINESS_NAME},
+                COL_BUSINESS_NAME + " IS NOT NULL AND TRIM(" + COL_BUSINESS_NAME + ") != ''",
+                null,
+                null,
+                null,
+                COL_BUSINESS_NAME + " COLLATE NOCASE ASC",
+                null
+        );
+        if (cursor != null) {
+            int index = cursor.getColumnIndex(COL_BUSINESS_NAME);
+            while (cursor.moveToNext()) {
+                String site = index >= 0 ? cursor.getString(index) : "";
+                if (site != null && !site.trim().isEmpty()) {
+                    sites.add(site.trim());
+                }
+            }
+            cursor.close();
+        }
+        db.close();
+        return sites;
     }
 }
