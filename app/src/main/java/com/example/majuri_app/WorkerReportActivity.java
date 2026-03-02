@@ -176,7 +176,7 @@ public class WorkerReportActivity extends AppCompatActivity {
 
     private String formatNumber(double value) {
         if (Math.abs(value - Math.round(value)) < 0.001d) {
-            return String.valueOf((long) Math.round(value));
+            return String.valueOf(Math.round(value));
         }
         return String.format(Locale.US, "%.1f", value);
     }
@@ -309,15 +309,13 @@ public class WorkerReportActivity extends AppCompatActivity {
         values.put(android.provider.MediaStore.MediaColumns.IS_PENDING, 1);
 
         ContentResolver resolver = getContentResolver();
-        Uri collection = android.provider.MediaStore.Downloads.EXTERNAL_CONTENT_URI;
+        Uri collection = android.provider.MediaStore.Files.getContentUri("external");
         Uri itemUri = resolver.insert(collection, values);
         if (itemUri == null) {
             return false;
         }
 
-        OutputStream outputStream = null;
-        try {
-            outputStream = resolver.openOutputStream(itemUri);
+        try (OutputStream outputStream = resolver.openOutputStream(itemUri)) {
             if (outputStream == null) return false;
             document.writeTo(outputStream);
             values.clear();
@@ -326,14 +324,6 @@ public class WorkerReportActivity extends AppCompatActivity {
             return true;
         } catch (Exception ignored) {
             return false;
-        } finally {
-            if (outputStream != null) {
-                try {
-                    outputStream.close();
-                } catch (Exception ignored) {
-                    // Ignore close exception
-                }
-            }
         }
     }
 
@@ -345,21 +335,11 @@ public class WorkerReportActivity extends AppCompatActivity {
         }
 
         File outputFile = new File(targetDir, fileName);
-        OutputStream outputStream = null;
-        try {
-            outputStream = new FileOutputStream(outputFile);
+        try (OutputStream outputStream = new FileOutputStream(outputFile)) {
             document.writeTo(outputStream);
             return true;
         } catch (Exception ignored) {
             return false;
-        } finally {
-            if (outputStream != null) {
-                try {
-                    outputStream.close();
-                } catch (Exception ignored) {
-                    // Ignore close exception
-                }
-            }
         }
     }
 }
