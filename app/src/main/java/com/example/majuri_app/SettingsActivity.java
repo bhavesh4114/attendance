@@ -51,7 +51,9 @@ public class SettingsActivity extends AppCompatActivity {
             navigateTo(AttendanceActivity.class);
             return true;
         }
-        if (id == R.id.nav_settings) return true;
+        if (id == R.id.nav_settings) {
+            return true;
+        }
         return false;
     }
 

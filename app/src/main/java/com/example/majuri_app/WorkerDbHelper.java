@@ -410,6 +410,46 @@ public class WorkerDbHelper extends SQLiteOpenHelper {
         return summaries;
     }
 
+    /**
+     * Returns attendance counts for one worker in a given month.
+     * Array order: [presentCount, halfDayCount, absentCount].
+     */
+    public int[] getWorkerAttendanceCountsForMonth(long workerId, int year, int monthZeroBased) {
+        int presentCount = 0;
+        int halfDayCount = 0;
+        int absentCount = 0;
+        if (workerId <= 0L) {
+            return new int[]{0, 0, 0};
+        }
+
+        SQLiteDatabase db = getReadableDatabase();
+        String monthPrefix = String.format(Locale.US, "%04d-%02d-%%", year, monthZeroBased + 1);
+        String sql = "SELECT " + COL_ATTENDANCE_STATUS + ", COUNT(1) "
+                + "FROM " + TABLE_ATTENDANCE + " "
+                + "WHERE " + COL_ATTENDANCE_WORKER_ID + "=? "
+                + "AND " + COL_ATTENDANCE_DATE + " LIKE ? "
+                + "AND " + COL_ATTENDANCE_LOCKED + "=1 "
+                + "GROUP BY " + COL_ATTENDANCE_STATUS;
+        Cursor c = db.rawQuery(sql, new String[]{String.valueOf(workerId), monthPrefix});
+        if (c != null) {
+            while (c.moveToNext()) {
+                int status = c.getInt(0);
+                int count = c.getInt(1);
+                if (status == AttendanceStaffItem.STATUS_PRESENT) {
+                    presentCount = count;
+                } else if (status == AttendanceStaffItem.STATUS_HALF_DAY) {
+                    halfDayCount = count;
+                } else if (status == AttendanceStaffItem.STATUS_ABSENT) {
+                    absentCount = count;
+                }
+            }
+            c.close();
+        }
+        db.close();
+
+        return new int[]{presentCount, halfDayCount, absentCount};
+    }
+
     private Map<Long, Double> readWorkedDaysMap(SQLiteDatabase db, String monthPrefixLike) {
         Map<Long, Double> map = new HashMap<>();
         String sql = "SELECT " + COL_ATTENDANCE_WORKER_ID + ", "

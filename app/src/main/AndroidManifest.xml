@@ -42,6 +42,9 @@
             android:name=".WorkerPaymentActivity"
             android:exported="false" />
         <activity
+            android:name=".WorkerReportActivity"
+            android:exported="false" />
+        <activity
             android:name=".ReportsActivity"
             android:exported="false" />
         <activity

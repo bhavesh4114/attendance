@@ -172,17 +172,17 @@
                         android:id="@+id/rowBackupData"
                         android:layout_width="match_parent"
                         android:layout_height="72dp"
+                        android:clickable="true"
+                        android:focusable="true"
                         android:gravity="center_vertical"
                         android:orientation="horizontal"
                         android:paddingStart="20dp"
-                        android:paddingEnd="20dp"
-                        android:clickable="true"
-                        android:focusable="true">
+                        android:paddingEnd="20dp">
 
                         <FrameLayout
                             android:layout_width="@dimen/settings_icon_circle_44"
                             android:layout_height="@dimen/settings_icon_circle_44"
-                            android:background="@drawable/bg_settings_icon_purple">
+                            android:background="@drawable/bg_settings_icon_orange">
 
                             <ImageView
                                 android:layout_width="22dp"
@@ -259,17 +259,17 @@
                         android:id="@+id/rowLanguage"
                         android:layout_width="match_parent"
                         android:layout_height="72dp"
+                        android:clickable="true"
+                        android:focusable="true"
                         android:gravity="center_vertical"
                         android:orientation="horizontal"
                         android:paddingStart="20dp"
-                        android:paddingEnd="20dp"
-                        android:clickable="true"
-                        android:focusable="true">
+                        android:paddingEnd="20dp">
 
                         <FrameLayout
                             android:layout_width="@dimen/settings_icon_circle_44"
                             android:layout_height="@dimen/settings_icon_circle_44"
-                            android:background="@drawable/bg_settings_icon_orange">
+                            android:background="@drawable/bg_settings_icon_purple">
 
                             <ImageView
                                 android:layout_width="22dp"
@@ -299,7 +299,7 @@
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
                                 android:fontFamily="sans-serif"
-                                android:text="@string/language_english_us"
+                                android:text="@string/language_subtitle"
                                 android:textColor="@color/payments_medium_grey"
                                 android:textSize="14sp" />
                         </LinearLayout>

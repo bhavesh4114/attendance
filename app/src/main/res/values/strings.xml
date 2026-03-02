@@ -187,6 +187,7 @@
     <string name="payment_logs_subtitle">Financial breakdown of wages and pending disbursements</string>
     <string name="insight_quote_text">Insights are the key to efficient site management.</string>
     <string name="download_all_pdf_reports">Download All PDF Reports</string>
+    <string name="select_worker">Select worker</string>
     <string name="no_workers_found">No workers found</string>
     <string name="no_skill_types_found">No skill types found</string>
     <string name="no_sites_found">No sites found</string>
@@ -306,4 +307,3 @@
     <string name="user_dashboard_my_dues">MY DUES</string>
     <string name="user_dashboard_payslips">Payslips</string>
 </resources>
-

@@ -4,18 +4,22 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:layout_marginBottom="@dimen/spacing_16"
-    app:cardBackgroundColor="@color/card_white"
-    app:cardCornerRadius="@dimen/report_card_radius"
-    app:cardElevation="@dimen/attendance_mgmt_card_elevation">
+    android:layout_marginBottom="14dp"
+    app:cardBackgroundColor="#F5F6F8"
+    app:cardCornerRadius="30dp"
+    app:cardElevation="0dp"
+    app:strokeColor="#E0E5EC"
+    app:strokeWidth="1dp">
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="vertical"
-        android:padding="20dp">
+        android:paddingStart="16dp"
+        android:paddingTop="14dp"
+        android:paddingEnd="16dp"
+        android:paddingBottom="14dp">
 
-        <!-- Top row: avatar + name + subtitle -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -23,8 +27,8 @@
             android:orientation="horizontal">
 
             <FrameLayout
-                android:layout_width="@dimen/attendance_avatar_size"
-                android:layout_height="@dimen/attendance_avatar_size">
+                android:layout_width="44dp"
+                android:layout_height="44dp">
 
                 <View
                     android:id="@+id/avatarPlaceholder"
@@ -36,38 +40,38 @@
                     android:id="@+id/avatarInitials"
                     android:layout_width="match_parent"
                     android:layout_height="match_parent"
-                    android:gravity="center"
                     android:fontFamily="sans-serif"
+                    android:gravity="center"
                     android:textColor="@color/primary_blue"
-                    android:textSize="20sp"
+                    android:textSize="15sp"
                     android:textStyle="bold"
-                    tools:text="JD" />
+                    tools:text="MC" />
 
                 <ImageView
                     android:id="@+id/avatarImage"
                     android:layout_width="match_parent"
                     android:layout_height="match_parent"
-                    android:visibility="gone"
+                    android:contentDescription="@string/worker_photo"
                     android:scaleType="centerCrop"
-                    android:contentDescription="@string/worker_photo" />
+                    android:visibility="gone" />
             </FrameLayout>
 
             <LinearLayout
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
+                android:layout_marginStart="12dp"
                 android:layout_weight="1"
-                android:layout_marginStart="16dp"
                 android:orientation="vertical">
 
                 <TextView
                     android:id="@+id/staffName"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:fontFamily="sans-serif"
-                    android:textColor="@color/dark_navy"
-                    android:textSize="20sp"
+                    android:fontFamily="sans-serif-medium"
+                    android:textColor="#0F172A"
+                    android:textSize="17sp"
                     android:textStyle="bold"
-                    tools:text="Jordan Henderson" />
+                    tools:text="Marcus Chen" />
 
                 <TextView
                     android:id="@+id/staffSubtitle"
@@ -75,17 +79,23 @@
                     android:layout_height="wrap_content"
                     android:layout_marginTop="2dp"
                     android:fontFamily="sans-serif"
-                    android:textColor="@color/medium_grey"
-                    android:textSize="16sp"
-                    tools:text="Site Supervisor • #WR-2034" />
+                    android:textColor="#64748B"
+                    android:textSize="13sp"
+                    tools:text="Site Electrician - ID: #8845" />
             </LinearLayout>
+
+            <ImageView
+                android:layout_width="20dp"
+                android:layout_height="20dp"
+                android:contentDescription="@null"
+                android:src="@drawable/ic_notifications_blue"
+                app:tint="#94A3B8" />
         </LinearLayout>
 
-        <!-- Segmented control: Present | Half Day | Absent -->
         <LinearLayout
             android:layout_width="match_parent"
-            android:layout_height="@dimen/segment_control_height"
-            android:layout_marginTop="16dp"
+            android:layout_height="44dp"
+            android:layout_marginTop="12dp"
             android:background="@drawable/bg_segment_container"
             android:gravity="center"
             android:orientation="horizontal"
@@ -106,10 +116,11 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_gravity="center"
-                    android:fontFamily="sans-serif"
-                    android:text="@string/present"
+                    android:fontFamily="sans-serif-medium"
+                    android:text="FULL DAY"
+                    android:textAllCaps="true"
                     android:textColor="@color/white"
-                    android:textSize="14sp"
+                    android:textSize="10sp"
                     android:textStyle="bold" />
             </FrameLayout>
 
@@ -128,10 +139,11 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_gravity="center"
-                    android:fontFamily="sans-serif"
-                    android:text="@string/half_day"
-                    android:textColor="@color/medium_grey"
-                    android:textSize="14sp" />
+                    android:fontFamily="sans-serif-medium"
+                    android:text="HALF DAY"
+                    android:textAllCaps="true"
+                    android:textColor="#64748B"
+                    android:textSize="10sp" />
             </FrameLayout>
 
             <FrameLayout
@@ -140,6 +152,7 @@
                 android:layout_height="match_parent"
                 android:layout_weight="1"
                 android:layout_marginStart="2dp"
+                android:layout_marginEnd="2dp"
                 android:clickable="true"
                 android:focusable="true">
 
@@ -148,11 +161,202 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_gravity="center"
-                    android:fontFamily="sans-serif"
+                    android:fontFamily="sans-serif-medium"
                     android:text="@string/absent"
-                    android:textColor="@color/medium_grey"
-                    android:textSize="14sp" />
+                    android:textAllCaps="true"
+                    android:textColor="#64748B"
+                    android:textSize="10sp" />
+            </FrameLayout>
+
+            <FrameLayout
+                android:id="@+id/optionHourly"
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_weight="1"
+                android:layout_marginStart="2dp"
+                android:layout_marginEnd="2dp"
+                android:clickable="true"
+                android:focusable="true">
+
+                <TextView
+                    android:id="@+id/textHourly"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center"
+                    android:fontFamily="sans-serif-medium"
+                    android:text="HOURLY"
+                    android:textAllCaps="true"
+                    android:textColor="#64748B"
+                    android:textSize="10sp" />
+            </FrameLayout>
+
+            <FrameLayout
+                android:id="@+id/optionOvertime"
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_weight="1"
+                android:layout_marginStart="2dp"
+                android:clickable="true"
+                android:focusable="true">
+
+                <TextView
+                    android:id="@+id/textOvertime"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center"
+                    android:fontFamily="sans-serif-medium"
+                    android:text="OVERTIME"
+                    android:textAllCaps="true"
+                    android:textColor="#64748B"
+                    android:textSize="10sp" />
             </FrameLayout>
         </LinearLayout>
+
+        <LinearLayout
+            android:id="@+id/hourlyContainer"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
+            android:orientation="horizontal"
+            android:visibility="gone">
+
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginEnd="8dp"
+                android:layout_weight="1"
+                android:orientation="vertical">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:fontFamily="sans-serif-medium"
+                    android:text="ENTER WORKING HOURS"
+                    android:textAllCaps="true"
+                    android:textColor="#94A3B8"
+                    android:textSize="10sp"
+                    android:textStyle="bold" />
+
+                <com.google.android.material.card.MaterialCardView
+                    android:layout_width="match_parent"
+                    android:layout_height="42dp"
+                    android:layout_marginTop="6dp"
+                    app:cardBackgroundColor="#EEF1F5"
+                    app:cardCornerRadius="12dp"
+                    app:cardElevation="0dp">
+
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+                        android:gravity="center_vertical"
+                        android:paddingStart="12dp"
+                        android:text="4.5"
+                        android:textColor="#0F172A"
+                        android:textSize="13sp"
+                        tools:ignore="HardcodedText" />
+                </com.google.android.material.card.MaterialCardView>
+            </LinearLayout>
+
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="8dp"
+                android:layout_weight="1"
+                android:orientation="vertical">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:fontFamily="sans-serif-medium"
+                    android:text="RATE/HR"
+                    android:textAllCaps="true"
+                    android:textColor="#94A3B8"
+                    android:textSize="10sp"
+                    android:textStyle="bold" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="42dp"
+                    android:layout_marginTop="6dp"
+                    android:gravity="center_vertical"
+                    android:text="$25.00"
+                    android:textColor="#0F172A"
+                    android:textSize="13sp"
+                    android:textStyle="bold" />
+            </LinearLayout>
+        </LinearLayout>
+
+        <com.google.android.material.card.MaterialCardView
+            android:id="@+id/overtimeContainer"
+            android:layout_width="match_parent"
+            android:layout_height="58dp"
+            android:layout_marginTop="12dp"
+            android:visibility="gone"
+            app:cardBackgroundColor="#EFF3FA"
+            app:cardCornerRadius="22dp"
+            app:cardElevation="0dp"
+            app:strokeColor="#DCE4F2"
+            app:strokeWidth="1dp">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:gravity="center_vertical"
+                android:orientation="horizontal"
+                android:paddingStart="14dp"
+                android:paddingEnd="14dp">
+
+                <TextView
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:fontFamily="sans-serif-medium"
+                    android:text="Overtime Hours"
+                    android:textColor="#3B5DCC"
+                    android:textSize="13sp"
+                    android:textStyle="bold" />
+
+                <com.google.android.material.card.MaterialCardView
+                    android:layout_width="72dp"
+                    android:layout_height="34dp"
+                    app:cardBackgroundColor="#F8FAFC"
+                    app:cardCornerRadius="8dp"
+                    app:cardElevation="0dp"
+                    app:strokeColor="#D7DFEA"
+                    app:strokeWidth="1dp">
+
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+                        android:gravity="center"
+                        android:text="2.5"
+                        android:textColor="#0F172A"
+                        android:textSize="14sp"
+                        android:textStyle="bold"
+                        tools:ignore="HardcodedText" />
+                </com.google.android.material.card.MaterialCardView>
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="8dp"
+                    android:text="hrs"
+                    android:textColor="#64748B"
+                    android:textSize="12sp" />
+            </LinearLayout>
+        </com.google.android.material.card.MaterialCardView>
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnInlineSaveAttendance"
+            android:layout_width="match_parent"
+            android:layout_height="46dp"
+            android:layout_marginTop="12dp"
+            android:text="@string/save_attendance"
+            android:textAllCaps="false"
+            android:textColor="@color/white"
+            android:textStyle="bold"
+            android:visibility="gone"
+            app:backgroundTint="@color/primary_blue"
+            app:cornerRadius="12dp" />
     </LinearLayout>
 </com.google.android.material.card.MaterialCardView>

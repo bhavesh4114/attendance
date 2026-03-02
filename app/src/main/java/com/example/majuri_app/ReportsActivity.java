@@ -1,5 +1,6 @@
 package com.example.majuri_app;
 
+import android.content.Intent;
 import android.os.Bundle;
 import android.widget.EditText;
 import android.util.Log;
@@ -58,6 +59,7 @@ public class ReportsActivity extends AppCompatActivity {
         setupWorkerSpinner();
         setupSiteSpinner();
         setupDatePickers();
+        setupGenerateReportButton();
     }
 
     private void setupWorkerSpinner() {
@@ -215,6 +217,51 @@ public class ReportsActivity extends AppCompatActivity {
         if (etToDate != null) {
             etToDate.setOnClickListener(v -> showToDatePicker());
         }
+    }
+
+    private void setupGenerateReportButton() {
+        View btnGenerate = findViewById(R.id.btnGenerateReport);
+        if (btnGenerate == null) {
+            Log.w(TAG, "Generate Report button not found in layout.");
+            return;
+        }
+
+        btnGenerate.setOnClickListener(v -> openSelectedWorkerReport());
+    }
+
+    private void openSelectedWorkerReport() {
+        if (displayedWorkers == null || displayedWorkers.isEmpty()) {
+            Toast.makeText(this, R.string.no_workers_found, Toast.LENGTH_SHORT).show();
+            return;
+        }
+        if (spinnerSelectWorker == null) {
+            Toast.makeText(this, R.string.select_worker, Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        int selectedPos = spinnerSelectWorker.getSelectedItemPosition();
+        if (selectedPos < 0 || selectedPos >= displayedWorkers.size()) {
+            Toast.makeText(this, R.string.select_worker, Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        WorkerListItem selectedWorker = displayedWorkers.get(selectedPos);
+        if (selectedWorker == null || selectedWorker.getId() <= 0L) {
+            Toast.makeText(this, R.string.worker_not_found, Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        Intent intent = new Intent(this, WorkerReportActivity.class);
+        intent.putExtra(WorkerReportActivity.EXTRA_WORKER_ID, selectedWorker.getId());
+        intent.putExtra(WorkerReportActivity.EXTRA_SITE_NAME, getSelectedSpinnerValue(spinnerSiteName));
+        intent.putExtra(WorkerReportActivity.EXTRA_FROM_DATE, etFromDate != null ? etFromDate.getText().toString().trim() : "");
+        intent.putExtra(WorkerReportActivity.EXTRA_TO_DATE, etToDate != null ? etToDate.getText().toString().trim() : "");
+        startActivity(intent);
+    }
+
+    private String getSelectedSpinnerValue(Spinner spinner) {
+        if (spinner == null || spinner.getSelectedItem() == null) return "";
+        return String.valueOf(spinner.getSelectedItem()).trim();
     }
 
     private void showFromDatePicker() {
