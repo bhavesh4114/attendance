@@ -1,15 +1,5 @@
-    package com.example.majuri_app;
+package com.example.majuri_app;
 
-<<<<<<< HEAD
-    import android.content.Intent;
-    import android.os.Bundle;
-    import android.text.Editable;
-    import android.text.TextWatcher;
-    import android.widget.EditText;
-    import android.widget.TextView;
-    import android.widget.Toast;
-=======
-import android.app.Activity;
 import android.content.Intent;
 import android.os.Bundle;
 import android.text.Editable;
@@ -17,18 +7,17 @@ import android.text.TextWatcher;
 import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.Toast;
->>>>>>> bf18d32cd0baa99b5f3c3d5bdce81b85c9f13931
 
-    import androidx.appcompat.app.AppCompatActivity;
-    import androidx.recyclerview.widget.LinearLayoutManager;
-    import androidx.recyclerview.widget.RecyclerView;
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
 
-    import com.google.android.material.bottomnavigation.BottomNavigationView;
+import com.google.android.material.bottomnavigation.BottomNavigationView;
 
-    import java.util.ArrayList;
-    import java.util.List;
+import java.util.ArrayList;
+import java.util.List;
 
-    public class WorkersListActivity extends AppCompatActivity {
+public class WorkersListActivity extends AppCompatActivity {
     public static final String EXTRA_FORCE_USER_FLOW = "extra_force_user_flow";
 
     private WorkersListAdapter adapter;
@@ -132,18 +121,15 @@ import android.widget.Toast;
 
     private boolean onUserNavItemSelected(int id) {
         if (id == R.id.nav_user_home) {
-            navigateTo(UserDashboardActivity.class);
+            startActivity(new Intent(this, UserDashboardActivity.class));
+            finish();
             return true;
         }
         if (id == R.id.nav_user_attendance) {
-<<<<<<< HEAD
             Intent intent = new Intent(this, AttendanceManagementActivity.class);
             intent.putExtra(AttendanceManagementActivity.EXTRA_FORCE_USER_FLOW, true);
             startActivity(intent);
             finish();
-=======
-            navigateTo(AttendanceManagementActivity.class);
->>>>>>> bf18d32cd0baa99b5f3c3d5bdce81b85c9f13931
             return true;
         }
         if (id == R.id.nav_user_workers) {
@@ -160,7 +146,6 @@ import android.widget.Toast;
         return false;
     }
 
-<<<<<<< HEAD
     private boolean onAdminNavItemSelected(int id) {
         if (id == R.id.nav_dashboard) {
             startActivity(new Intent(this, DashboardActivity.class));
@@ -170,8 +155,8 @@ import android.widget.Toast;
         if (id == R.id.nav_workers) {
             return true;
         }
-        if (id == R.id.nav_payments) {
-            startActivity(new Intent(this, PaymentsActivity.class));
+        if (id == R.id.nav_attendance) {
+            startActivity(new Intent(this, AttendanceManagementActivity.class));
             finish();
             return true;
         }
@@ -186,12 +171,6 @@ import android.widget.Toast;
             return true;
         }
         return false;
-=======
-    private void navigateTo(Class<? extends Activity> targetActivity) {
-        Intent intent = new Intent(this, targetActivity);
-        intent.addFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT | Intent.FLAG_ACTIVITY_SINGLE_TOP);
-        startActivity(intent);
->>>>>>> bf18d32cd0baa99b5f3c3d5bdce81b85c9f13931
     }
 
     private void openWorkerProfile(WorkerListItem item) {

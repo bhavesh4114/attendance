@@ -44,8 +44,8 @@ public class ReportsActivity extends AppCompatActivity {
             navigateTo(WorkersListActivity.class);
             return true;
         }
-        if (id == R.id.nav_payments) {
-            navigateTo(PaymentsActivity.class);
+        if (id == R.id.nav_attendance) {
+            navigateTo(AttendanceManagementActivity.class);
             return true;
         }
         if (id == R.id.nav_analytics) return true;
