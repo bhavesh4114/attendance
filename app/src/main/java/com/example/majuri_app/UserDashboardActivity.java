@@ -57,8 +57,7 @@ public class UserDashboardActivity extends AppCompatActivity {
 
         findViewById(R.id.cardViewPayments).setOnClickListener(v ->
                 Toast.makeText(this, getString(R.string.nav_payments), Toast.LENGTH_SHORT).show());
-        findViewById(R.id.cardViewReports).setOnClickListener(v ->
-                Toast.makeText(this, getString(R.string.nav_reports), Toast.LENGTH_SHORT).show());
+        bindClick(R.id.cardViewReports, ReportsActivity.class);
     }
 
     private void openAttendanceScreen() {
@@ -73,6 +72,13 @@ public class UserDashboardActivity extends AppCompatActivity {
         intent.putExtra(WorkersListActivity.EXTRA_FORCE_USER_FLOW, true);
         startActivity(intent);
         finish();
+    }
+
+    private void bindClick(int viewId, Class<?> targetActivity) {
+        android.view.View view = findViewById(viewId);
+        if (view != null) {
+            view.setOnClickListener(v -> startActivity(new Intent(this, targetActivity)));
+        }
     }
 
     private void bindLoggedInUserName() {

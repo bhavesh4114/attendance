@@ -20,13 +20,7 @@ public class DashboardActivity extends AppCompatActivity {
 
         updateWelcomeName();
         updateTotalWorkersCount();
-
-        findViewById(R.id.quickActionAddWorker).setOnClickListener(v -> {
-            startActivity(new Intent(this, AddWorkerActivity.class));
-        });
-        findViewById(R.id.quickActionAnalytics).setOnClickListener(v -> {
-            startActivity(new Intent(this, ReportsActivity.class));
-        });
+        bindQuickActions();
 
         BottomNavigationView bottomNav = findViewById(R.id.bottomNav);
         if (bottomNav != null) {
@@ -102,5 +96,18 @@ public class DashboardActivity extends AppCompatActivity {
         Intent intent = new Intent(this, targetActivity);
         intent.addFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT | Intent.FLAG_ACTIVITY_SINGLE_TOP);
         startActivity(intent);
+    }
+
+    private void bindQuickActions() {
+        bindClick(R.id.quickActionAddWorker, AddWorkerActivity.class);
+        bindClick(R.id.cardViewAttendance, ReportsActivity.class); // Reports icon in Quick Actions
+        bindClick(R.id.quickActionAnalytics, PaymentsActivity.class);
+    }
+
+    private void bindClick(int viewId, Class<? extends Activity> targetActivity) {
+        android.view.View quickAction = findViewById(viewId);
+        if (quickAction != null) {
+            quickAction.setOnClickListener(v -> navigateTo(targetActivity));
+        }
     }
 }
