@@ -3,6 +3,7 @@ package com.example.majuri_app;
 import android.animation.AnimatorSet;
 import android.animation.ObjectAnimator;
 import android.animation.ValueAnimator;
+import android.app.Activity;
 import android.content.Intent;
 import android.os.Bundle;
 import android.os.Handler;
@@ -14,7 +15,7 @@ import androidx.appcompat.app.AppCompatActivity;
 
 /**
  * Premium animated splash screen with logo scale/fade, notification dot pulse,
- * app name and subtitle reveal, then exit to LoginActivity after 2.5s.
+ * app name and subtitle reveal, then route based on saved session after 2.5s.
  */
 public class SplashActivity extends AppCompatActivity {
 
@@ -143,6 +144,8 @@ public class SplashActivity extends AppCompatActivity {
         if (pulseAnimator != null && pulseAnimator.isRunning()) {
             pulseAnimator.cancel();
         }
+        Class<? extends Activity> targetActivity = resolveLaunchTarget();
+
         // Scale 1.0 -> 1.05, fade out
         splashRoot.animate()
                 .scaleX(1.05f)
@@ -150,11 +153,24 @@ public class SplashActivity extends AppCompatActivity {
                 .alpha(0f)
                 .setDuration(EXIT_DURATION_MS)
                 .withEndAction(() -> {
-                    startActivity(new Intent(this, LoginActivity.class));
+                    startActivity(new Intent(this, targetActivity));
                     overridePendingTransition(android.R.anim.fade_in, android.R.anim.fade_out);
                     finish();
                 })
                 .start();
+    }
+
+    private Class<? extends Activity> resolveLaunchTarget() {
+        SessionManager sessionManager = new SessionManager(this);
+        if (!sessionManager.isLoggedIn()) {
+            return LoginActivity.class;
+        }
+
+        String role = sessionManager.getUserRole();
+        if (SessionManager.ROLE_ADMIN.equals(role)) {
+            return DashboardActivity.class;
+        }
+        return UserDashboardActivity.class;
     }
 
     @Override

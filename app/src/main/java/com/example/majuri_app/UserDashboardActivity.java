@@ -1,10 +1,12 @@
 package com.example.majuri_app;
 
+import android.app.Activity;
 import android.content.Intent;
 import android.os.Bundle;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import androidx.activity.OnBackPressedCallback;
 import androidx.appcompat.app.AppCompatActivity;
 
 import com.google.android.material.bottomnavigation.BottomNavigationView;
@@ -20,6 +22,7 @@ public class UserDashboardActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_user_dashboard);
         bindLoggedInUserName();
+        installBackHandler();
 
         BottomNavigationView bottomNav = findViewById(R.id.bottomNav);
         bottomNav.setSelectedItemId(R.id.nav_user_home);
@@ -29,11 +32,15 @@ public class UserDashboardActivity extends AppCompatActivity {
                 return true;
             }
             if (id == R.id.nav_user_attendance) {
+<<<<<<< HEAD
                 openAttendanceScreen();
                 return true;
             }
             if (id == R.id.nav_user_workers) {
                 openWorkersScreen();
+=======
+                navigateTo(AttendanceManagementActivity.class);
+>>>>>>> bf18d32cd0baa99b5f3c3d5bdce81b85c9f13931
                 return true;
             }
             if (id == R.id.nav_user_payslips) {
@@ -51,9 +58,15 @@ public class UserDashboardActivity extends AppCompatActivity {
                 Toast.makeText(this, getString(R.string.menu), Toast.LENGTH_SHORT).show());
 
         findViewById(R.id.cardViewWorkers).setOnClickListener(v ->
+<<<<<<< HEAD
                 openWorkersScreen());
         findViewById(R.id.cardViewAttendance).setOnClickListener(v ->
                 openAttendanceScreen());
+=======
+                navigateTo(WorkersListActivity.class));
+        findViewById(R.id.cardViewAttendance).setOnClickListener(v ->
+                navigateTo(AttendanceManagementActivity.class));
+>>>>>>> bf18d32cd0baa99b5f3c3d5bdce81b85c9f13931
         findViewById(R.id.cardViewPayments).setOnClickListener(v ->
                 Toast.makeText(this, getString(R.string.nav_payments), Toast.LENGTH_SHORT).show());
         findViewById(R.id.cardViewReports).setOnClickListener(v ->
@@ -84,5 +97,29 @@ public class UserDashboardActivity extends AppCompatActivity {
             userName = "Builder";
         }
         tvUserName.setText(userName.trim());
+    }
+
+    private void installBackHandler() {
+        getOnBackPressedDispatcher().addCallback(this, new OnBackPressedCallback(true) {
+            @Override
+            public void handleOnBackPressed() {
+                navigateBackToLogin();
+            }
+        });
+    }
+
+    private void navigateBackToLogin() {
+        if (isTaskRoot()) {
+            Intent intent = new Intent(this, LoginActivity.class);
+            intent.addFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT | Intent.FLAG_ACTIVITY_SINGLE_TOP);
+            startActivity(intent);
+        }
+        finish();
+    }
+
+    private void navigateTo(Class<? extends Activity> targetActivity) {
+        Intent intent = new Intent(this, targetActivity);
+        intent.addFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT | Intent.FLAG_ACTIVITY_SINGLE_TOP);
+        startActivity(intent);
     }
 }

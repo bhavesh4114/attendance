@@ -108,16 +108,15 @@ public class LoginActivity extends AppCompatActivity {
     }
 
     private void completeLogin(String loginId, String name, boolean isAdmin) {
-        sessionManager.saveSession(loginId, name, isAdmin);
+        String role = isAdmin ? SessionManager.ROLE_ADMIN : SessionManager.ROLE_USER;
+        sessionManager.saveSession(loginId, name, role);
         Toast.makeText(this, R.string.login_success, Toast.LENGTH_SHORT).show();
         Intent target = new Intent(this, isAdmin ? DashboardActivity.class : UserDashboardActivity.class);
         target.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
         startActivity(target);
-        finish();
     }
 
     private void openSignUp() {
         startActivity(new Intent(this, CreateAdminActivity.class));
-        finish();
     }
 }
