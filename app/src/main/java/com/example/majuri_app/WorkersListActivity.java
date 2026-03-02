@@ -1,5 +1,6 @@
 package com.example.majuri_app;
 
+import android.app.Activity;
 import android.content.Intent;
 import android.os.Bundle;
 import android.text.Editable;
@@ -98,13 +99,11 @@ public class WorkersListActivity extends AppCompatActivity {
 
     private boolean onUserNavItemSelected(int id) {
         if (id == R.id.nav_user_home) {
-            startActivity(new Intent(this, UserDashboardActivity.class));
-            finish();
+            navigateTo(UserDashboardActivity.class);
             return true;
         }
         if (id == R.id.nav_user_attendance) {
-            startActivity(new Intent(this, AttendanceManagementActivity.class));
-            finish();
+            navigateTo(AttendanceManagementActivity.class);
             return true;
         }
         if (id == R.id.nav_user_payslips) {
@@ -116,6 +115,12 @@ public class WorkersListActivity extends AppCompatActivity {
             return true;
         }
         return false;
+    }
+
+    private void navigateTo(Class<? extends Activity> targetActivity) {
+        Intent intent = new Intent(this, targetActivity);
+        intent.addFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT | Intent.FLAG_ACTIVITY_SINGLE_TOP);
+        startActivity(intent);
     }
 
     private void openWorkerProfile(WorkerListItem item) {

@@ -1,5 +1,6 @@
 package com.example.majuri_app;
 
+import android.app.Activity;
 import android.content.Intent;
 import android.os.Bundle;
 import android.view.View;
@@ -70,8 +71,7 @@ public class AttendanceManagementActivity extends AppCompatActivity {
         bottomNav.setOnItemSelectedListener(item -> {
             int id = item.getItemId();
             if (id == R.id.nav_user_home) {
-                startActivity(new Intent(this, UserDashboardActivity.class));
-                finish();
+                navigateTo(UserDashboardActivity.class);
                 return true;
             }
             if (id == R.id.nav_user_attendance) {
@@ -87,6 +87,12 @@ public class AttendanceManagementActivity extends AppCompatActivity {
             }
             return false;
         });
+    }
+
+    private void navigateTo(Class<? extends Activity> targetActivity) {
+        Intent intent = new Intent(this, targetActivity);
+        intent.addFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT | Intent.FLAG_ACTIVITY_SINGLE_TOP);
+        startActivity(intent);
     }
 
     @Override

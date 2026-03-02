@@ -1,5 +1,6 @@
 package com.example.majuri_app;
 
+import android.app.Activity;
 import android.content.Intent;
 import android.os.Bundle;
 import android.text.Editable;
@@ -286,28 +287,30 @@ public class PaymentsActivity extends AppCompatActivity {
 
     private boolean onNavItemSelected(int id) {
         if (id == R.id.nav_dashboard) {
-            startActivity(new Intent(this, DashboardActivity.class));
-            finish();
+            navigateTo(DashboardActivity.class);
             return true;
         }
         if (id == R.id.nav_workers) {
-            startActivity(new Intent(this, WorkersListActivity.class));
-            finish();
+            navigateTo(WorkersListActivity.class);
             return true;
         }
         if (id == R.id.nav_payments) {
             return true;
         }
         if (id == R.id.nav_analytics) {
-            startActivity(new Intent(this, ReportsActivity.class));
-            finish();
+            navigateTo(ReportsActivity.class);
             return true;
         }
         if (id == R.id.nav_settings) {
-            startActivity(new Intent(this, SettingsActivity.class));
-            finish();
+            navigateTo(SettingsActivity.class);
             return true;
         }
         return false;
+    }
+
+    private void navigateTo(Class<? extends Activity> targetActivity) {
+        Intent intent = new Intent(this, targetActivity);
+        intent.addFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT | Intent.FLAG_ACTIVITY_SINGLE_TOP);
+        startActivity(intent);
     }
 }

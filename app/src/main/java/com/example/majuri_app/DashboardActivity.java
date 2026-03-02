@@ -1,9 +1,11 @@
 package com.example.majuri_app;
 
+import android.app.Activity;
 import android.content.Intent;
 import android.os.Bundle;
 import android.widget.TextView;
 
+import androidx.activity.OnBackPressedCallback;
 import androidx.appcompat.app.AppCompatActivity;
 
 import com.google.android.material.bottomnavigation.BottomNavigationView;
@@ -14,6 +16,7 @@ public class DashboardActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_dashboard);
+        installBackHandler();
 
         updateWelcomeName();
         updateTotalWorkersCount();
@@ -31,23 +34,19 @@ public class DashboardActivity extends AppCompatActivity {
                     return true;
                 }
                 if (id == R.id.nav_workers) {
-                    startActivity(new Intent(this, WorkersListActivity.class));
-                    finish();
+                    navigateTo(WorkersListActivity.class);
                     return true;
                 }
                 if (id == R.id.nav_payments) {
-                    startActivity(new Intent(this, PaymentsActivity.class));
-                    finish();
+                    navigateTo(PaymentsActivity.class);
                     return true;
                 }
                 if (id == R.id.nav_analytics) {
-                    startActivity(new Intent(this, ReportsActivity.class));
-                    finish();
+                    navigateTo(ReportsActivity.class);
                     return true;
                 }
                 if (id == R.id.nav_settings) {
-                    startActivity(new Intent(this, SettingsActivity.class));
-                    finish();
+                    navigateTo(SettingsActivity.class);
                     return true;
                 }
                 return false;
@@ -80,5 +79,29 @@ public class DashboardActivity extends AppCompatActivity {
         if (tvCount != null) {
             tvCount.setText(String.valueOf(count));
         }
+    }
+
+    private void installBackHandler() {
+        getOnBackPressedDispatcher().addCallback(this, new OnBackPressedCallback(true) {
+            @Override
+            public void handleOnBackPressed() {
+                navigateBackToLogin();
+            }
+        });
+    }
+
+    private void navigateBackToLogin() {
+        if (isTaskRoot()) {
+            Intent intent = new Intent(this, LoginActivity.class);
+            intent.addFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT | Intent.FLAG_ACTIVITY_SINGLE_TOP);
+            startActivity(intent);
+        }
+        finish();
+    }
+
+    private void navigateTo(Class<? extends Activity> targetActivity) {
+        Intent intent = new Intent(this, targetActivity);
+        intent.addFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT | Intent.FLAG_ACTIVITY_SINGLE_TOP);
+        startActivity(intent);
     }
 }
