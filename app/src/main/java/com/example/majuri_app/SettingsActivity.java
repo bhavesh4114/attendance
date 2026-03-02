@@ -47,12 +47,8 @@ public class SettingsActivity extends AppCompatActivity {
             navigateTo(WorkersListActivity.class);
             return true;
         }
-        if (id == R.id.nav_payments) {
-            navigateTo(PaymentsActivity.class);
-            return true;
-        }
-        if (id == R.id.nav_analytics) {
-            navigateTo(ReportsActivity.class);
+        if (id == R.id.nav_attendance) {
+            navigateTo(AttendanceActivity.class);
             return true;
         }
         if (id == R.id.nav_settings) return true;

@@ -73,7 +73,7 @@ public class PaymentsActivity extends AppCompatActivity {
         loadPaymentData();
 
         BottomNavigationView bottomNav = findViewById(R.id.bottomNav);
-        bottomNav.setSelectedItemId(R.id.nav_payments);
+        bottomNav.setSelectedItemId(R.id.nav_dashboard);
         bottomNav.setOnItemSelectedListener(item -> onNavItemSelected(item.getItemId()));
     }
 
@@ -294,11 +294,8 @@ public class PaymentsActivity extends AppCompatActivity {
             navigateTo(WorkersListActivity.class);
             return true;
         }
-        if (id == R.id.nav_payments) {
-            return true;
-        }
-        if (id == R.id.nav_analytics) {
-            navigateTo(ReportsActivity.class);
+        if (id == R.id.nav_attendance) {
+            navigateTo(AttendanceActivity.class);
             return true;
         }
         if (id == R.id.nav_settings) {
@@ -307,13 +304,13 @@ public class PaymentsActivity extends AppCompatActivity {
         }
         return false;
     }
-<<<<<<< HEAD
-=======
+
 
     private void navigateTo(Class<? extends Activity> targetActivity) {
         Intent intent = new Intent(this, targetActivity);
         intent.addFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT | Intent.FLAG_ACTIVITY_SINGLE_TOP);
         startActivity(intent);
     }
->>>>>>> bf18d32cd0baa99b5f3c3d5bdce81b85c9f13931
+
 }
+

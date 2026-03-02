@@ -31,7 +31,7 @@ public class ReportsActivity extends AppCompatActivity {
                 Toast.makeText(this, R.string.download_all_pdf_reports, Toast.LENGTH_SHORT).show());
 
         BottomNavigationView bottomNav = findViewById(R.id.bottomNav);
-        bottomNav.setSelectedItemId(R.id.nav_analytics);
+        bottomNav.setSelectedItemId(R.id.nav_dashboard);
         bottomNav.setOnItemSelectedListener(item -> onNavItemSelected(item.getItemId()));
     }
 
@@ -44,11 +44,10 @@ public class ReportsActivity extends AppCompatActivity {
             navigateTo(WorkersListActivity.class);
             return true;
         }
-        if (id == R.id.nav_payments) {
-            navigateTo(PaymentsActivity.class);
+        if (id == R.id.nav_attendance) {
+            navigateTo(AttendanceActivity.class);
             return true;
         }
-        if (id == R.id.nav_analytics) return true;
         if (id == R.id.nav_settings) {
             navigateTo(SettingsActivity.class);
             return true;

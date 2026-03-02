@@ -10,13 +10,9 @@
         android:icon="@drawable/ic_worker_management"
         android:title="@string/nav_workers" />
     <item
-        android:id="@+id/nav_payments"
-        android:icon="@drawable/ic_bank"
-        android:title="@string/nav_payments" />
-    <item
-        android:id="@+id/nav_analytics"
-        android:icon="@drawable/ic_analytics_chart"
-        android:title="@string/nav_analytics" />
+        android:id="@+id/nav_attendance"
+        android:icon="@drawable/ic_attendance"
+        android:title="@string/nav_attendance" />
     <item
         android:id="@+id/nav_settings"
         android:icon="@drawable/ic_admin_settings"

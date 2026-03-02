@@ -529,6 +529,7 @@
                                 android:layout_width="28dp"
                                 android:layout_height="28dp"
                                 android:layout_gravity="center"
+                                android:tint="@color/primary_blue"
                                 android:src="@drawable/ic_analytics_chart" />
                         </FrameLayout>
 

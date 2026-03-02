@@ -1,6 +1,5 @@
 package com.example.majuri_app;
 
-import android.app.Activity;
 import android.content.Intent;
 import android.os.Bundle;
 import android.widget.TextView;
@@ -12,7 +11,7 @@ import androidx.appcompat.app.AppCompatActivity;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
 
 /**
- * User (worker) dashboard – separate from admin DashboardActivity.
+ * User (worker) dashboard - separate from admin DashboardActivity.
  * Uses activity_user_dashboard.xml.
  */
 public class UserDashboardActivity extends AppCompatActivity {
@@ -32,15 +31,11 @@ public class UserDashboardActivity extends AppCompatActivity {
                 return true;
             }
             if (id == R.id.nav_user_attendance) {
-<<<<<<< HEAD
                 openAttendanceScreen();
                 return true;
             }
             if (id == R.id.nav_user_workers) {
                 openWorkersScreen();
-=======
-                navigateTo(AttendanceManagementActivity.class);
->>>>>>> bf18d32cd0baa99b5f3c3d5bdce81b85c9f13931
                 return true;
             }
             if (id == R.id.nav_user_payslips) {
@@ -57,16 +52,9 @@ public class UserDashboardActivity extends AppCompatActivity {
         findViewById(R.id.btnNotifications).setOnClickListener(v ->
                 Toast.makeText(this, getString(R.string.menu), Toast.LENGTH_SHORT).show());
 
-        findViewById(R.id.cardViewWorkers).setOnClickListener(v ->
-<<<<<<< HEAD
-                openWorkersScreen());
-        findViewById(R.id.cardViewAttendance).setOnClickListener(v ->
-                openAttendanceScreen());
-=======
-                navigateTo(WorkersListActivity.class));
-        findViewById(R.id.cardViewAttendance).setOnClickListener(v ->
-                navigateTo(AttendanceManagementActivity.class));
->>>>>>> bf18d32cd0baa99b5f3c3d5bdce81b85c9f13931
+        findViewById(R.id.cardViewWorkers).setOnClickListener(v -> openWorkersScreen());
+        findViewById(R.id.cardViewAttendance).setOnClickListener(v -> openAttendanceScreen());
+
         findViewById(R.id.cardViewPayments).setOnClickListener(v ->
                 Toast.makeText(this, getString(R.string.nav_payments), Toast.LENGTH_SHORT).show());
         findViewById(R.id.cardViewReports).setOnClickListener(v ->
@@ -115,11 +103,5 @@ public class UserDashboardActivity extends AppCompatActivity {
             startActivity(intent);
         }
         finish();
-    }
-
-    private void navigateTo(Class<? extends Activity> targetActivity) {
-        Intent intent = new Intent(this, targetActivity);
-        intent.addFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT | Intent.FLAG_ACTIVITY_SINGLE_TOP);
-        startActivity(intent);
     }
 }

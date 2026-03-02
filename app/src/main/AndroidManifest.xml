@@ -60,6 +60,9 @@
             android:name=".WorkerProfileActivity"
             android:exported="false" />
         <activity
+            android:name=".AttendanceActivity"
+            android:exported="false" />
+        <activity
             android:name=".AttendanceManagementActivity"
             android:exported="false" />
         <activity

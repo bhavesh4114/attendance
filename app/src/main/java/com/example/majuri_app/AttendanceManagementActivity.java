@@ -1,12 +1,12 @@
 package com.example.majuri_app;
 
-import android.app.Activity;
 import android.content.Intent;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import androidx.activity.OnBackPressedCallback;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
@@ -51,6 +51,7 @@ public class AttendanceManagementActivity extends AppCompatActivity {
         updateMonthLabel();
         updateWeekDates();
         setupMonthArrows();
+        installBackHandler();
 
         adapter = new AttendanceManagementAdapter();
         adapter.setOnSummaryChangedListener((present, halfDay, absent) -> {
@@ -71,48 +72,22 @@ public class AttendanceManagementActivity extends AppCompatActivity {
 
         findViewById(R.id.btnSaveAttendance).setOnClickListener(v -> saveAttendanceForSelectedDate());
 
-<<<<<<< HEAD
         setupBottomNav();
-    }
-
-    @Override
-    public void onBackPressed() {
-        navigateToHomeByRole();
-=======
-        BottomNavigationView bottomNav = findViewById(R.id.bottomNav);
-        bottomNav.setSelectedItemId(R.id.nav_user_attendance);
-        bottomNav.setOnItemSelectedListener(item -> {
-            int id = item.getItemId();
-            if (id == R.id.nav_user_home) {
-                navigateTo(UserDashboardActivity.class);
-                return true;
-            }
-            if (id == R.id.nav_user_attendance) {
-                return true;
-            }
-            if (id == R.id.nav_user_payslips) {
-                Toast.makeText(this, getString(R.string.user_dashboard_payslips), Toast.LENGTH_SHORT).show();
-                return true;
-            }
-            if (id == R.id.nav_user_profile) {
-                Toast.makeText(this, getString(R.string.nav_profile), Toast.LENGTH_SHORT).show();
-                return true;
-            }
-            return false;
-        });
->>>>>>> bf18d32cd0baa99b5f3c3d5bdce81b85c9f13931
-    }
-
-    private void navigateTo(Class<? extends Activity> targetActivity) {
-        Intent intent = new Intent(this, targetActivity);
-        intent.addFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT | Intent.FLAG_ACTIVITY_SINGLE_TOP);
-        startActivity(intent);
     }
 
     @Override
     protected void onResume() {
         super.onResume();
         loadAttendanceForSelectedDate();
+    }
+
+    private void installBackHandler() {
+        getOnBackPressedDispatcher().addCallback(this, new OnBackPressedCallback(true) {
+            @Override
+            public void handleOnBackPressed() {
+                navigateToHomeByRole();
+            }
+        });
     }
 
     private void setupMonthArrows() {
@@ -132,8 +107,9 @@ public class AttendanceManagementActivity extends AppCompatActivity {
 
     private void updateMonthLabel() {
         String month = calendar.getDisplayName(Calendar.MONTH, Calendar.LONG, Locale.US);
+        String monthUpper = month != null ? month.toUpperCase(Locale.US) : "";
         int year = calendar.get(Calendar.YEAR);
-        tvMonthYear.setText((month != null ? month.toUpperCase(Locale.US) : "") + " " + year);
+        tvMonthYear.setText(getString(R.string.month_year_format, monthUpper, year));
     }
 
     private void updateWeekDates() {
@@ -166,7 +142,7 @@ public class AttendanceManagementActivity extends AppCompatActivity {
             int status = savedStatus.containsKey(worker.getId())
                     ? savedStatus.get(worker.getId())
                     : AttendanceStaffItem.STATUS_PRESENT;
-            String workerCode = "#WR-" + Math.max(worker.getId(), 0L);
+            String workerCode = getString(R.string.worker_code_format, Math.max(worker.getId(), 0L));
             list.add(new AttendanceStaffItem(
                     worker.getId(),
                     worker.getName(),
@@ -218,7 +194,9 @@ public class AttendanceManagementActivity extends AppCompatActivity {
 
     private void navigateToHomeByRole() {
         boolean isAdmin = sessionManager != null && sessionManager.isAdmin();
-        Class<?> home = forceUserFlow ? UserDashboardActivity.class : (isAdmin ? DashboardActivity.class : UserDashboardActivity.class);
+        Class<?> home = forceUserFlow
+                ? UserDashboardActivity.class
+                : (isAdmin ? DashboardActivity.class : UserDashboardActivity.class);
         Intent target = new Intent(this, home);
         target.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
         startActivity(target);
@@ -236,7 +214,7 @@ public class AttendanceManagementActivity extends AppCompatActivity {
             bottomNav.setOnItemSelectedListener(item -> onUserNavItemSelected(item.getItemId()));
         } else {
             bottomNav.inflateMenu(R.menu.menu_dashboard_bottom_nav);
-            bottomNav.setSelectedItemId(R.id.nav_dashboard);
+            bottomNav.setSelectedItemId(R.id.nav_attendance);
             bottomNav.setOnItemSelectedListener(item -> onAdminNavItemSelected(item.getItemId()));
         }
     }
@@ -278,14 +256,7 @@ public class AttendanceManagementActivity extends AppCompatActivity {
             finish();
             return true;
         }
-        if (id == R.id.nav_payments) {
-            startActivity(new Intent(this, PaymentsActivity.class));
-            finish();
-            return true;
-        }
-        if (id == R.id.nav_analytics) {
-            startActivity(new Intent(this, ReportsActivity.class));
-            finish();
+        if (id == R.id.nav_attendance) {
             return true;
         }
         if (id == R.id.nav_settings) {
