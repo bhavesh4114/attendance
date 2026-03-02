@@ -84,12 +84,6 @@
                     tools:text="Site Electrician - ID: #8845" />
             </LinearLayout>
 
-            <ImageView
-                android:layout_width="20dp"
-                android:layout_height="20dp"
-                android:contentDescription="@null"
-                android:src="@drawable/ic_notifications_blue"
-                app:tint="#94A3B8" />
         </LinearLayout>
 
         <LinearLayout

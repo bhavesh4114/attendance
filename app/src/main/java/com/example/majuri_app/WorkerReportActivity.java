@@ -7,6 +7,7 @@ import android.content.pm.PackageManager;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
+import android.graphics.RectF;
 import android.graphics.Typeface;
 import android.graphics.pdf.PdfDocument;
 import android.net.Uri;
@@ -199,34 +200,10 @@ public class WorkerReportActivity extends AppCompatActivity {
         PdfDocument.Page page = document.startPage(pageInfo);
         Canvas canvas = page.getCanvas();
 
-        Paint titlePaint = new Paint(Paint.ANTI_ALIAS_FLAG);
-        titlePaint.setColor(Color.parseColor("#0D1324"));
-        titlePaint.setTextSize(20f);
-        titlePaint.setTypeface(Typeface.create(Typeface.DEFAULT, Typeface.BOLD));
-
-        Paint sectionPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
-        sectionPaint.setColor(Color.parseColor("#1F2937"));
-        sectionPaint.setTextSize(14f);
-        sectionPaint.setTypeface(Typeface.create(Typeface.DEFAULT, Typeface.BOLD));
-
-        Paint bodyPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
-        bodyPaint.setColor(Color.parseColor("#111827"));
-        bodyPaint.setTextSize(12f);
-
-        Paint linePaint = new Paint(Paint.ANTI_ALIAS_FLAG);
-        linePaint.setColor(Color.parseColor("#9CA3AF"));
-        linePaint.setStrokeWidth(1.5f);
-
-        int left = 40;
-        int right = 555;
-        int y = 50;
-
-        canvas.drawText("Worker Attendance Report", left, y, titlePaint);
-        y += 24;
-        canvas.drawLine(left, y, right, y, linePaint);
-        y += 24;
-
         String workerName = getViewText(R.id.tvReportWorkerName);
+        String employeeId = getViewText(R.id.tvReportEmployeeId);
+        String phone = getViewText(R.id.tvReportPhone);
+        String site = getViewText(R.id.tvReportSite);
         String present = getViewText(R.id.tvPresentDays);
         String absent = getViewText(R.id.tvAbsentDays);
         String overtime = getViewText(R.id.tvOvertimeHours);
@@ -236,29 +213,127 @@ public class WorkerReportActivity extends AppCompatActivity {
         String pendingAmount = getViewText(R.id.tvPendingAmount);
         String generatedOn = getViewText(R.id.tvGeneratedDate);
 
-        y = drawSectionTitle(canvas, "Worker Details", left, y, sectionPaint);
-        y = drawKeyValue(canvas, "Worker Name", workerName, left, y, bodyPaint);
+        Paint headerFillPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+        headerFillPaint.setColor(Color.parseColor("#1E40AF"));
+        headerFillPaint.setStyle(Paint.Style.FILL);
 
-        y += 8;
-        y = drawSectionTitle(canvas, "Attendance Summary", left, y, sectionPaint);
-        y = drawKeyValue(canvas, "Present", present, left, y, bodyPaint);
-        y = drawKeyValue(canvas, "Absent", absent, left, y, bodyPaint);
-        y = drawKeyValue(canvas, "Overtime", overtime, left, y, bodyPaint);
+        Paint cardFillPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+        cardFillPaint.setColor(Color.parseColor("#F3F4F6"));
+        cardFillPaint.setStyle(Paint.Style.FILL);
 
-        y += 8;
-        y = drawSectionTitle(canvas, "Payment Details", left, y, sectionPaint);
-        y = drawKeyValue(canvas, "Daily Wage", dailyWage, left, y, bodyPaint);
-        y = drawKeyValue(canvas, "Gross Salary", grossSalary, left, y, bodyPaint);
-        y = drawKeyValue(canvas, "Paid Amount", paidAmount, left, y, bodyPaint);
-        y = drawKeyValue(canvas, "Pending Amount", pendingAmount, left, y, bodyPaint);
+        Paint borderPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+        borderPaint.setColor(Color.parseColor("#D1D5DB"));
+        borderPaint.setStyle(Paint.Style.STROKE);
+        borderPaint.setStrokeWidth(1.2f);
 
-        y += 8;
-        y = drawSectionTitle(canvas, "Generated", left, y, sectionPaint);
-        y = drawKeyValue(canvas, "Date Generated", generatedOn, left, y, bodyPaint);
+        Paint companyPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+        companyPaint.setColor(Color.WHITE);
+        companyPaint.setTextSize(16f);
+        companyPaint.setTypeface(Typeface.create(Typeface.DEFAULT, Typeface.BOLD));
 
-        int signatureY = y + 60;
-        canvas.drawLine(right - 180, signatureY, right, signatureY, linePaint);
-        canvas.drawText("Authorized Signature", right - 165, signatureY + 20, bodyPaint);
+        Paint invoiceTitlePaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+        invoiceTitlePaint.setColor(Color.WHITE);
+        invoiceTitlePaint.setTextSize(30f);
+        invoiceTitlePaint.setTextAlign(Paint.Align.RIGHT);
+        invoiceTitlePaint.setTypeface(Typeface.create(Typeface.DEFAULT, Typeface.BOLD));
+
+        Paint sectionTitlePaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+        sectionTitlePaint.setColor(Color.parseColor("#111827"));
+        sectionTitlePaint.setTextSize(13f);
+        sectionTitlePaint.setTypeface(Typeface.create(Typeface.DEFAULT, Typeface.BOLD));
+
+        Paint labelPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+        labelPaint.setColor(Color.parseColor("#4B5563"));
+        labelPaint.setTextSize(11f);
+
+        Paint valuePaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+        valuePaint.setColor(Color.parseColor("#111827"));
+        valuePaint.setTextSize(11f);
+        valuePaint.setTextAlign(Paint.Align.RIGHT);
+        valuePaint.setTypeface(Typeface.create(Typeface.DEFAULT, Typeface.BOLD));
+
+        Paint totalLabelPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+        totalLabelPaint.setColor(Color.parseColor("#1F2937"));
+        totalLabelPaint.setTextSize(13f);
+        totalLabelPaint.setTypeface(Typeface.create(Typeface.DEFAULT, Typeface.BOLD));
+
+        Paint totalValuePaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+        totalValuePaint.setColor(Color.parseColor("#0B1329"));
+        totalValuePaint.setTextSize(20f);
+        totalValuePaint.setTextAlign(Paint.Align.RIGHT);
+        totalValuePaint.setTypeface(Typeface.create(Typeface.DEFAULT, Typeface.BOLD));
+
+        Paint headerMetaPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+        headerMetaPaint.setColor(Color.parseColor("#DBEAFE"));
+        headerMetaPaint.setTextSize(10f);
+
+        Paint mutedPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+        mutedPaint.setColor(Color.parseColor("#6B7280"));
+        mutedPaint.setTextSize(10f);
+
+        int pageWidth = pageInfo.getPageWidth();
+        int pageHeight = pageInfo.getPageHeight();
+        int margin = 36;
+        int contentLeft = margin;
+        int contentRight = pageWidth - margin;
+        int contentWidth = contentRight - contentLeft;
+
+        RectF headerRect = new RectF(contentLeft, margin, contentRight, margin + 88);
+        canvas.drawRoundRect(headerRect, 12f, 12f, headerFillPaint);
+        canvas.drawText(resolveCompanyName(), contentLeft + 18, margin + 35, companyPaint);
+        canvas.drawText("Professional Labour Services", contentLeft + 18, margin + 56, headerMetaPaint);
+        canvas.drawText("INVOICE", contentRight - 18, margin + 54, invoiceTitlePaint);
+        canvas.drawText("Generated: " + safeText(generatedOn, "-"), contentRight - 18, margin + 74, headerMetaPaint);
+
+        int y = (int) headerRect.bottom + 22;
+        int cardPadding = 12;
+        int rowHeight = 28;
+
+        String[] workerLabels = {"Worker Name", "Employee ID", "Phone Number", "Current Site"};
+        String[] workerValues = {
+                safeText(workerName, "-"),
+                safeText(employeeId, "-"),
+                safeText(phone, "-"),
+                safeText(site, "-")
+        };
+        y = drawTableCard(
+                canvas, contentLeft, contentRight, y,
+                "Worker Information", workerLabels, workerValues,
+                cardFillPaint, borderPaint, sectionTitlePaint, labelPaint, valuePaint,
+                cardPadding, rowHeight
+        );
+
+        y += 16;
+        String[] paymentLabels = {"Daily Wage Rate", "Gross Salary", "Total Paid Amount", "Present Days", "Absent Days", "Overtime"};
+        String[] paymentValues = {
+                safeText(dailyWage, "-"),
+                safeText(grossSalary, "-"),
+                safeText(paidAmount, "-"),
+                safeText(present, "-"),
+                safeText(absent, "-"),
+                safeText(overtime, "-")
+        };
+        y = drawTableCard(
+                canvas, contentLeft, contentRight, y,
+                "Payment Details", paymentLabels, paymentValues,
+                cardFillPaint, borderPaint, sectionTitlePaint, labelPaint, valuePaint,
+                cardPadding, rowHeight
+        );
+
+        y += 14;
+        RectF totalRect = new RectF(contentLeft, y, contentRight, y + 50);
+        Paint totalFillPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+        totalFillPaint.setColor(Color.parseColor("#E5EDFF"));
+        totalFillPaint.setStyle(Paint.Style.FILL);
+        canvas.drawRoundRect(totalRect, 8f, 8f, totalFillPaint);
+        canvas.drawRoundRect(totalRect, 8f, 8f, borderPaint);
+        canvas.drawText("TOTAL AMOUNT DUE", totalRect.left + 14, totalRect.top + 31, totalLabelPaint);
+        canvas.drawText(safeText(pendingAmount, "$0.00"), totalRect.right - 14, totalRect.top + 34, totalValuePaint);
+
+        int signatureY = Math.min(pageHeight - 92, (int) totalRect.bottom + 72);
+        canvas.drawText("Date: " + safeText(generatedOn, "-"), contentLeft, signatureY, labelPaint);
+        canvas.drawLine(contentRight - 180, signatureY - 10, contentRight, signatureY - 10, borderPaint);
+        canvas.drawText("Authorized Signature", contentRight - 90, signatureY + 12, mutedPaint);
 
         document.finishPage(page);
 
@@ -273,15 +348,74 @@ public class WorkerReportActivity extends AppCompatActivity {
         }
     }
 
-    private int drawSectionTitle(Canvas canvas, String title, int left, int y, Paint paint) {
-        canvas.drawText(title, left, y, paint);
-        return y + 20;
+    private int drawTableCard(
+            Canvas canvas,
+            int left,
+            int right,
+            int top,
+            String title,
+            String[] labels,
+            String[] values,
+            Paint cardFillPaint,
+            Paint borderPaint,
+            Paint sectionTitlePaint,
+            Paint labelPaint,
+            Paint valuePaint,
+            int cardPadding,
+            int rowHeight
+    ) {
+        int rows = Math.min(labels != null ? labels.length : 0, values != null ? values.length : 0);
+        int headerHeight = 30;
+        int tableHeight = rows * rowHeight;
+        int cardHeight = headerHeight + tableHeight + (cardPadding * 2);
+
+        RectF cardRect = new RectF(left, top, right, top + cardHeight);
+        canvas.drawRoundRect(cardRect, 10f, 10f, cardFillPaint);
+        canvas.drawRoundRect(cardRect, 10f, 10f, borderPaint);
+
+        float titleX = left + cardPadding;
+        float titleY = top + cardPadding + 13;
+        canvas.drawText(title, titleX, titleY, sectionTitlePaint);
+
+        int tableLeft = left + cardPadding;
+        int tableRight = right - cardPadding;
+        int tableTop = top + cardPadding + headerHeight - 2;
+        int tableBottom = tableTop + tableHeight;
+        int splitX = tableLeft + (int) ((tableRight - tableLeft) * 0.58f);
+
+        canvas.drawRect(tableLeft, tableTop, tableRight, tableBottom, borderPaint);
+        canvas.drawLine(splitX, tableTop, splitX, tableBottom, borderPaint);
+
+        for (int i = 1; i < rows; i++) {
+            int rowY = tableTop + (i * rowHeight);
+            canvas.drawLine(tableLeft, rowY, tableRight, rowY, borderPaint);
+        }
+
+        for (int i = 0; i < rows; i++) {
+            float baseline = tableTop + (i * rowHeight) + 18;
+            canvas.drawText(safeText(labels[i], "-"), tableLeft + 10, baseline, labelPaint);
+            canvas.drawText(safeText(values[i], "-"), tableRight - 10, baseline, valuePaint);
+        }
+
+        return (int) cardRect.bottom;
     }
 
-    private int drawKeyValue(Canvas canvas, String key, String value, int left, int y, Paint paint) {
-        String safeValue = (value == null || value.trim().isEmpty()) ? "-" : value.trim();
-        canvas.drawText(key + ": " + safeValue, left, y, paint);
-        return y + 18;
+    private String resolveCompanyName() {
+        BuilderDbHelper helper = new BuilderDbHelper(this);
+        try {
+            List<String> names = helper.getAllBusinessNames();
+            if (names != null && !names.isEmpty()) {
+                String name = names.get(0);
+                if (name != null && !name.trim().isEmpty()) {
+                    return name.trim();
+                }
+            }
+        } catch (Exception ignored) {
+            // Fall back to app name.
+        } finally {
+            helper.close();
+        }
+        return getString(R.string.app_name);
     }
 
     @NonNull
