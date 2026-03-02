@@ -21,6 +21,9 @@ public class DashboardActivity extends AppCompatActivity {
         findViewById(R.id.quickActionAddWorker).setOnClickListener(v -> {
             startActivity(new Intent(this, AddWorkerActivity.class));
         });
+        findViewById(R.id.quickActionAnalytics).setOnClickListener(v -> {
+            startActivity(new Intent(this, ReportsActivity.class));
+        });
 
         BottomNavigationView bottomNav = findViewById(R.id.bottomNav);
         if (bottomNav != null) {

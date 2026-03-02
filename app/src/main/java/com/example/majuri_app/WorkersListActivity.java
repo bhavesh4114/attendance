@@ -1,31 +1,37 @@
-package com.example.majuri_app;
+    package com.example.majuri_app;
 
-import android.content.Intent;
-import android.os.Bundle;
-import android.text.Editable;
-import android.text.TextWatcher;
-import android.widget.EditText;
-import android.widget.TextView;
-import android.widget.Toast;
+    import android.content.Intent;
+    import android.os.Bundle;
+    import android.text.Editable;
+    import android.text.TextWatcher;
+    import android.widget.EditText;
+    import android.widget.TextView;
+    import android.widget.Toast;
 
-import androidx.appcompat.app.AppCompatActivity;
-import androidx.recyclerview.widget.LinearLayoutManager;
-import androidx.recyclerview.widget.RecyclerView;
+    import androidx.appcompat.app.AppCompatActivity;
+    import androidx.recyclerview.widget.LinearLayoutManager;
+    import androidx.recyclerview.widget.RecyclerView;
 
-import com.google.android.material.bottomnavigation.BottomNavigationView;
+    import com.google.android.material.bottomnavigation.BottomNavigationView;
 
-import java.util.ArrayList;
-import java.util.List;
+    import java.util.ArrayList;
+    import java.util.List;
 
-public class WorkersListActivity extends AppCompatActivity {
+    public class WorkersListActivity extends AppCompatActivity {
+    public static final String EXTRA_FORCE_USER_FLOW = "extra_force_user_flow";
 
     private WorkersListAdapter adapter;
     private List<WorkerListItem> allItems;
+    private boolean forceUserFlow;
+    private boolean useUserNav;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_workers_list_builder);
+        forceUserFlow = getIntent() != null && getIntent().getBooleanExtra(EXTRA_FORCE_USER_FLOW, false);
+        SessionManager sessionManager = new SessionManager(this);
+        useUserNav = forceUserFlow || !sessionManager.isAdmin();
+        setContentView(useUserNav ? R.layout.activity_workers_list_builder : R.layout.activity_workers_list);
 
         loadWorkersFromDb();
         adapter = new WorkersListAdapter();
@@ -56,14 +62,31 @@ public class WorkersListActivity extends AppCompatActivity {
                 Toast.makeText(this, R.string.filter, Toast.LENGTH_SHORT).show());
 
         BottomNavigationView bottomNav = findViewById(R.id.bottomNav);
-        bottomNav.setSelectedItemId(R.id.nav_user_home);
-        bottomNav.setOnItemSelectedListener(item -> onUserNavItemSelected(item.getItemId()));
+        if (useUserNav) {
+            bottomNav.setSelectedItemId(R.id.nav_user_workers);
+            bottomNav.setOnItemSelectedListener(item -> onUserNavItemSelected(item.getItemId()));
+        } else {
+            bottomNav.setSelectedItemId(R.id.nav_workers);
+            bottomNav.setOnItemSelectedListener(item -> onAdminNavItemSelected(item.getItemId()));
+        }
     }
 
     @Override
     protected void onResume() {
         super.onResume();
         loadWorkersFromDb();
+    }
+
+    @Override
+    public void onBackPressed() {
+        if (useUserNav) {
+            Intent intent = new Intent(this, UserDashboardActivity.class);
+            intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
+            startActivity(intent);
+            finish();
+            return;
+        }
+        super.onBackPressed();
     }
 
     private void loadWorkersFromDb() {
@@ -103,8 +126,13 @@ public class WorkersListActivity extends AppCompatActivity {
             return true;
         }
         if (id == R.id.nav_user_attendance) {
-            startActivity(new Intent(this, AttendanceManagementActivity.class));
+            Intent intent = new Intent(this, AttendanceManagementActivity.class);
+            intent.putExtra(AttendanceManagementActivity.EXTRA_FORCE_USER_FLOW, true);
+            startActivity(intent);
             finish();
+            return true;
+        }
+        if (id == R.id.nav_user_workers) {
             return true;
         }
         if (id == R.id.nav_user_payslips) {
@@ -113,6 +141,33 @@ public class WorkersListActivity extends AppCompatActivity {
         }
         if (id == R.id.nav_user_profile) {
             Toast.makeText(this, getString(R.string.nav_profile), Toast.LENGTH_SHORT).show();
+            return true;
+        }
+        return false;
+    }
+
+    private boolean onAdminNavItemSelected(int id) {
+        if (id == R.id.nav_dashboard) {
+            startActivity(new Intent(this, DashboardActivity.class));
+            finish();
+            return true;
+        }
+        if (id == R.id.nav_workers) {
+            return true;
+        }
+        if (id == R.id.nav_payments) {
+            startActivity(new Intent(this, PaymentsActivity.class));
+            finish();
+            return true;
+        }
+        if (id == R.id.nav_analytics) {
+            startActivity(new Intent(this, ReportsActivity.class));
+            finish();
+            return true;
+        }
+        if (id == R.id.nav_settings) {
+            startActivity(new Intent(this, SettingsActivity.class));
+            finish();
             return true;
         }
         return false;

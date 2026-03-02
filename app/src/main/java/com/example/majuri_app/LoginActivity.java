@@ -111,6 +111,7 @@ public class LoginActivity extends AppCompatActivity {
         sessionManager.saveSession(loginId, name, isAdmin);
         Toast.makeText(this, R.string.login_success, Toast.LENGTH_SHORT).show();
         Intent target = new Intent(this, isAdmin ? DashboardActivity.class : UserDashboardActivity.class);
+        target.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
         startActivity(target);
         finish();
     }

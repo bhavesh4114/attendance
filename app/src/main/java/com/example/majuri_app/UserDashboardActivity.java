@@ -29,7 +29,11 @@ public class UserDashboardActivity extends AppCompatActivity {
                 return true;
             }
             if (id == R.id.nav_user_attendance) {
-                startActivity(new Intent(UserDashboardActivity.this, AttendanceManagementActivity.class));
+                openAttendanceScreen();
+                return true;
+            }
+            if (id == R.id.nav_user_workers) {
+                openWorkersScreen();
                 return true;
             }
             if (id == R.id.nav_user_payslips) {
@@ -47,13 +51,27 @@ public class UserDashboardActivity extends AppCompatActivity {
                 Toast.makeText(this, getString(R.string.menu), Toast.LENGTH_SHORT).show());
 
         findViewById(R.id.cardViewWorkers).setOnClickListener(v ->
-                startActivity(new Intent(UserDashboardActivity.this, WorkersListActivity.class)));
+                openWorkersScreen());
         findViewById(R.id.cardViewAttendance).setOnClickListener(v ->
-                startActivity(new Intent(UserDashboardActivity.this, AttendanceManagementActivity.class)));
+                openAttendanceScreen());
         findViewById(R.id.cardViewPayments).setOnClickListener(v ->
                 Toast.makeText(this, getString(R.string.nav_payments), Toast.LENGTH_SHORT).show());
         findViewById(R.id.cardViewReports).setOnClickListener(v ->
                 Toast.makeText(this, getString(R.string.nav_reports), Toast.LENGTH_SHORT).show());
+    }
+
+    private void openAttendanceScreen() {
+        Intent intent = new Intent(this, AttendanceManagementActivity.class);
+        intent.putExtra(AttendanceManagementActivity.EXTRA_FORCE_USER_FLOW, true);
+        startActivity(intent);
+        finish();
+    }
+
+    private void openWorkersScreen() {
+        Intent intent = new Intent(this, WorkersListActivity.class);
+        intent.putExtra(WorkersListActivity.EXTRA_FORCE_USER_FLOW, true);
+        startActivity(intent);
+        finish();
     }
 
     private void bindLoggedInUserName() {

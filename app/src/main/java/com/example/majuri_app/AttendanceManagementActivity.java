@@ -20,6 +20,7 @@ import java.util.Locale;
 import java.util.Map;
 
 public class AttendanceManagementActivity extends AppCompatActivity {
+    public static final String EXTRA_FORCE_USER_FLOW = "extra_force_user_flow";
 
     private TextView tvMonthYear;
     private TextView summaryPresent;
@@ -28,6 +29,8 @@ public class AttendanceManagementActivity extends AppCompatActivity {
     private TextView tvTotalWorkers;
     private Calendar calendar;
     private AttendanceManagementAdapter adapter;
+    private SessionManager sessionManager;
+    private boolean forceUserFlow;
     private final SimpleDateFormat dateKeyFormat = new SimpleDateFormat("yyyy-MM-dd", Locale.US);
 
     @Override
@@ -35,6 +38,8 @@ public class AttendanceManagementActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_attendance_management);
 
+        sessionManager = new SessionManager(this);
+        forceUserFlow = getIntent() != null && getIntent().getBooleanExtra(EXTRA_FORCE_USER_FLOW, false);
         calendar = Calendar.getInstance();
         tvMonthYear = findViewById(R.id.tvMonthYear);
         summaryPresent = findViewById(R.id.summaryPresent);
@@ -65,28 +70,12 @@ public class AttendanceManagementActivity extends AppCompatActivity {
 
         findViewById(R.id.btnSaveAttendance).setOnClickListener(v -> saveAttendanceForSelectedDate());
 
-        BottomNavigationView bottomNav = findViewById(R.id.bottomNav);
-        bottomNav.setSelectedItemId(R.id.nav_user_attendance);
-        bottomNav.setOnItemSelectedListener(item -> {
-            int id = item.getItemId();
-            if (id == R.id.nav_user_home) {
-                startActivity(new Intent(this, UserDashboardActivity.class));
-                finish();
-                return true;
-            }
-            if (id == R.id.nav_user_attendance) {
-                return true;
-            }
-            if (id == R.id.nav_user_payslips) {
-                Toast.makeText(this, getString(R.string.user_dashboard_payslips), Toast.LENGTH_SHORT).show();
-                return true;
-            }
-            if (id == R.id.nav_user_profile) {
-                Toast.makeText(this, getString(R.string.nav_profile), Toast.LENGTH_SHORT).show();
-                return true;
-            }
-            return false;
-        });
+        setupBottomNav();
+    }
+
+    @Override
+    public void onBackPressed() {
+        navigateToHomeByRole();
     }
 
     @Override
@@ -194,5 +183,85 @@ public class AttendanceManagementActivity extends AppCompatActivity {
         View btnSaveAttendance = findViewById(R.id.btnSaveAttendance);
         btnSaveAttendance.setEnabled(!locked);
         btnSaveAttendance.setAlpha(locked ? 0.6f : 1f);
+    }
+
+    private void navigateToHomeByRole() {
+        boolean isAdmin = sessionManager != null && sessionManager.isAdmin();
+        Class<?> home = forceUserFlow ? UserDashboardActivity.class : (isAdmin ? DashboardActivity.class : UserDashboardActivity.class);
+        Intent target = new Intent(this, home);
+        target.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
+        startActivity(target);
+        finish();
+    }
+
+    private void setupBottomNav() {
+        BottomNavigationView bottomNav = findViewById(R.id.bottomNav);
+        boolean useUserNav = forceUserFlow || (sessionManager != null && !sessionManager.isAdmin());
+
+        bottomNav.getMenu().clear();
+        if (useUserNav) {
+            bottomNav.inflateMenu(R.menu.menu_user_dashboard_nav);
+            bottomNav.setSelectedItemId(R.id.nav_user_attendance);
+            bottomNav.setOnItemSelectedListener(item -> onUserNavItemSelected(item.getItemId()));
+        } else {
+            bottomNav.inflateMenu(R.menu.menu_dashboard_bottom_nav);
+            bottomNav.setSelectedItemId(R.id.nav_dashboard);
+            bottomNav.setOnItemSelectedListener(item -> onAdminNavItemSelected(item.getItemId()));
+        }
+    }
+
+    private boolean onUserNavItemSelected(int id) {
+        if (id == R.id.nav_user_home) {
+            navigateToHomeByRole();
+            return true;
+        }
+        if (id == R.id.nav_user_attendance) {
+            return true;
+        }
+        if (id == R.id.nav_user_workers) {
+            Intent intent = new Intent(this, WorkersListActivity.class);
+            intent.putExtra(WorkersListActivity.EXTRA_FORCE_USER_FLOW, true);
+            startActivity(intent);
+            finish();
+            return true;
+        }
+        if (id == R.id.nav_user_payslips) {
+            Toast.makeText(this, getString(R.string.user_dashboard_payslips), Toast.LENGTH_SHORT).show();
+            return true;
+        }
+        if (id == R.id.nav_user_profile) {
+            Toast.makeText(this, getString(R.string.nav_profile), Toast.LENGTH_SHORT).show();
+            return true;
+        }
+        return false;
+    }
+
+    private boolean onAdminNavItemSelected(int id) {
+        if (id == R.id.nav_dashboard) {
+            startActivity(new Intent(this, DashboardActivity.class));
+            finish();
+            return true;
+        }
+        if (id == R.id.nav_workers) {
+            startActivity(new Intent(this, WorkersListActivity.class));
+            finish();
+            return true;
+        }
+        if (id == R.id.nav_payments) {
+            startActivity(new Intent(this, PaymentsActivity.class));
+            finish();
+            return true;
+        }
+        if (id == R.id.nav_analytics) {
+            startActivity(new Intent(this, ReportsActivity.class));
+            finish();
+            return true;
+        }
+        if (id == R.id.nav_settings) {
+            startActivity(new Intent(this, SettingsActivity.class));
+            finish();
+            return true;
+        }
+        return false;
     }
 }
