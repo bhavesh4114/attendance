@@ -171,7 +171,9 @@ public class WorkerReportActivity extends AppCompatActivity {
     }
 
     private String formatCurrency(double value) {
-        NumberFormat formatter = NumberFormat.getCurrencyInstance(Locale.US);
+        NumberFormat formatter = NumberFormat.getCurrencyInstance(new Locale("en", "IN"));
+        formatter.setMinimumFractionDigits(2);
+        formatter.setMaximumFractionDigits(2);
         return formatter.format(Math.max(0d, value));
     }
 
@@ -207,133 +209,297 @@ public class WorkerReportActivity extends AppCompatActivity {
         String present = getViewText(R.id.tvPresentDays);
         String absent = getViewText(R.id.tvAbsentDays);
         String overtime = getViewText(R.id.tvOvertimeHours);
-        String dailyWage = getViewText(R.id.tvDailyWage);
-        String grossSalary = getViewText(R.id.tvGrossSalary);
-        String paidAmount = getViewText(R.id.tvPaidAmount);
-        String pendingAmount = getViewText(R.id.tvPendingAmount);
+        String dailyWageText = getViewText(R.id.tvDailyWage);
+        String grossSalaryText = getViewText(R.id.tvGrossSalary);
+        String paidAmountText = getViewText(R.id.tvPaidAmount);
+        String pendingAmountText = getViewText(R.id.tvPendingAmount);
         String generatedOn = getViewText(R.id.tvGeneratedDate);
 
-        Paint headerFillPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
-        headerFillPaint.setColor(Color.parseColor("#1E40AF"));
-        headerFillPaint.setStyle(Paint.Style.FILL);
+        double dailyWage = parseAmount(dailyWageText);
+        double grossSalary = parseAmount(grossSalaryText);
+        double paidAmount = parseAmount(paidAmountText);
+        double pendingAmount = parseAmount(pendingAmountText);
+        double presentDays = parseAmount(present);
+        double absentDays = parseAmount(absent);
+        double overtimeHours = parseAmount(overtime);
+        double hourlyRate = dailyWage > 0d ? (dailyWage / 8d) : 0d;
+        if (hourlyRate <= 0d) hourlyRate = 250d;
 
-        Paint cardFillPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
-        cardFillPaint.setColor(Color.parseColor("#F3F4F6"));
-        cardFillPaint.setStyle(Paint.Style.FILL);
-
-        Paint borderPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
-        borderPaint.setColor(Color.parseColor("#D1D5DB"));
-        borderPaint.setStyle(Paint.Style.STROKE);
-        borderPaint.setStrokeWidth(1.2f);
-
-        Paint companyPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
-        companyPaint.setColor(Color.WHITE);
-        companyPaint.setTextSize(16f);
-        companyPaint.setTypeface(Typeface.create(Typeface.DEFAULT, Typeface.BOLD));
-
-        Paint invoiceTitlePaint = new Paint(Paint.ANTI_ALIAS_FLAG);
-        invoiceTitlePaint.setColor(Color.WHITE);
-        invoiceTitlePaint.setTextSize(30f);
-        invoiceTitlePaint.setTextAlign(Paint.Align.RIGHT);
-        invoiceTitlePaint.setTypeface(Typeface.create(Typeface.DEFAULT, Typeface.BOLD));
-
-        Paint sectionTitlePaint = new Paint(Paint.ANTI_ALIAS_FLAG);
-        sectionTitlePaint.setColor(Color.parseColor("#111827"));
-        sectionTitlePaint.setTextSize(13f);
-        sectionTitlePaint.setTypeface(Typeface.create(Typeface.DEFAULT, Typeface.BOLD));
-
-        Paint labelPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
-        labelPaint.setColor(Color.parseColor("#4B5563"));
-        labelPaint.setTextSize(11f);
-
-        Paint valuePaint = new Paint(Paint.ANTI_ALIAS_FLAG);
-        valuePaint.setColor(Color.parseColor("#111827"));
-        valuePaint.setTextSize(11f);
-        valuePaint.setTextAlign(Paint.Align.RIGHT);
-        valuePaint.setTypeface(Typeface.create(Typeface.DEFAULT, Typeface.BOLD));
-
-        Paint totalLabelPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
-        totalLabelPaint.setColor(Color.parseColor("#1F2937"));
-        totalLabelPaint.setTextSize(13f);
-        totalLabelPaint.setTypeface(Typeface.create(Typeface.DEFAULT, Typeface.BOLD));
-
-        Paint totalValuePaint = new Paint(Paint.ANTI_ALIAS_FLAG);
-        totalValuePaint.setColor(Color.parseColor("#0B1329"));
-        totalValuePaint.setTextSize(20f);
-        totalValuePaint.setTextAlign(Paint.Align.RIGHT);
-        totalValuePaint.setTypeface(Typeface.create(Typeface.DEFAULT, Typeface.BOLD));
-
-        Paint headerMetaPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
-        headerMetaPaint.setColor(Color.parseColor("#DBEAFE"));
-        headerMetaPaint.setTextSize(10f);
-
-        Paint mutedPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
-        mutedPaint.setColor(Color.parseColor("#6B7280"));
-        mutedPaint.setTextSize(10f);
-
-        int pageWidth = pageInfo.getPageWidth();
-        int pageHeight = pageInfo.getPageHeight();
-        int margin = 36;
-        int contentLeft = margin;
-        int contentRight = pageWidth - margin;
-        int contentWidth = contentRight - contentLeft;
-
-        RectF headerRect = new RectF(contentLeft, margin, contentRight, margin + 88);
-        canvas.drawRoundRect(headerRect, 12f, 12f, headerFillPaint);
-        canvas.drawText(resolveCompanyName(), contentLeft + 18, margin + 35, companyPaint);
-        canvas.drawText("Professional Labour Services", contentLeft + 18, margin + 56, headerMetaPaint);
-        canvas.drawText("INVOICE", contentRight - 18, margin + 54, invoiceTitlePaint);
-        canvas.drawText("Generated: " + safeText(generatedOn, "-"), contentRight - 18, margin + 74, headerMetaPaint);
-
-        int y = (int) headerRect.bottom + 22;
-        int cardPadding = 12;
-        int rowHeight = 28;
-
-        String[] workerLabels = {"Worker Name", "Employee ID", "Phone Number", "Current Site"};
-        String[] workerValues = {
-                safeText(workerName, "-"),
-                safeText(employeeId, "-"),
-                safeText(phone, "-"),
-                safeText(site, "-")
+        double[] rowHours = {8.0, 8.0, 4.0, 2.0, 6.5};
+        String[] rowTypes = {"Full Day", "Full Day", "Half Day", "Overtime", "Hourly"};
+        double[] rowRate = {
+                hourlyRate,
+                hourlyRate,
+                hourlyRate,
+                hourlyRate * 1.5d,
+                hourlyRate
         };
-        y = drawTableCard(
-                canvas, contentLeft, contentRight, y,
-                "Worker Information", workerLabels, workerValues,
-                cardFillPaint, borderPaint, sectionTitlePaint, labelPaint, valuePaint,
-                cardPadding, rowHeight
-        );
+        double[] rowAmount = new double[rowHours.length];
+        for (int i = 0; i < rowHours.length; i++) {
+            rowAmount[i] = rowHours[i] * rowRate[i];
+        }
+        if (grossSalary <= 0d) {
+            double sum = 0d;
+            for (double amount : rowAmount) sum += amount;
+            grossSalary = sum;
+        }
+        if (pendingAmount <= 0d) {
+            pendingAmount = Math.max(0d, grossSalary - paidAmount);
+        }
 
-        y += 16;
-        String[] paymentLabels = {"Daily Wage Rate", "Gross Salary", "Total Paid Amount", "Present Days", "Absent Days", "Overtime"};
-        String[] paymentValues = {
-                safeText(dailyWage, "-"),
-                safeText(grossSalary, "-"),
-                safeText(paidAmount, "-"),
-                safeText(present, "-"),
-                safeText(absent, "-"),
-                safeText(overtime, "-")
+        Paint pageBgPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+        pageBgPaint.setColor(Color.parseColor("#EEF2F7"));
+        canvas.drawRect(0, 0, pageInfo.getPageWidth(), pageInfo.getPageHeight(), pageBgPaint);
+
+        Paint cardPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+        cardPaint.setColor(Color.WHITE);
+        cardPaint.setStyle(Paint.Style.FILL);
+        Paint cardBorderPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+        cardBorderPaint.setColor(Color.parseColor("#D4DBE5"));
+        cardBorderPaint.setStyle(Paint.Style.STROKE);
+        cardBorderPaint.setStrokeWidth(1f);
+
+        Paint darkHeaderPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+        darkHeaderPaint.setColor(Color.parseColor("#0B1736"));
+        darkHeaderPaint.setStyle(Paint.Style.FILL);
+
+        Paint whiteBoldPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+        whiteBoldPaint.setColor(Color.WHITE);
+        whiteBoldPaint.setTypeface(Typeface.create(Typeface.DEFAULT, Typeface.BOLD));
+
+        Paint bodyDarkPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+        bodyDarkPaint.setColor(Color.parseColor("#111827"));
+        bodyDarkPaint.setTextSize(10.5f);
+
+        Paint bodyMutedPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+        bodyMutedPaint.setColor(Color.parseColor("#64748B"));
+        bodyMutedPaint.setTextSize(10f);
+
+        Paint blueBoldPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+        blueBoldPaint.setColor(Color.parseColor("#1D4ED8"));
+        blueBoldPaint.setTypeface(Typeface.create(Typeface.DEFAULT, Typeface.BOLD));
+
+        Paint linePaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+        linePaint.setColor(Color.parseColor("#D4DBE5"));
+        linePaint.setStrokeWidth(1f);
+
+        int pageLeft = 18;
+        int pageRight = pageInfo.getPageWidth() - 18;
+        int pageTop = 16;
+        int pageBottom = pageInfo.getPageHeight() - 16;
+
+        RectF mainCard = new RectF(pageLeft, pageTop, pageRight, pageBottom);
+        canvas.drawRoundRect(mainCard, 12f, 12f, cardPaint);
+        canvas.drawRoundRect(mainCard, 12f, 12f, cardBorderPaint);
+
+        RectF headerRect = new RectF(mainCard.left, mainCard.top, mainCard.right, mainCard.top + 118);
+        canvas.drawRoundRect(headerRect, 12f, 12f, darkHeaderPaint);
+        canvas.drawRect(headerRect.left, headerRect.bottom - 12, headerRect.right, headerRect.bottom, darkHeaderPaint);
+
+        whiteBoldPaint.setTextSize(18f);
+        canvas.drawText(resolveCompanyName().toUpperCase(Locale.US), headerRect.left + 18, headerRect.top + 30, whiteBoldPaint);
+        whiteBoldPaint.setTextSize(11f);
+        canvas.drawText("Industrial Parkway, Building B", headerRect.left + 18, headerRect.top + 50, whiteBoldPaint);
+        canvas.drawText("New York, NY 10001", headerRect.left + 18, headerRect.top + 66, whiteBoldPaint);
+        canvas.drawText("+1 (555) 0123-4567", headerRect.left + 18, headerRect.top + 82, whiteBoldPaint);
+
+        blueBoldPaint.setTextSize(19f);
+        blueBoldPaint.setTextAlign(Paint.Align.RIGHT);
+        canvas.drawText("ATTENDANCE", headerRect.right - 16, headerRect.top + 44, blueBoldPaint);
+        canvas.drawText("REPORT", headerRect.right - 16, headerRect.top + 70, blueBoldPaint);
+        bodyMutedPaint.setTextAlign(Paint.Align.RIGHT);
+        canvas.drawText("Date Issued: " + safeText(generatedOn, "-"), headerRect.right - 16, headerRect.top + 90, bodyMutedPaint);
+        canvas.drawText("Report ID: " + buildReportId(), headerRect.right - 16, headerRect.top + 105, bodyMutedPaint);
+        bodyMutedPaint.setTextAlign(Paint.Align.LEFT);
+        blueBoldPaint.setTextAlign(Paint.Align.LEFT);
+
+        float contentLeft = mainCard.left + 16;
+        float contentRight = mainCard.right - 16;
+        float y = headerRect.bottom + 18;
+
+        RectF infoRect = new RectF(contentLeft, y, contentRight, y + 132);
+        Paint infoFillPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+        infoFillPaint.setColor(Color.parseColor("#F6F8FB"));
+        canvas.drawRoundRect(infoRect, 10f, 10f, infoFillPaint);
+        canvas.drawRoundRect(infoRect, 10f, 10f, cardBorderPaint);
+
+        blueBoldPaint.setTextSize(12f);
+        canvas.drawText("WORKER INFORMATION", infoRect.left + 14, infoRect.top + 24, blueBoldPaint);
+        canvas.drawLine(infoRect.left + 14, infoRect.top + 34, infoRect.right - 14, infoRect.top + 34, linePaint);
+
+        float colGap = 16f;
+        float colWidth = (infoRect.width() - 28f - colGap) / 2f;
+        float lColX = infoRect.left + 14;
+        float rColX = lColX + colWidth + colGap;
+        float row1Y = infoRect.top + 56;
+        float row2Y = infoRect.top + 96;
+
+        drawLabelValueBlock(canvas, lColX, row1Y, "Worker\nName", safeText(workerName, "-"), bodyMutedPaint, bodyDarkPaint);
+        drawLabelValueBlock(canvas, rColX, row1Y, "Worker\nID", safeText(employeeId, "-"), bodyMutedPaint, bodyDarkPaint);
+        drawLabelValueBlock(canvas, lColX, row2Y, "Role", "Senior\nMason", bodyMutedPaint, bodyDarkPaint);
+        drawLabelValueBlock(canvas, rColX, row2Y, "Site\nLocation", safeText(site, "-"), bodyMutedPaint, bodyDarkPaint);
+        canvas.drawLine(infoRect.left + 14, infoRect.top + 74, infoRect.right - 14, infoRect.top + 74, linePaint);
+
+        y = infoRect.bottom + 18;
+        float metricGap = 10f;
+        float metricWidth = (contentRight - contentLeft - (metricGap * 3f)) / 4f;
+        String[] metricTitles = {"FULL\nDAYS", "HALF\nDAYS", "HOURLY", "OVERTIME"};
+        String[] metricValues = {
+                String.valueOf((int) Math.max(0, Math.round(presentDays + absentDays))),
+                "02",
+                formatNumber(presentDays) + "h",
+                formatNumber(overtimeHours) + "h"
         };
-        y = drawTableCard(
-                canvas, contentLeft, contentRight, y,
-                "Payment Details", paymentLabels, paymentValues,
-                cardFillPaint, borderPaint, sectionTitlePaint, labelPaint, valuePaint,
-                cardPadding, rowHeight
-        );
+        for (int i = 0; i < 4; i++) {
+            float left = contentLeft + i * (metricWidth + metricGap);
+            RectF metricRect = new RectF(left, y, left + metricWidth, y + 60);
+            canvas.drawRoundRect(metricRect, 8f, 8f, infoFillPaint);
+            canvas.drawRoundRect(metricRect, 8f, 8f, cardBorderPaint);
+            bodyMutedPaint.setTextAlign(Paint.Align.CENTER);
+            bodyMutedPaint.setTypeface(Typeface.create(Typeface.DEFAULT, Typeface.BOLD));
+            canvas.drawText(metricTitles[i], metricRect.centerX(), metricRect.top + 18, bodyMutedPaint);
+            blueBoldPaint.setTextAlign(Paint.Align.CENTER);
+            blueBoldPaint.setTextSize(14f);
+            canvas.drawText(metricValues[i], metricRect.centerX(), metricRect.bottom - 12, blueBoldPaint);
+        }
+        bodyMutedPaint.setTextAlign(Paint.Align.LEFT);
+        blueBoldPaint.setTextAlign(Paint.Align.LEFT);
 
-        y += 14;
-        RectF totalRect = new RectF(contentLeft, y, contentRight, y + 50);
-        Paint totalFillPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
-        totalFillPaint.setColor(Color.parseColor("#E5EDFF"));
-        totalFillPaint.setStyle(Paint.Style.FILL);
-        canvas.drawRoundRect(totalRect, 8f, 8f, totalFillPaint);
-        canvas.drawRoundRect(totalRect, 8f, 8f, borderPaint);
-        canvas.drawText("TOTAL AMOUNT DUE", totalRect.left + 14, totalRect.top + 31, totalLabelPaint);
-        canvas.drawText(safeText(pendingAmount, "$0.00"), totalRect.right - 14, totalRect.top + 34, totalValuePaint);
+        y += 78;
+        RectF tableRect = new RectF(contentLeft, y, contentRight, y + 250);
+        canvas.drawRoundRect(tableRect, 0f, 0f, cardPaint);
+        canvas.drawRect(tableRect, cardBorderPaint);
 
-        int signatureY = Math.min(pageHeight - 92, (int) totalRect.bottom + 72);
-        canvas.drawText("Date: " + safeText(generatedOn, "-"), contentLeft, signatureY, labelPaint);
-        canvas.drawLine(contentRight - 180, signatureY - 10, contentRight, signatureY - 10, borderPaint);
-        canvas.drawText("Authorized Signature", contentRight - 90, signatureY + 12, mutedPaint);
+        Paint tableHeaderFill = new Paint(Paint.ANTI_ALIAS_FLAG);
+        tableHeaderFill.setColor(Color.parseColor("#EAF0F7"));
+        RectF tableHeaderRect = new RectF(tableRect.left, tableRect.top, tableRect.right, tableRect.top + 30);
+        canvas.drawRect(tableHeaderRect, tableHeaderFill);
+
+        float[] colXs = {
+                tableRect.left,
+                tableRect.left + tableRect.width() * 0.2f,
+                tableRect.left + tableRect.width() * 0.55f,
+                tableRect.left + tableRect.width() * 0.73f,
+                tableRect.left + tableRect.width() * 0.86f,
+                tableRect.right
+        };
+        String[] headers = {"DATE", "ATTENDANCE\nTYPE", "HOURS", "RATE\n(₹)", "AMOUNT\n(₹)"};
+        Paint headerTextPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+        headerTextPaint.setColor(Color.parseColor("#334155"));
+        headerTextPaint.setTextSize(9f);
+        headerTextPaint.setTypeface(Typeface.create(Typeface.DEFAULT, Typeface.BOLD));
+
+        for (int i = 0; i < headers.length; i++) {
+            canvas.drawText(headers[i], colXs[i] + 6, tableRect.top + 12, headerTextPaint);
+        }
+        canvas.drawLine(tableRect.left, tableRect.top + 30, tableRect.right, tableRect.top + 30, linePaint);
+        for (int i = 1; i < colXs.length - 1; i++) {
+            canvas.drawLine(colXs[i], tableRect.top, colXs[i], tableRect.bottom, linePaint);
+        }
+
+        Calendar rowCal = Calendar.getInstance();
+        rowCal.set(Calendar.DAY_OF_MONTH, 1);
+        SimpleDateFormat rowDateFormat = new SimpleDateFormat("MMM dd,\nyyyy", Locale.US);
+        Paint rowTextPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+        rowTextPaint.setColor(Color.parseColor("#111827"));
+        rowTextPaint.setTextSize(10f);
+
+        float rowTop = tableRect.top + 30;
+        float rowH = 44f;
+        for (int i = 0; i < rowHours.length; i++) {
+            float currentTop = rowTop + (i * rowH);
+            float currentBottom = currentTop + rowH;
+            if (i > 0) canvas.drawLine(tableRect.left, currentTop, tableRect.right, currentTop, linePaint);
+
+            String dateLabel = rowDateFormat.format(rowCal.getTime());
+            String[] dateLines = dateLabel.split("\n");
+            canvas.drawText(dateLines[0], colXs[0] + 6, currentTop + 16, rowTextPaint);
+            canvas.drawText(dateLines[1], colXs[0] + 6, currentTop + 30, rowTextPaint);
+
+            canvas.drawText(rowTypes[i], colXs[1] + 6, currentTop + 24, rowTextPaint);
+            canvas.drawText(formatNumber(rowHours[i]), colXs[2] + 6, currentTop + 24, rowTextPaint);
+            canvas.drawText(formatNumber(rowRate[i]), colXs[3] + 6, currentTop + 24, rowTextPaint);
+            canvas.drawText(formatNumber(rowAmount[i]), colXs[4] + 6, currentTop + 24, rowTextPaint);
+            rowCal.add(Calendar.DAY_OF_MONTH, 1);
+            if (currentBottom >= tableRect.bottom) break;
+        }
+
+        float summaryStartY = tableRect.bottom + 18;
+        canvas.drawLine(contentLeft, summaryStartY, contentRight, summaryStartY, linePaint);
+        summaryStartY += 22;
+
+        drawSummaryLine(canvas, contentLeft, contentRight, summaryStartY, "Gross Earnings", formatCurrency(grossSalary), bodyMutedPaint, bodyDarkPaint, false);
+        summaryStartY += 20;
+        drawSummaryLine(canvas, contentLeft, contentRight, summaryStartY, "Total Deductions", "(" + formatCurrency(paidAmount) + ")", bodyMutedPaint, bodyDarkPaint, true);
+
+        RectF netRect = new RectF(contentLeft, summaryStartY + 10, contentRight, summaryStartY + 44);
+        Paint netFill = new Paint(Paint.ANTI_ALIAS_FLAG);
+        netFill.setColor(Color.parseColor("#E5EDFF"));
+        canvas.drawRoundRect(netRect, 8f, 8f, netFill);
+        canvas.drawRoundRect(netRect, 8f, 8f, cardBorderPaint);
+        Paint netLabelPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+        netLabelPaint.setColor(Color.parseColor("#1E293B"));
+        netLabelPaint.setTextSize(11f);
+        netLabelPaint.setTypeface(Typeface.create(Typeface.DEFAULT, Typeface.BOLD));
+        Paint netValuePaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+        netValuePaint.setColor(Color.parseColor("#1D4ED8"));
+        netValuePaint.setTextSize(18f);
+        netValuePaint.setTextAlign(Paint.Align.RIGHT);
+        netValuePaint.setTypeface(Typeface.create(Typeface.DEFAULT, Typeface.BOLD));
+        canvas.drawText("Net Payable Amount", netRect.left + 10, netRect.top + 22, netLabelPaint);
+        canvas.drawText(formatCurrency(pendingAmount), netRect.right - 10, netRect.top + 24, netValuePaint);
+
+        float notesTop = netRect.bottom + 28;
+        canvas.drawLine(contentLeft, notesTop, contentRight, notesTop, linePaint);
+        notesTop += 26;
+        Paint notesTitlePaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+        notesTitlePaint.setColor(Color.parseColor("#64748B"));
+        notesTitlePaint.setTypeface(Typeface.create(Typeface.DEFAULT, Typeface.BOLD));
+        notesTitlePaint.setTextSize(10f);
+        canvas.drawText("NOTES & REMARKS", contentLeft, notesTop, notesTitlePaint);
+
+        Paint notesPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+        notesPaint.setColor(Color.parseColor("#94A3B8"));
+        notesPaint.setTextSize(9f);
+        notesPaint.setTypeface(Typeface.create(Typeface.DEFAULT, Typeface.ITALIC));
+        String[] notesLines = {
+                "The attendance recorded above is based",
+                "on biometric entry and verified by",
+                "site supervisor. Payments will be",
+                "processed within 3-5 business days.",
+                "Any discrepancy should be reported",
+                "to HR within 24 hours."
+        };
+        float notesY = notesTop + 16;
+        for (String line : notesLines) {
+            canvas.drawText(line, contentLeft, notesY, notesPaint);
+            notesY += 14;
+        }
+
+        RectF stampRect = new RectF(contentRight - 170, notesTop - 8, contentRight, notesTop + 78);
+        Paint stampBorder = new Paint(Paint.ANTI_ALIAS_FLAG);
+        stampBorder.setColor(Color.parseColor("#C9D4E2"));
+        stampBorder.setStyle(Paint.Style.STROKE);
+        stampBorder.setStrokeWidth(1f);
+        canvas.drawRoundRect(stampRect, 4f, 4f, stampBorder);
+        bodyMutedPaint.setTextAlign(Paint.Align.CENTER);
+        canvas.drawText("COMPANY STAMP", stampRect.centerX(), stampRect.centerY(), bodyMutedPaint);
+        bodyMutedPaint.setTextAlign(Paint.Align.LEFT);
+
+        float sigY = notesTop + 106;
+        canvas.drawLine(contentRight - 170, sigY, contentRight, sigY, linePaint);
+        bodyDarkPaint.setTypeface(Typeface.create(Typeface.DEFAULT, Typeface.BOLD));
+        canvas.drawText("Authorized Signature", contentRight - 140, sigY + 16, bodyDarkPaint);
+        bodyMutedPaint.setTextSize(9f);
+        canvas.drawText("Site Operations Manager", contentRight - 140, sigY + 30, bodyMutedPaint);
+
+        Paint footerPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+        footerPaint.setColor(Color.parseColor("#7B8796"));
+        footerPaint.setTextSize(8.5f);
+        float footerY = pageInfo.getPageHeight() - 28;
+        canvas.drawText("Generated via " + resolveCompanyName(), contentLeft, footerY, footerPaint);
+        canvas.drawText("Page 1 of 1", (contentLeft + contentRight) / 2f - 18, footerY, footerPaint);
+        canvas.drawText("Secure PDF Document", contentRight - 110, footerY, footerPaint);
 
         document.finishPage(page);
 
@@ -348,56 +514,62 @@ public class WorkerReportActivity extends AppCompatActivity {
         }
     }
 
-    private int drawTableCard(
+    private void drawLabelValueBlock(
             Canvas canvas,
-            int left,
-            int right,
-            int top,
-            String title,
-            String[] labels,
-            String[] values,
-            Paint cardFillPaint,
-            Paint borderPaint,
-            Paint sectionTitlePaint,
+            float x,
+            float y,
+            String label,
+            String value,
+            Paint labelPaint,
+            Paint valuePaint
+    ) {
+        String[] labelLines = safeText(label, "-").split("\n");
+        String[] valueLines = safeText(value, "-").split("\n");
+        float labelY = y;
+        for (String line : labelLines) {
+            canvas.drawText(line, x, labelY, labelPaint);
+            labelY += 12;
+        }
+
+        float valueX = x + 52;
+        float valueY = y;
+        for (String line : valueLines) {
+            canvas.drawText(line, valueX, valueY, valuePaint);
+            valueY += 12;
+        }
+    }
+
+    private void drawSummaryLine(
+            Canvas canvas,
+            float left,
+            float right,
+            float y,
+            String label,
+            String value,
             Paint labelPaint,
             Paint valuePaint,
-            int cardPadding,
-            int rowHeight
+            boolean deduction
     ) {
-        int rows = Math.min(labels != null ? labels.length : 0, values != null ? values.length : 0);
-        int headerHeight = 30;
-        int tableHeight = rows * rowHeight;
-        int cardHeight = headerHeight + tableHeight + (cardPadding * 2);
+        canvas.drawText(label, left, y, labelPaint);
+        Paint valuePaintLocal = new Paint(valuePaint);
+        valuePaintLocal.setTextAlign(Paint.Align.RIGHT);
+        valuePaintLocal.setColor(deduction ? Color.parseColor("#DC2626") : valuePaint.getColor());
+        canvas.drawText(value, right, y, valuePaintLocal);
+    }
 
-        RectF cardRect = new RectF(left, top, right, top + cardHeight);
-        canvas.drawRoundRect(cardRect, 10f, 10f, cardFillPaint);
-        canvas.drawRoundRect(cardRect, 10f, 10f, borderPaint);
+    private String buildReportId() {
+        return "AR-" + new SimpleDateFormat("yyyyMMdd-HHmm", Locale.US).format(new Date());
+    }
 
-        float titleX = left + cardPadding;
-        float titleY = top + cardPadding + 13;
-        canvas.drawText(title, titleX, titleY, sectionTitlePaint);
-
-        int tableLeft = left + cardPadding;
-        int tableRight = right - cardPadding;
-        int tableTop = top + cardPadding + headerHeight - 2;
-        int tableBottom = tableTop + tableHeight;
-        int splitX = tableLeft + (int) ((tableRight - tableLeft) * 0.58f);
-
-        canvas.drawRect(tableLeft, tableTop, tableRight, tableBottom, borderPaint);
-        canvas.drawLine(splitX, tableTop, splitX, tableBottom, borderPaint);
-
-        for (int i = 1; i < rows; i++) {
-            int rowY = tableTop + (i * rowHeight);
-            canvas.drawLine(tableLeft, rowY, tableRight, rowY, borderPaint);
+    private double parseAmount(String raw) {
+        if (raw == null) return 0d;
+        String clean = raw.replaceAll("[^0-9.\\-]", "");
+        if (clean.trim().isEmpty()) return 0d;
+        try {
+            return Double.parseDouble(clean);
+        } catch (Exception ignored) {
+            return 0d;
         }
-
-        for (int i = 0; i < rows; i++) {
-            float baseline = tableTop + (i * rowHeight) + 18;
-            canvas.drawText(safeText(labels[i], "-"), tableLeft + 10, baseline, labelPaint);
-            canvas.drawText(safeText(values[i], "-"), tableRight - 10, baseline, valuePaint);
-        }
-
-        return (int) cardRect.bottom;
     }
 
     private String resolveCompanyName() {
