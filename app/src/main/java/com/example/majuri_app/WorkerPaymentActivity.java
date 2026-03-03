@@ -7,6 +7,7 @@ import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
 
+import com.google.android.material.button.MaterialButton;
 import com.razorpay.Checkout;
 import com.razorpay.PaymentResultListener;
 
@@ -36,7 +37,7 @@ public class WorkerPaymentActivity extends AppCompatActivity implements PaymentR
     private TextView tvNetPayable;
     private View optionCash;
     private View optionUpi;
-    private View btnMarkAsPaid;
+    private MaterialButton btnMarkAsPaid;
     private boolean isCashSelected = true;
     private long currentWorkerId = -1L;
     private String currentWorkerName = "Worker";
@@ -94,6 +95,9 @@ public class WorkerPaymentActivity extends AppCompatActivity implements PaymentR
             optionUpi.setBackgroundResource(
                     isCashSelected ? R.drawable.bg_payment_option_unselected : R.drawable.bg_payment_option_selected
             );
+        }
+        if (btnMarkAsPaid != null) {
+            btnMarkAsPaid.setText(isCashSelected ? getString(R.string.mark_as_paid) : "Pay Now");
         }
     }
 
