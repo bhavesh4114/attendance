@@ -109,7 +109,7 @@ public class WorkerPaymentActivity extends AppCompatActivity implements PaymentR
             return;
         }
         if (isCashSelected) {
-            recordPayment(currentPendingAmount, "Cash");
+            recordPayment(currentPendingAmount, "Cash", "Cash payment");
             return;
         }
         startRazorpayCheckout();
@@ -208,7 +208,7 @@ public class WorkerPaymentActivity extends AppCompatActivity implements PaymentR
         if (razorpayPaymentId != null && !razorpayPaymentId.trim().isEmpty()) {
             note = note + " (" + razorpayPaymentId.trim() + ")";
         }
-        recordPayment(currentPendingAmount, note);
+        recordPayment(currentPendingAmount, "UPI", note);
     }
 
     @Override
@@ -216,12 +216,13 @@ public class WorkerPaymentActivity extends AppCompatActivity implements PaymentR
         Toast.makeText(this, R.string.payment_failed, Toast.LENGTH_SHORT).show();
     }
 
-    private void recordPayment(double amount, String note) {
+    private void recordPayment(double amount, String paymentMethod, String note) {
         WorkerDbHelper dbHelper = new WorkerDbHelper(this);
-        long rowId = dbHelper.recordAdvancePayment(
+        long rowId = dbHelper.recordPayment(
                 currentWorkerId,
                 amount,
                 getTodayIsoDate(),
+                paymentMethod,
                 note
         );
         dbHelper.close();

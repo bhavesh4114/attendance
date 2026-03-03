@@ -208,10 +208,11 @@ public class PaymentsActivity extends AppCompatActivity {
         }
 
         WorkerDbHelper dbHelper = new WorkerDbHelper(this);
-        long rowId = dbHelper.recordAdvancePayment(
+        long rowId = dbHelper.recordPayment(
                 item.getWorkerId(),
                 item.getPendingAmountValue(),
                 getTodayIsoDate(),
+                "Cash",
                 "Marked paid from payment queue"
         );
         dbHelper.close();
@@ -239,10 +240,11 @@ public class PaymentsActivity extends AppCompatActivity {
             if (item.getWorkerId() <= 0L || item.getPendingAmountValue() <= 0d) {
                 continue;
             }
-            long rowId = dbHelper.recordAdvancePayment(
+            long rowId = dbHelper.recordPayment(
                     item.getWorkerId(),
                     item.getPendingAmountValue(),
                     getTodayIsoDate(),
+                    "Cash",
                     "Marked paid (all)"
             );
             if (rowId > 0L) {

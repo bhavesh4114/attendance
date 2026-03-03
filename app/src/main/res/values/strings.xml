@@ -150,7 +150,7 @@
     <string name="nav_attendance">ATTENDANCE</string>
     <string name="nav_workers">WORKERS</string>
     <string name="nav_reports">REPORTS</string>
-
+        
     <!-- Worker Payment -->
     <string name="worker_payment">Worker Payment</string>
     <string name="rajesh_kumar">Rajesh Kumar</string>
@@ -173,7 +173,7 @@
     <string name="pay_now">Pay Now</string>
     <string name="pay_later">Pay Later</string>
     <string name="razorpay_key_id">rzp_test_RqBKFiC6cMIPx8</string>
-    <string name="configure_razorpay_key">Razorpay key set </string>
+    <string name="configure_razorpay_key">zGX7f8eNyEapXwGUFZl2lnfg</string>
     <string name="payment_successful">Payment successful.</string>
     <string name="payment_failed">Payment failed.</string>
 

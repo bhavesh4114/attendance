@@ -20,11 +20,12 @@ import java.util.Map;
 public class WorkerDbHelper extends SQLiteOpenHelper {
 
     private static final String DB_NAME = "majuri_workers.db";
-    private static final int DB_VERSION = 2;
+    private static final int DB_VERSION = 3;
 
     private static final String TABLE_WORKERS = "workers";
     private static final String TABLE_ATTENDANCE = "attendance_records";
     private static final String TABLE_ADVANCES = "payment_advances";
+    private static final String TABLE_PAYMENTS = "payment_records";
 
     public static final String COL_ID = "id";
     public static final String COL_NAME = "name";
@@ -42,6 +43,12 @@ public class WorkerDbHelper extends SQLiteOpenHelper {
     private static final String COL_ADVANCE_DATE = "payment_date";
     private static final String COL_ADVANCE_NOTE = "note";
 
+    private static final String COL_PAYMENT_WORKER_ID = "worker_id";
+    private static final String COL_PAYMENT_AMOUNT = "amount";
+    private static final String COL_PAYMENT_DATE = "payment_date";
+    private static final String COL_PAYMENT_METHOD = "payment_method";
+    private static final String COL_PAYMENT_NOTE = "note";
+
     public WorkerDbHelper(@Nullable Context context) {
         super(context, DB_NAME, null, DB_VERSION);
     }
@@ -51,6 +58,8 @@ public class WorkerDbHelper extends SQLiteOpenHelper {
         createWorkersTable(db);
         createAttendanceTable(db);
         createAdvancesTable(db);
+        createPaymentsTable(db);
+        migrateAdvancesToPayments(db);
     }
 
     @Override
@@ -58,6 +67,10 @@ public class WorkerDbHelper extends SQLiteOpenHelper {
         if (oldVersion < 2) {
             createAttendanceTable(db);
             createAdvancesTable(db);
+        }
+        if (oldVersion < 3) {
+            createPaymentsTable(db);
+            migrateAdvancesToPayments(db);
         }
     }
 
@@ -89,6 +102,34 @@ public class WorkerDbHelper extends SQLiteOpenHelper {
                 + COL_ADVANCE_AMOUNT + " REAL NOT NULL, "
                 + COL_ADVANCE_DATE + " TEXT NOT NULL, "
                 + COL_ADVANCE_NOTE + " TEXT)";
+        db.execSQL(sql);
+    }
+
+    private void createPaymentsTable(SQLiteDatabase db) {
+        String sql = "CREATE TABLE IF NOT EXISTS " + TABLE_PAYMENTS + " ("
+                + COL_ID + " INTEGER PRIMARY KEY AUTOINCREMENT, "
+                + COL_PAYMENT_WORKER_ID + " INTEGER NOT NULL, "
+                + COL_PAYMENT_AMOUNT + " REAL NOT NULL, "
+                + COL_PAYMENT_DATE + " TEXT NOT NULL, "
+                + COL_PAYMENT_METHOD + " TEXT, "
+                + COL_PAYMENT_NOTE + " TEXT)";
+        db.execSQL(sql);
+    }
+
+    private void migrateAdvancesToPayments(SQLiteDatabase db) {
+        String sql = "INSERT INTO " + TABLE_PAYMENTS + " ("
+                + COL_PAYMENT_WORKER_ID + ", "
+                + COL_PAYMENT_AMOUNT + ", "
+                + COL_PAYMENT_DATE + ", "
+                + COL_PAYMENT_METHOD + ", "
+                + COL_PAYMENT_NOTE + ") "
+                + "SELECT "
+                + COL_ADVANCE_WORKER_ID + ", "
+                + COL_ADVANCE_AMOUNT + ", "
+                + COL_ADVANCE_DATE + ", "
+                + "'Legacy', "
+                + COL_ADVANCE_NOTE + " "
+                + "FROM " + TABLE_ADVANCES;
         db.execSQL(sql);
     }
 
@@ -376,17 +417,25 @@ public class WorkerDbHelper extends SQLiteOpenHelper {
      * Record a payment/advance deduction entry for a worker.
      */
     public long recordAdvancePayment(long workerId, double amount, String paymentDate, String note) {
+        return recordPayment(workerId, amount, paymentDate, "Manual", note);
+    }
+
+    /**
+     * Record a contractor payment entry for a worker.
+     */
+    public long recordPayment(long workerId, double amount, String paymentDate, String paymentMethod, String note) {
         if (workerId <= 0L || amount <= 0d || paymentDate == null || paymentDate.trim().isEmpty()) {
             return -1L;
         }
 
         SQLiteDatabase db = getWritableDatabase();
         ContentValues cv = new ContentValues();
-        cv.put(COL_ADVANCE_WORKER_ID, workerId);
-        cv.put(COL_ADVANCE_AMOUNT, amount);
-        cv.put(COL_ADVANCE_DATE, paymentDate.trim());
-        cv.put(COL_ADVANCE_NOTE, note != null ? note : "");
-        long id = db.insert(TABLE_ADVANCES, null, cv);
+        cv.put(COL_PAYMENT_WORKER_ID, workerId);
+        cv.put(COL_PAYMENT_AMOUNT, amount);
+        cv.put(COL_PAYMENT_DATE, paymentDate.trim());
+        cv.put(COL_PAYMENT_METHOD, paymentMethod != null ? paymentMethod.trim() : "");
+        cv.put(COL_PAYMENT_NOTE, note != null ? note : "");
+        long id = db.insert(TABLE_PAYMENTS, null, cv);
         db.close();
         return id;
     }
@@ -539,10 +588,10 @@ public class WorkerDbHelper extends SQLiteOpenHelper {
 
     private Map<Long, Double> readPaidAmountMap(SQLiteDatabase db, String monthPrefixLike) {
         Map<Long, Double> map = new HashMap<>();
-        String sql = "SELECT " + COL_ADVANCE_WORKER_ID + ", SUM(" + COL_ADVANCE_AMOUNT + ") AS paid_amount "
-                + "FROM " + TABLE_ADVANCES + " "
-                + "WHERE " + COL_ADVANCE_DATE + " LIKE ? "
-                + "GROUP BY " + COL_ADVANCE_WORKER_ID;
+        String sql = "SELECT " + COL_PAYMENT_WORKER_ID + ", SUM(" + COL_PAYMENT_AMOUNT + ") AS paid_amount "
+                + "FROM " + TABLE_PAYMENTS + " "
+                + "WHERE " + COL_PAYMENT_DATE + " LIKE ? "
+                + "GROUP BY " + COL_PAYMENT_WORKER_ID;
         Cursor c = db.rawQuery(sql, new String[]{ monthPrefixLike });
         if (c != null) {
             while (c.moveToNext()) {
