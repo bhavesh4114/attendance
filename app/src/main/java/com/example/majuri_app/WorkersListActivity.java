@@ -5,6 +5,7 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.text.Editable;
 import android.text.TextWatcher;
+import android.view.View;
 import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -26,6 +27,7 @@ public class WorkersListActivity extends AppCompatActivity {
     private List<WorkerListItem> allItems;
     private boolean forceUserFlow;
     private boolean useUserNav;
+    private View notificationDot;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -34,6 +36,7 @@ public class WorkersListActivity extends AppCompatActivity {
         SessionManager sessionManager = new SessionManager(this);
         useUserNav = forceUserFlow || !sessionManager.isAdmin();
         setContentView(useUserNav ? R.layout.activity_workers_list_builder : R.layout.activity_workers_list);
+        NotificationStore.seedIfEmpty(this);
 
         loadWorkersFromDb();
         adapter = new WorkersListAdapter();
@@ -45,6 +48,7 @@ public class WorkersListActivity extends AppCompatActivity {
         recyclerWorkers.setAdapter(adapter);
 
         EditText searchWorkers = findViewById(R.id.searchWorkers);
+        notificationDot = findViewById(R.id.notificationDot);
         searchWorkers.addTextChangedListener(new TextWatcher() {
             @Override
             public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
@@ -58,8 +62,7 @@ public class WorkersListActivity extends AppCompatActivity {
             public void afterTextChanged(Editable s) {}
         });
 
-        findViewById(R.id.btnNotifications).setOnClickListener(v ->
-                Toast.makeText(this, R.string.notifications, Toast.LENGTH_SHORT).show());
+        findViewById(R.id.btnNotifications).setOnClickListener(v -> openNotifications());
         findViewById(R.id.btnFilter).setOnClickListener(v ->
                 Toast.makeText(this, R.string.filter, Toast.LENGTH_SHORT).show());
 
@@ -73,12 +76,14 @@ public class WorkersListActivity extends AppCompatActivity {
         }
 
         installBackHandler();
+        updateNotificationDot();
     }
 
     @Override
     protected void onResume() {
         super.onResume();
         loadWorkersFromDb();
+        updateNotificationDot();
     }
 
     private void installBackHandler() {
@@ -192,5 +197,15 @@ public class WorkersListActivity extends AppCompatActivity {
         Intent intent = new Intent(this, WorkerProfileActivity.class);
         intent.putExtra(WorkerProfileActivity.EXTRA_WORKER_ID, item.getId());
         startActivity(intent);
+    }
+
+    private void openNotifications() {
+        startActivity(new Intent(this, NotificationActivity.class));
+    }
+
+    private void updateNotificationDot() {
+        if (notificationDot != null) {
+            notificationDot.setVisibility(NotificationStore.hasUnread(this) ? View.VISIBLE : View.GONE);
+        }
     }
 }

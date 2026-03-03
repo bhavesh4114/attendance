@@ -2,6 +2,7 @@ package com.example.majuri_app;
 
 import android.content.Intent;
 import android.os.Bundle;
+import android.view.View;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -15,13 +16,16 @@ import com.google.android.material.bottomnavigation.BottomNavigationView;
  * Uses activity_user_dashboard.xml.
  */
 public class UserDashboardActivity extends AppCompatActivity {
+    private View notificationDot;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_user_dashboard);
+        NotificationStore.seedIfEmpty(this);
         bindLoggedInUserName();
         installBackHandler();
+        notificationDot = findViewById(R.id.notificationDot);
 
         BottomNavigationView bottomNav = findViewById(R.id.bottomNav);
         bottomNav.setSelectedItemId(R.id.nav_user_home);
@@ -50,7 +54,7 @@ public class UserDashboardActivity extends AppCompatActivity {
         });
 
         findViewById(R.id.btnNotifications).setOnClickListener(v ->
-                Toast.makeText(this, getString(R.string.menu), Toast.LENGTH_SHORT).show());
+                startActivity(new Intent(this, NotificationActivity.class)));
 
         findViewById(R.id.cardViewWorkers).setOnClickListener(v -> openWorkersScreen());
         findViewById(R.id.cardViewAttendance).setOnClickListener(v -> openAttendanceScreen());
@@ -58,6 +62,13 @@ public class UserDashboardActivity extends AppCompatActivity {
         findViewById(R.id.cardViewPayments).setOnClickListener(v ->
                 Toast.makeText(this, getString(R.string.nav_payments), Toast.LENGTH_SHORT).show());
         bindClick(R.id.cardViewReports, ReportsActivity.class);
+        updateNotificationDot();
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        updateNotificationDot();
     }
 
     private void openAttendanceScreen() {
@@ -109,5 +120,11 @@ public class UserDashboardActivity extends AppCompatActivity {
             startActivity(intent);
         }
         finish();
+    }
+
+    private void updateNotificationDot() {
+        if (notificationDot != null) {
+            notificationDot.setVisibility(NotificationStore.hasUnread(this) ? View.VISIBLE : View.GONE);
+        }
     }
 }

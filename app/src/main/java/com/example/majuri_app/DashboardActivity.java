@@ -3,6 +3,7 @@ package com.example.majuri_app;
 import android.app.Activity;
 import android.content.Intent;
 import android.os.Bundle;
+import android.view.View;
 import android.widget.TextView;
 
 import androidx.activity.OnBackPressedCallback;
@@ -21,6 +22,10 @@ public class DashboardActivity extends AppCompatActivity {
         updateWelcomeName();
         updateTotalWorkersCount();
         bindQuickActions();
+        NotificationStore.seedIfEmpty(this);
+        findViewById(R.id.btnNotifications).setOnClickListener(v ->
+                startActivity(new Intent(this, NotificationActivity.class)));
+        updateNotificationDot();
 
         BottomNavigationView bottomNav = findViewById(R.id.bottomNav);
         if (bottomNav != null) {
@@ -52,6 +57,7 @@ public class DashboardActivity extends AppCompatActivity {
         super.onResume();
         updateWelcomeName();
         updateTotalWorkersCount();
+        updateNotificationDot();
     }
 
     private void updateWelcomeName() {
@@ -102,6 +108,13 @@ public class DashboardActivity extends AppCompatActivity {
         bindClick(R.id.quickActionAddWorker, AddWorkerActivity.class);
         bindClick(R.id.cardViewAttendance, ReportsActivity.class); // Reports icon in Quick Actions
         bindClick(R.id.quickActionAnalytics, PaymentsActivity.class);
+    }
+
+    private void updateNotificationDot() {
+        View dot = findViewById(R.id.notificationDot);
+        if (dot != null) {
+            dot.setVisibility(NotificationStore.hasUnread(this) ? View.VISIBLE : View.GONE);
+        }
     }
 
     private void bindClick(int viewId, Class<? extends Activity> targetActivity) {

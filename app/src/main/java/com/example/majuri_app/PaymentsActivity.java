@@ -5,6 +5,7 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.text.Editable;
 import android.text.TextWatcher;
+import android.view.View;
 import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -37,6 +38,7 @@ public class PaymentsActivity extends AppCompatActivity {
     private TextView tvPaidTotal;
     private TextView tvPaymentQueueTitle;
     private TextView btnMarkAllPaid;
+    private View notificationDot;
     private Calendar selectedMonth;
 
     @Override
@@ -51,6 +53,7 @@ public class PaymentsActivity extends AppCompatActivity {
         tvPaidTotal = findViewById(R.id.tvPaidTotal);
         tvPaymentQueueTitle = findViewById(R.id.tvPaymentQueueTitle);
         btnMarkAllPaid = findViewById(R.id.btnMarkAllPaid);
+        notificationDot = findViewById(R.id.notificationDot);
 
         adapter = new PaymentQueueAdapter();
         adapter.setOnMarkPaidClickListener((item, position) -> markSinglePaid(item));
@@ -62,8 +65,8 @@ public class PaymentsActivity extends AppCompatActivity {
 
         bindSearchAndFilters();
 
-        findViewById(R.id.btnNotifications).setOnClickListener(v ->
-                Toast.makeText(this, R.string.notifications, Toast.LENGTH_SHORT).show());
+        NotificationStore.seedIfEmpty(this);
+        findViewById(R.id.btnNotifications).setOnClickListener(v -> openNotificationScreen());
         findViewById(R.id.btnFilter).setOnClickListener(v ->
                 Toast.makeText(this, R.string.filter, Toast.LENGTH_SHORT).show());
         btnMarkAllPaid.setOnClickListener(v -> markAllPaid());
@@ -75,6 +78,13 @@ public class PaymentsActivity extends AppCompatActivity {
         BottomNavigationView bottomNav = findViewById(R.id.bottomNav);
         bottomNav.setSelectedItemId(R.id.nav_dashboard);
         bottomNav.setOnItemSelectedListener(item -> onNavItemSelected(item.getItemId()));
+        updateNotificationDot();
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        updateNotificationDot();
     }
 
     private void bindSearchAndFilters() {
@@ -207,10 +217,16 @@ public class PaymentsActivity extends AppCompatActivity {
         dbHelper.close();
 
         if (rowId > 0L) {
+            NotificationStore.pushNotification(
+                    this,
+                    "Payment Recorded",
+                    item.getWorkerName() + " paid " + formatCurrency(item.getPendingAmountValue())
+            );
             Toast.makeText(this,
                     getString(R.string.payment_recorded_amount, formatCurrency(item.getPendingAmountValue())),
                     Toast.LENGTH_SHORT).show();
             loadPaymentData();
+            updateNotificationDot();
         } else {
             Toast.makeText(this, R.string.payment_record_failed, Toast.LENGTH_SHORT).show();
         }
@@ -240,8 +256,14 @@ public class PaymentsActivity extends AppCompatActivity {
             return;
         }
 
+        NotificationStore.pushNotification(
+                this,
+                "Bulk Payment Update",
+                count + " workers marked as paid."
+        );
         Toast.makeText(this, getString(R.string.marked_paid_count, count), Toast.LENGTH_SHORT).show();
         loadPaymentData();
+        updateNotificationDot();
     }
 
     private String getTodayIsoDate() {
@@ -312,5 +334,14 @@ public class PaymentsActivity extends AppCompatActivity {
         startActivity(intent);
     }
 
-}
+    private void openNotificationScreen() {
+        startActivity(new Intent(this, NotificationActivity.class));
+    }
 
+    private void updateNotificationDot() {
+        if (notificationDot != null) {
+            notificationDot.setVisibility(NotificationStore.hasUnread(this) ? View.VISIBLE : View.GONE);
+        }
+    }
+
+}

@@ -508,6 +508,7 @@ public class WorkerReportActivity extends AppCompatActivity {
         document.close();
 
         if (success) {
+            NotificationStore.pushNotification(this, "Report Downloaded", "Worker report saved as " + fileName);
             Toast.makeText(this, getString(R.string.pdf_saved_success, fileName), Toast.LENGTH_LONG).show();
         } else {
             Toast.makeText(this, R.string.failed_to_save_pdf, Toast.LENGTH_SHORT).show();

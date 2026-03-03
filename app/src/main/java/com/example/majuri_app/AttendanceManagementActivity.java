@@ -180,6 +180,7 @@ public class AttendanceManagementActivity extends AppCompatActivity {
         if (saved) {
             adapter.setEditable(false);
             updateSaveButtonState(true);
+            NotificationStore.pushNotification(this, "Attendance Saved", "Attendance has been locked for " + attendanceDate + ".");
             Toast.makeText(this, R.string.attendance_saved_locked, Toast.LENGTH_SHORT).show();
         } else {
             Toast.makeText(this, R.string.attendance_save_failed, Toast.LENGTH_SHORT).show();
