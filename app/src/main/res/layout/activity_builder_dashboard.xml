@@ -53,7 +53,7 @@
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="Good Morning,"
+                        android:text="Welcome,"
                         android:textColor="@color/dashboard_dark_text"
                         android:textSize="32sp"
                         android:textStyle="bold" />
@@ -149,6 +149,7 @@
                             android:textSize="12sp" />
 
                         <TextView
+                            android:id="@+id/tvTotalWorkersValue"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:layout_marginTop="10dp"
@@ -226,6 +227,7 @@
                             android:textSize="12sp" />
 
                         <TextView
+                            android:id="@+id/tvActiveSitesValue"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:layout_marginTop="10dp"
@@ -390,6 +392,15 @@
                             android:textColor="@color/primary_blue"
                             android:textSize="27sp"
                             android:textStyle="bold" />
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="2dp"
+                            android:text="@string/full_day"
+                            android:textColor="@color/payments_medium_grey"
+                            android:textSize="10sp"
+                            android:textStyle="bold" />
                     </LinearLayout>
                 </com.google.android.material.card.MaterialCardView>
 
@@ -410,11 +421,21 @@
                         android:orientation="vertical">
 
                         <TextView
+                            android:id="@+id/tvHalfDayCount"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:text="110"
                             android:textColor="#4F46E5"
                             android:textSize="27sp"
+                            android:textStyle="bold" />
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="2dp"
+                            android:text="@string/half_day"
+                            android:textColor="@color/payments_medium_grey"
+                            android:textSize="10sp"
                             android:textStyle="bold" />
                     </LinearLayout>
                 </com.google.android.material.card.MaterialCardView>
@@ -436,11 +457,21 @@
                         android:orientation="vertical">
 
                         <TextView
+                            android:id="@+id/tvHourlyCount"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:text="85"
                             android:textColor="#0E7490"
                             android:textSize="27sp"
+                            android:textStyle="bold" />
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="2dp"
+                            android:text="@string/hourly"
+                            android:textColor="@color/payments_medium_grey"
+                            android:textSize="10sp"
                             android:textStyle="bold" />
                     </LinearLayout>
                 </com.google.android.material.card.MaterialCardView>
@@ -461,11 +492,21 @@
                         android:orientation="vertical">
 
                         <TextView
+                            android:id="@+id/tvOtCount"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:text="15"
                             android:textColor="#7E22CE"
                             android:textSize="27sp"
+                            android:textStyle="bold" />
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="2dp"
+                            android:text="@string/ot"
+                            android:textColor="@color/payments_medium_grey"
+                            android:textSize="10sp"
                             android:textStyle="bold" />
                     </LinearLayout>
                 </com.google.android.material.card.MaterialCardView>
