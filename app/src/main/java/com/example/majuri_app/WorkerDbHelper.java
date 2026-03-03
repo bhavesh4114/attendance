@@ -246,6 +246,36 @@ public class WorkerDbHelper extends SQLiteOpenHelper {
     }
 
     /**
+     * Returns daily wage value for a worker id. 0 when unavailable.
+     */
+    public double getWorkerDailyWageById(long workerId) {
+        if (workerId <= 0L) {
+            return 0d;
+        }
+        SQLiteDatabase db = getReadableDatabase();
+        Cursor c = db.query(
+                TABLE_WORKERS,
+                new String[]{COL_DAILY_WAGE},
+                COL_ID + "=?",
+                new String[]{String.valueOf(workerId)},
+                null,
+                null,
+                null,
+                "1"
+        );
+        double dailyWage = 0d;
+        if (c != null) {
+            if (c.moveToFirst()) {
+                String wageText = c.getString(0);
+                dailyWage = parseAmount(wageText);
+            }
+            c.close();
+        }
+        db.close();
+        return Math.max(0d, dailyWage);
+    }
+
+    /**
      * Returns workerId -> attendance status map for a specific date (yyyy-MM-dd).
      */
     public Map<Long, Integer> getAttendanceStatusByDate(String attendanceDate) {

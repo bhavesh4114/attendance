@@ -123,6 +123,8 @@
     <string name="ot">OT</string>
     <string name="total_ot_hrs">4.5 Total OT Hrs</string>
     <string name="save_attendance">Save Attendance</string>
+    <string name="end_duty">End Duty</string>
+    <string name="start_duty">Start Duty</string>
 
     <!-- Attendance Management -->
     <string name="attendance_title">Attendance</string>
@@ -168,6 +170,12 @@
     <string name="bank">Bank</string>
     <string name="upi">UPI</string>
     <string name="mark_as_paid">Mark as Paid</string>
+    <string name="pay_now">Pay Now</string>
+    <string name="pay_later">Pay Later</string>
+    <string name="razorpay_key_id">rzp_test_RqBKFiC6cMIPx8</string>
+    <string name="configure_razorpay_key">Razorpay key set </string>
+    <string name="payment_successful">Payment successful.</string>
+    <string name="payment_failed">Payment failed.</string>
 
     <!-- Reports screen -->
     <string name="reports">Reports</string>

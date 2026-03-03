@@ -1,14 +1,18 @@
 package com.example.majuri_app;
 
+import android.content.Intent;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.FrameLayout;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.core.content.ContextCompat;
 import androidx.recyclerview.widget.RecyclerView;
+
+import com.google.android.material.button.MaterialButton;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -30,6 +34,8 @@ public class AttendanceManagementAdapter extends RecyclerView.Adapter<Attendance
 
     private final List<AttendanceStaffItem> items = new ArrayList<>();
     private final Map<Long, Integer> uiModeByWorkerKey = new HashMap<>();
+    private final Map<Long, Boolean> dutyStartedByWorkerKey = new HashMap<>();
+    private final Map<Long, Boolean> dutyEndedByWorkerKey = new HashMap<>();
     private OnSummaryChangedListener summaryListener;
     private boolean editable = true;
 
@@ -44,6 +50,8 @@ public class AttendanceManagementAdapter extends RecyclerView.Adapter<Attendance
     public void setItems(List<AttendanceStaffItem> list) {
         items.clear();
         uiModeByWorkerKey.clear();
+        dutyStartedByWorkerKey.clear();
+        dutyEndedByWorkerKey.clear();
         if (list != null) {
             items.addAll(list);
         }
@@ -107,15 +115,44 @@ public class AttendanceManagementAdapter extends RecyclerView.Adapter<Attendance
         holder.optionOvertime.setOnClickListener(editable
                 ? v -> setUiModeOnly(holder.getAdapterPosition(), MODE_OVERTIME)
                 : null);
+        holder.btnInlineSaveAttendance.setOnClickListener(v -> {
+            int adapterPosition = holder.getAdapterPosition();
+            if (adapterPosition < 0 || adapterPosition >= items.size()) return;
+            AttendanceStaffItem clickedItem = items.get(adapterPosition);
+            long workerKey = getWorkerKey(clickedItem, adapterPosition);
+            boolean started = Boolean.TRUE.equals(dutyStartedByWorkerKey.get(workerKey));
+            if (!started) {
+                setDutyStarted(adapterPosition, true);
+            } else {
+                setDutyEnded(adapterPosition, true);
+            }
+        });
+        holder.btnPayNow.setOnClickListener(v -> {
+            WorkerDbHelper dbHelper = new WorkerDbHelper(v.getContext());
+            double workerDailyWage = dbHelper.getWorkerDailyWageById(item.getWorkerDbId());
+            dbHelper.close();
+            Intent intent = new Intent(v.getContext(), WorkerPaymentActivity.class);
+            intent.putExtra(WorkerPaymentActivity.EXTRA_WORKER_ID, item.getWorkerDbId());
+            intent.putExtra(WorkerPaymentActivity.EXTRA_WORKER_NAME, item.getName());
+            intent.putExtra(WorkerPaymentActivity.EXTRA_WORKER_ROLE, item.getRole());
+            intent.putExtra(WorkerPaymentActivity.EXTRA_WORKER_CODE, item.getWorkerId());
+            intent.putExtra(WorkerPaymentActivity.EXTRA_DAILY_WAGE, workerDailyWage);
+            intent.putExtra(WorkerPaymentActivity.EXTRA_ATTENDANCE_STATUS, item.getStatus());
+            v.getContext().startActivity(intent);
+        });
+        holder.btnPayLater.setOnClickListener(v ->
+                Toast.makeText(v.getContext(), R.string.pay_later, Toast.LENGTH_SHORT).show());
 
         setOptionEnabledState(holder.optionPresent, editable);
         setOptionEnabledState(holder.optionHalfDay, editable);
         setOptionEnabledState(holder.optionAbsent, editable);
         setOptionEnabledState(holder.optionHourly, editable);
         setOptionEnabledState(holder.optionOvertime, editable);
+        setOptionEnabledState(holder.btnPayNow, true);
+        setOptionEnabledState(holder.btnPayLater, true);
 
         int mode = resolveUiMode(item, position);
-        updateSegmentUi(holder, mode);
+        updateSegmentUi(holder, item, position, mode);
     }
 
     private void setOptionEnabledState(View option, boolean enabled) {
@@ -141,6 +178,20 @@ public class AttendanceManagementAdapter extends RecyclerView.Adapter<Attendance
         notifyItemChanged(position);
     }
 
+    private void setDutyEnded(int position, boolean ended) {
+        if (position < 0 || position >= items.size()) return;
+        AttendanceStaffItem item = items.get(position);
+        dutyEndedByWorkerKey.put(getWorkerKey(item, position), ended);
+        notifyItemChanged(position);
+    }
+
+    private void setDutyStarted(int position, boolean started) {
+        if (position < 0 || position >= items.size()) return;
+        AttendanceStaffItem item = items.get(position);
+        dutyStartedByWorkerKey.put(getWorkerKey(item, position), started);
+        notifyItemChanged(position);
+    }
+
     private int resolveUiMode(AttendanceStaffItem item, int position) {
         Integer stored = uiModeByWorkerKey.get(getWorkerKey(item, position));
         if (stored != null) {
@@ -161,7 +212,7 @@ public class AttendanceManagementAdapter extends RecyclerView.Adapter<Attendance
         return -1L - fallbackPosition;
     }
 
-    private void updateSegmentUi(StaffViewHolder holder, int mode) {
+    private void updateSegmentUi(StaffViewHolder holder, AttendanceStaffItem item, int position, int mode) {
         int blueBg = R.drawable.bg_segment_option_selected;
         int transparent = android.R.color.transparent;
         int white = ContextCompat.getColor(holder.itemView.getContext(), R.color.white);
@@ -181,9 +232,17 @@ public class AttendanceManagementAdapter extends RecyclerView.Adapter<Attendance
 
         holder.hourlyContainer.setVisibility(isHourly ? View.VISIBLE : View.GONE);
         holder.overtimeContainer.setVisibility(isOvertime ? View.VISIBLE : View.GONE);
-        holder.btnInlineSaveAttendance.setVisibility((isFull || isHalf) ? View.VISIBLE : View.GONE);
-        holder.btnInlineSaveAttendance.setEnabled(editable);
-        holder.btnInlineSaveAttendance.setAlpha(editable ? 1f : 0.7f);
+        boolean showDutyActions = isFull || isHalf;
+        boolean dutyStarted = Boolean.TRUE.equals(dutyStartedByWorkerKey.get(getWorkerKey(item, position)));
+        boolean dutyEnded = Boolean.TRUE.equals(dutyEndedByWorkerKey.get(getWorkerKey(item, position)));
+
+        holder.btnInlineSaveAttendance.setVisibility(showDutyActions && !dutyEnded ? View.VISIBLE : View.GONE);
+        holder.paymentActionContainer.setVisibility(showDutyActions && dutyEnded ? View.VISIBLE : View.GONE);
+        holder.btnInlineSaveAttendance.setText(dutyStarted ? R.string.end_duty : R.string.start_duty);
+        holder.btnInlineSaveAttendance.setEnabled(true);
+        holder.paymentActionContainer.setEnabled(true);
+        holder.btnInlineSaveAttendance.setAlpha(1f);
+        holder.paymentActionContainer.setAlpha(1f);
     }
 
     private void applyOptionUi(
@@ -223,7 +282,10 @@ public class AttendanceManagementAdapter extends RecyclerView.Adapter<Attendance
         final TextView textOvertime;
         final View hourlyContainer;
         final View overtimeContainer;
-        final View btnInlineSaveAttendance;
+        final MaterialButton btnInlineSaveAttendance;
+        final View paymentActionContainer;
+        final View btnPayNow;
+        final View btnPayLater;
 
         StaffViewHolder(@NonNull View itemView) {
             super(itemView);
@@ -245,6 +307,9 @@ public class AttendanceManagementAdapter extends RecyclerView.Adapter<Attendance
             hourlyContainer = itemView.findViewById(R.id.hourlyContainer);
             overtimeContainer = itemView.findViewById(R.id.overtimeContainer);
             btnInlineSaveAttendance = itemView.findViewById(R.id.btnInlineSaveAttendance);
+            paymentActionContainer = itemView.findViewById(R.id.paymentActionContainer);
+            btnPayNow = itemView.findViewById(R.id.btnPayNow);
+            btnPayLater = itemView.findViewById(R.id.btnPayLater);
         }
     }
 }

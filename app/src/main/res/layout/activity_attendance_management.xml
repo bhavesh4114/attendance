@@ -13,11 +13,11 @@
         android:layout_height="0dp"
         android:fillViewport="false"
         android:overScrollMode="never"
-        app:layout_constraintBottom_toTopOf="@id/btnSaveAttendance"
+        app:layout_constraintBottom_toTopOf="@id/bottomNav"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
-        android:layout_marginBottom="24dp">
+        android:layout_marginBottom="8dp">
 
         <LinearLayout
             android:layout_width="match_parent"
@@ -471,28 +471,14 @@
         </LinearLayout>
     </androidx.core.widget.NestedScrollView>
 
-    <!-- Save button -->
-    <com.google.android.material.button.MaterialButton
+    <View
         android:id="@+id/btnSaveAttendance"
         android:layout_width="0dp"
-        android:layout_height="@dimen/save_attendance_btn_height"
-        android:layout_marginStart="@dimen/spacing_16"
-        android:layout_marginEnd="@dimen/spacing_16"
-        android:drawableStart="@drawable/ic_check_white"
-        android:drawablePadding="12dp"
-        android:drawableTint="@color/white"
-        android:gravity="center"
-        android:text="@string/save_attendance"
-        android:textColor="@color/white"
-        android:textSize="18sp"
-        android:textStyle="bold"
-        app:backgroundTint="@color/primary_blue"
-        app:cornerRadius="@dimen/save_attendance_radius"
+        android:layout_height="0dp"
+        android:visibility="gone"
         app:layout_constraintBottom_toTopOf="@id/bottomNav"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/scrollContent"
-        android:layout_marginTop="24dp" />
+        app:layout_constraintStart_toStartOf="parent" />
 
     <!-- Bottom navigation -->
     <com.google.android.material.bottomnavigation.BottomNavigationView

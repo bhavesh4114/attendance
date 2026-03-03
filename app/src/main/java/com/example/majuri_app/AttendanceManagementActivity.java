@@ -70,7 +70,10 @@ public class AttendanceManagementActivity extends AppCompatActivity {
         findViewById(R.id.btnSearch).setOnClickListener(v ->
                 Toast.makeText(this, getString(R.string.calendar), Toast.LENGTH_SHORT).show());
 
-        findViewById(R.id.btnSaveAttendance).setOnClickListener(v -> saveAttendanceForSelectedDate());
+        View btnSaveAttendance = findViewById(R.id.btnSaveAttendance);
+        if (btnSaveAttendance != null) {
+            btnSaveAttendance.setOnClickListener(v -> saveAttendanceForSelectedDate());
+        }
 
         setupBottomNav();
     }
@@ -189,8 +192,10 @@ public class AttendanceManagementActivity extends AppCompatActivity {
 
     private void updateSaveButtonState(boolean locked) {
         View btnSaveAttendance = findViewById(R.id.btnSaveAttendance);
-        btnSaveAttendance.setEnabled(!locked);
-        btnSaveAttendance.setAlpha(locked ? 0.6f : 1f);
+        if (btnSaveAttendance != null) {
+            btnSaveAttendance.setEnabled(!locked);
+            btnSaveAttendance.setAlpha(locked ? 0.6f : 1f);
+        }
     }
 
     private void navigateToHomeByRole() {
