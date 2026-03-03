@@ -11,7 +11,7 @@ android {
     }
 
     defaultConfig {
-        applicationId = "com.example.majuriapp"
+        applicationId = "com.example.majuri_app"
         minSdk = 24
         targetSdk = 36
         versionCode = 1
@@ -41,7 +41,7 @@ dependencies {
     implementation(libs.activity)
     implementation(libs.constraintlayout)
     implementation(libs.recyclerview)
-    implementation("com.razorpay:checkout:1.6.40")
+    implementation("com.razorpay:checkout:1.6.26")
     testImplementation(libs.junit)
     androidTestImplementation(libs.ext.junit)
     androidTestImplementation(libs.espresso.core)
