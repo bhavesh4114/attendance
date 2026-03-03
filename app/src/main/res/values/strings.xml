@@ -118,6 +118,9 @@
     <string name="present">PRESENT</string>
     <string name="absent">ABSENT</string>
     <string name="half_day">HALF DAY</string>
+    <string name="full_day">FULL DAY</string>
+    <string name="hourly">HOURLY</string>
+    <string name="ot">OT</string>
     <string name="total_ot_hrs">4.5 Total OT Hrs</string>
     <string name="save_attendance">Save Attendance</string>
 

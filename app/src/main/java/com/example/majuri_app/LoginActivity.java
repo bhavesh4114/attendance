@@ -12,6 +12,10 @@ import com.google.android.material.button.MaterialButton;
 
 public class LoginActivity extends AppCompatActivity {
 
+    private static final String BUILDER_LOGIN_MOBILE = "9978449457";
+    private static final String BUILDER_LOGIN_PASSWORD = "123";
+    private static final String BUILDER_LOGIN_NAME = "Builder";
+
     private EditText etMobile, etPassword;
     private SessionManager sessionManager;
     private boolean passwordVisible = false;
@@ -71,6 +75,14 @@ public class LoginActivity extends AppCompatActivity {
             return;
         }
 
+        // Fixed builder login requested by product flow.
+        if (!isEmailLogin
+                && BUILDER_LOGIN_MOBILE.equals(normalizedMobile)
+                && BUILDER_LOGIN_PASSWORD.equals(password)) {
+            completeLoginToTarget(normalizedMobile, BUILDER_LOGIN_NAME, SessionManager.ROLE_USER, UserDashboardActivity.class);
+            return;
+        }
+
         // 1) Builder/admin credentials from local SQLite.
         BuilderDbHelper builderDb = new BuilderDbHelper(this);
         String builderName = isEmailLogin
@@ -109,9 +121,14 @@ public class LoginActivity extends AppCompatActivity {
 
     private void completeLogin(String loginId, String name, boolean isAdmin) {
         String role = isAdmin ? SessionManager.ROLE_ADMIN : SessionManager.ROLE_USER;
+        Class<?> targetActivity = isAdmin ? DashboardActivity.class : UserDashboardActivity.class;
+        completeLoginToTarget(loginId, name, role, targetActivity);
+    }
+
+    private void completeLoginToTarget(String loginId, String name, String role, Class<?> targetActivity) {
         sessionManager.saveSession(loginId, name, role);
         Toast.makeText(this, R.string.login_success, Toast.LENGTH_SHORT).show();
-        Intent target = new Intent(this, isAdmin ? DashboardActivity.class : UserDashboardActivity.class);
+        Intent target = new Intent(this, targetActivity);
         target.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
         startActivity(target);
     }

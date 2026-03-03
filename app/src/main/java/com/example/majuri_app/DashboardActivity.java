@@ -5,22 +5,34 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.TextView;
+import android.widget.PopupMenu;
 
 import androidx.activity.OnBackPressedCallback;
 import androidx.appcompat.app.AppCompatActivity;
 
 import com.google.android.material.bottomnavigation.BottomNavigationView;
 
+import java.util.Calendar;
+import java.util.List;
+import java.util.Locale;
+
 public class DashboardActivity extends AppCompatActivity {
+    private static final String[] ATTENDANCE_RANGE_OPTIONS = {
+            "7 Day", "1 Month", "3 Month", "6 Month", "12 Month"
+    };
+
+    private TextView tvAttendanceRange;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_dashboard);
+        setContentView(R.layout.activity_contractor_dashboard);
         installBackHandler();
+        bindAttendanceRangeSelector();
 
         updateWelcomeName();
         updateTotalWorkersCount();
+        updateDashboardStats();
         bindQuickActions();
         NotificationStore.seedIfEmpty(this);
         findViewById(R.id.btnNotifications).setOnClickListener(v ->
@@ -57,6 +69,7 @@ public class DashboardActivity extends AppCompatActivity {
         super.onResume();
         updateWelcomeName();
         updateTotalWorkersCount();
+        updateDashboardStats();
         updateNotificationDot();
     }
 
@@ -78,6 +91,86 @@ public class DashboardActivity extends AppCompatActivity {
         if (tvCount != null) {
             tvCount.setText(String.valueOf(count));
         }
+    }
+
+    private void updateDashboardStats() {
+        Calendar now = Calendar.getInstance();
+        int year = now.get(Calendar.YEAR);
+        int month = now.get(Calendar.MONTH);
+
+        WorkerDbHelper dbHelper = new WorkerDbHelper(this);
+        List<WorkerPaymentSummary> summaries = dbHelper.getWorkerPaymentSummariesForMonth(year, month);
+        float attendancePercent = dbHelper.getAttendancePercentageForMonth(year, month);
+        dbHelper.close();
+
+        double pendingTotal = 0d;
+        double monthlyCostTotal = 0d;
+        for (WorkerPaymentSummary summary : summaries) {
+            if (summary == null) continue;
+            pendingTotal += summary.getPendingAmount();
+            monthlyCostTotal += summary.getGrossAmount();
+        }
+
+        TextView tvAttendanceValue = findViewById(R.id.tvAttendanceValue);
+        if (tvAttendanceValue != null) {
+            tvAttendanceValue.setText(String.format(Locale.US, "%d%%", Math.round(attendancePercent)));
+        }
+
+        TextView tvPendingPayValue = findViewById(R.id.tvPendingPayValue);
+        if (tvPendingPayValue != null) {
+            tvPendingPayValue.setText(formatCompactCurrencyInr(pendingTotal));
+        }
+
+        TextView tvMonthlyCostValue = findViewById(R.id.tvMonthlyCostValue);
+        if (tvMonthlyCostValue != null) {
+            tvMonthlyCostValue.setText(formatCompactCurrencyInr(monthlyCostTotal));
+        }
+    }
+
+    private void bindAttendanceRangeSelector() {
+        tvAttendanceRange = findViewById(R.id.tvAttendanceRange);
+        View selector = findViewById(R.id.attendanceRangeSelector);
+
+        if (tvAttendanceRange != null) {
+            tvAttendanceRange.setText(ATTENDANCE_RANGE_OPTIONS[0]);
+        }
+        if (selector != null) {
+            selector.setOnClickListener(this::showAttendanceRangeMenu);
+        }
+    }
+
+    private void showAttendanceRangeMenu(View anchor) {
+        PopupMenu popupMenu = new PopupMenu(this, anchor);
+        for (int i = 0; i < ATTENDANCE_RANGE_OPTIONS.length; i++) {
+            popupMenu.getMenu().add(0, i, i, ATTENDANCE_RANGE_OPTIONS[i]);
+        }
+
+        popupMenu.setOnMenuItemClickListener(item -> {
+            if (tvAttendanceRange != null) {
+                tvAttendanceRange.setText(item.getTitle());
+            }
+            return true;
+        });
+        popupMenu.show();
+    }
+
+    private String formatCompactCurrencyInr(double amount) {
+        double safeAmount = Math.max(0d, amount);
+        if (safeAmount >= 100000d) {
+            return "\u20B9" + trimTrailingZero(String.format(Locale.US, "%.1f", safeAmount / 100000d)) + "L";
+        }
+        if (safeAmount >= 1000d) {
+            return "\u20B9" + trimTrailingZero(String.format(Locale.US, "%.1f", safeAmount / 1000d)) + "K";
+        }
+        return "\u20B9" + String.valueOf(Math.round(safeAmount));
+    }
+
+    private String trimTrailingZero(String value) {
+        if (value == null) return "0";
+        if (value.endsWith(".0")) {
+            return value.substring(0, value.length() - 2);
+        }
+        return value;
     }
 
     private void installBackHandler() {

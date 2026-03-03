@@ -211,7 +211,7 @@ public class AttendanceManagementActivity extends AppCompatActivity {
         bottomNav.getMenu().clear();
         if (useUserNav) {
             bottomNav.inflateMenu(R.menu.menu_user_dashboard_nav);
-            bottomNav.setSelectedItemId(R.id.nav_user_attendance);
+            bottomNav.setSelectedItemId(R.id.nav_user_home);
             bottomNav.setOnItemSelectedListener(item -> onUserNavItemSelected(item.getItemId()));
         } else {
             bottomNav.inflateMenu(R.menu.menu_dashboard_bottom_nav);
@@ -223,9 +223,6 @@ public class AttendanceManagementActivity extends AppCompatActivity {
     private boolean onUserNavItemSelected(int id) {
         if (id == R.id.nav_user_home) {
             navigateToHomeByRole();
-            return true;
-        }
-        if (id == R.id.nav_user_attendance) {
             return true;
         }
         if (id == R.id.nav_user_workers) {

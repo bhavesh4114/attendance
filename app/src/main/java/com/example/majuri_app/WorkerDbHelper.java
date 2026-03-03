@@ -450,6 +450,41 @@ public class WorkerDbHelper extends SQLiteOpenHelper {
         return new int[]{presentCount, halfDayCount, absentCount};
     }
 
+    /**
+     * Returns overall attendance percentage for the given month across all workers.
+     * present=1.0, half-day=0.5, absent=0.0
+     */
+    public float getAttendancePercentageForMonth(int year, int monthZeroBased) {
+        SQLiteDatabase db = getReadableDatabase();
+        String monthPrefix = String.format(Locale.US, "%04d-%02d-%%", year, monthZeroBased + 1);
+        String sql = "SELECT "
+                + "SUM(CASE " + COL_ATTENDANCE_STATUS
+                + " WHEN " + AttendanceStaffItem.STATUS_PRESENT + " THEN 1.0"
+                + " WHEN " + AttendanceStaffItem.STATUS_HALF_DAY + " THEN 0.5"
+                + " ELSE 0.0 END) AS present_equivalent, "
+                + "COUNT(1) AS total_entries "
+                + "FROM " + TABLE_ATTENDANCE + " "
+                + "WHERE " + COL_ATTENDANCE_DATE + " LIKE ? "
+                + "AND " + COL_ATTENDANCE_LOCKED + "=1";
+
+        Cursor c = db.rawQuery(sql, new String[]{monthPrefix});
+        double presentEquivalent = 0d;
+        int totalEntries = 0;
+        if (c != null) {
+            if (c.moveToFirst()) {
+                presentEquivalent = c.isNull(0) ? 0d : c.getDouble(0);
+                totalEntries = c.getInt(1);
+            }
+            c.close();
+        }
+        db.close();
+
+        if (totalEntries <= 0) {
+            return 0f;
+        }
+        return (float) ((presentEquivalent * 100d) / totalEntries);
+    }
+
     private Map<Long, Double> readWorkedDaysMap(SQLiteDatabase db, String monthPrefixLike) {
         Map<Long, Double> map = new HashMap<>();
         String sql = "SELECT " + COL_ATTENDANCE_WORKER_ID + ", "

@@ -140,13 +140,6 @@ public class WorkersListActivity extends AppCompatActivity {
             navigateTo(UserDashboardActivity.class);
             return true;
         }
-        if (id == R.id.nav_user_attendance) {
-            Intent intent = new Intent(this, AttendanceManagementActivity.class);
-            intent.putExtra(AttendanceManagementActivity.EXTRA_FORCE_USER_FLOW, true);
-            startActivity(intent);
-            finish();
-            return true;
-        }
         if (id == R.id.nav_user_workers) {
             return true;
         }

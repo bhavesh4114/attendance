@@ -6,10 +6,6 @@
         android:icon="@drawable/ic_home"
         android:title="@string/nav_home" />
     <item
-        android:id="@+id/nav_user_attendance"
-        android:icon="@drawable/ic_calendar_blue"
-        android:title="@string/nav_attendance" />
-    <item
         android:id="@+id/nav_user_workers"
         android:icon="@drawable/ic_worker_management"
         android:title="@string/nav_workers" />
