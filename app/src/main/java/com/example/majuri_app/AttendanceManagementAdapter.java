@@ -90,6 +90,17 @@ public class AttendanceManagementAdapter extends RecyclerView.Adapter<Attendance
         notifyDataSetChanged();
     }
 
+    public void setDutyEndedWorkerIds(Set<Long> workerIds) {
+        dutyEndedByWorkerKey.clear();
+        if (workerIds != null) {
+            for (Long workerId : workerIds) {
+                if (workerId == null || workerId <= 0L) continue;
+                dutyEndedByWorkerKey.put(workerId, true);
+            }
+        }
+        notifyDataSetChanged();
+    }
+
     public void markDutyStarted(long workerDbId, boolean started) {
         int position = findPositionByWorkerDbId(workerDbId);
         if (position < 0 || position >= items.size()) return;

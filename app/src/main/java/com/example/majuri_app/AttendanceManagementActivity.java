@@ -35,6 +35,9 @@ import java.util.Set;
 
 public class AttendanceManagementActivity extends AppCompatActivity {
     public static final String EXTRA_FORCE_USER_FLOW = "extra_force_user_flow";
+    private static final int DUTY_ACTION_NONE = 0;
+    private static final int DUTY_ACTION_START = 1;
+    private static final int DUTY_ACTION_END = 2;
 
     private TextView tvMonthYear;
     private TextView summaryPresent;
@@ -46,11 +49,12 @@ public class AttendanceManagementActivity extends AppCompatActivity {
     private SessionManager sessionManager;
     private boolean forceUserFlow;
     private final SimpleDateFormat dateKeyFormat = new SimpleDateFormat("yyyy-MM-dd", Locale.US);
-    private final SimpleDateFormat dutyStartTimeFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.US);
+    private final SimpleDateFormat dutyTimeFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.US);
 
     private ActivityResultLauncher<String[]> permissionLauncher;
     private ActivityResultLauncher<Uri> takePictureLauncher;
     private long pendingDutyWorkerId = -1L;
+    private int pendingDutyAction = DUTY_ACTION_NONE;
     private String pendingPhotoPath;
 
     @Override
@@ -87,6 +91,7 @@ public class AttendanceManagementActivity extends AppCompatActivity {
                     return;
                 }
                 pendingDutyWorkerId = item.getWorkerDbId();
+                pendingDutyAction = DUTY_ACTION_START;
                 requestCameraAndStartCapture();
             }
 
@@ -95,7 +100,9 @@ public class AttendanceManagementActivity extends AppCompatActivity {
                 if (item == null || item.getWorkerDbId() <= 0L) {
                     return;
                 }
-                adapter.markDutyEnded(item.getWorkerDbId(), true);
+                pendingDutyWorkerId = item.getWorkerDbId();
+                pendingDutyAction = DUTY_ACTION_END;
+                requestCameraAndStartCapture();
             }
         });
 
@@ -177,6 +184,7 @@ public class AttendanceManagementActivity extends AppCompatActivity {
         List<WorkerListItem> workers = dbHelper.getAllWorkers();
         Map<Long, Integer> savedStatus = dbHelper.getAttendanceStatusByDate(attendanceDate);
         Set<Long> dutyStartedIds = dbHelper.getDutyStartedWorkerIdsForDate(attendanceDate);
+        Set<Long> dutyEndedIds = dbHelper.getDutyEndedWorkerIdsForDate(attendanceDate);
         boolean locked = dbHelper.isAttendanceLockedForDate(attendanceDate);
         dbHelper.close();
 
@@ -197,6 +205,7 @@ public class AttendanceManagementActivity extends AppCompatActivity {
 
         adapter.setItems(list);
         adapter.setDutyStartedWorkerIds(dutyStartedIds);
+        adapter.setDutyEndedWorkerIds(dutyEndedIds);
         adapter.setEditable(!locked);
 
         if (tvTotalWorkers != null) {
@@ -329,9 +338,9 @@ public class AttendanceManagementActivity extends AppCompatActivity {
                 new ActivityResultContracts.TakePicture(),
                 success -> {
                     if (Boolean.TRUE.equals(success)) {
-                        persistDutyStartProofAfterCapture();
+                        persistDutyProofAfterCapture();
                     } else {
-                        Toast.makeText(this, R.string.duty_start_photo_required, Toast.LENGTH_SHORT).show();
+                        Toast.makeText(this, getDutyPhotoRequiredMessage(), Toast.LENGTH_SHORT).show();
                         clearPendingDutyCaptureState(true);
                     }
                 }
@@ -377,33 +386,53 @@ public class AttendanceManagementActivity extends AppCompatActivity {
         return File.createTempFile("duty_" + workerId + "_" + timestamp + "_", ".jpg", parent);
     }
 
-    private void persistDutyStartProofAfterCapture() {
+    private void persistDutyProofAfterCapture() {
         if (pendingDutyWorkerId <= 0L || pendingPhotoPath == null || pendingPhotoPath.trim().isEmpty()) {
-            Toast.makeText(this, R.string.duty_start_photo_save_failed, Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, getDutySaveFailedMessage(), Toast.LENGTH_SHORT).show();
+            clearPendingDutyCaptureState(true);
+            return;
+        }
+        if (pendingDutyAction != DUTY_ACTION_START && pendingDutyAction != DUTY_ACTION_END) {
             clearPendingDutyCaptureState(true);
             return;
         }
 
         String attendanceDate = getSelectedDateKey();
-        String dutyStartTime = dutyStartTimeFormat.format(new Date());
+        String dutyTime = dutyTimeFormat.format(new Date());
         String location = readLastKnownLocationLabel();
 
         WorkerDbHelper dbHelper = new WorkerDbHelper(this);
-        boolean saved = dbHelper.saveDutyStartProof(
-                pendingDutyWorkerId,
-                attendanceDate,
-                dutyStartTime,
-                location,
-                pendingPhotoPath
-        );
+        boolean saved;
+        if (pendingDutyAction == DUTY_ACTION_START) {
+            saved = dbHelper.saveDutyStartProof(
+                    pendingDutyWorkerId,
+                    attendanceDate,
+                    dutyTime,
+                    location,
+                    pendingPhotoPath
+            );
+        } else {
+            saved = dbHelper.saveDutyEndProof(
+                    pendingDutyWorkerId,
+                    attendanceDate,
+                    dutyTime,
+                    location,
+                    pendingPhotoPath
+            );
+        }
         dbHelper.close();
 
         if (saved) {
-            adapter.markDutyStarted(pendingDutyWorkerId, true);
-            Toast.makeText(this, R.string.duty_started_with_proof, Toast.LENGTH_SHORT).show();
+            if (pendingDutyAction == DUTY_ACTION_START) {
+                adapter.markDutyStarted(pendingDutyWorkerId, true);
+                Toast.makeText(this, R.string.duty_started_with_proof, Toast.LENGTH_SHORT).show();
+            } else {
+                adapter.markDutyEnded(pendingDutyWorkerId, true);
+                Toast.makeText(this, R.string.duty_ended_with_proof, Toast.LENGTH_SHORT).show();
+            }
             clearPendingDutyCaptureState(false);
         } else {
-            Toast.makeText(this, R.string.duty_start_photo_save_failed, Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, getDutySaveFailedMessage(), Toast.LENGTH_SHORT).show();
             clearPendingDutyCaptureState(true);
         }
     }
@@ -450,6 +479,19 @@ public class AttendanceManagementActivity extends AppCompatActivity {
             }
         }
         pendingDutyWorkerId = -1L;
+        pendingDutyAction = DUTY_ACTION_NONE;
         pendingPhotoPath = null;
+    }
+
+    private int getDutyPhotoRequiredMessage() {
+        return pendingDutyAction == DUTY_ACTION_END
+                ? R.string.duty_end_photo_required
+                : R.string.duty_start_photo_required;
+    }
+
+    private int getDutySaveFailedMessage() {
+        return pendingDutyAction == DUTY_ACTION_END
+                ? R.string.duty_end_photo_save_failed
+                : R.string.duty_start_photo_save_failed;
     }
 }

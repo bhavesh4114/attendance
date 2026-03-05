@@ -22,7 +22,7 @@ import java.util.Set;
 public class WorkerDbHelper extends SQLiteOpenHelper {
 
     private static final String DB_NAME = "majuri_workers.db";
-    private static final int DB_VERSION = 4;
+    private static final int DB_VERSION = 5;
 
     private static final String TABLE_WORKERS = "workers";
     private static final String TABLE_ATTENDANCE = "attendance_records";
@@ -46,6 +46,9 @@ public class WorkerDbHelper extends SQLiteOpenHelper {
     private static final String COL_DUTY_START_TIME = "duty_start_time";
     private static final String COL_DUTY_LOCATION = "location";
     private static final String COL_DUTY_IMAGE_PATH = "image_path";
+    private static final String COL_DUTY_END_TIME = "duty_end_time";
+    private static final String COL_DUTY_END_LOCATION = "end_location";
+    private static final String COL_DUTY_END_IMAGE_PATH = "end_image_path";
 
     private static final String COL_ADVANCE_WORKER_ID = "worker_id";
     private static final String COL_ADVANCE_AMOUNT = "amount";
@@ -84,6 +87,9 @@ public class WorkerDbHelper extends SQLiteOpenHelper {
         }
         if (oldVersion < 4) {
             createDutyStartProofsTable(db);
+        }
+        if (oldVersion < 5) {
+            addDutyEndColumnsIfMissing(db);
         }
     }
 
@@ -137,8 +143,26 @@ public class WorkerDbHelper extends SQLiteOpenHelper {
                 + COL_DUTY_START_TIME + " TEXT NOT NULL, "
                 + COL_DUTY_LOCATION + " TEXT, "
                 + COL_DUTY_IMAGE_PATH + " TEXT NOT NULL, "
+                + COL_DUTY_END_TIME + " TEXT, "
+                + COL_DUTY_END_LOCATION + " TEXT, "
+                + COL_DUTY_END_IMAGE_PATH + " TEXT, "
                 + "UNIQUE(" + COL_DUTY_WORKER_ID + ", " + COL_DUTY_ATTENDANCE_DATE + "))";
         db.execSQL(sql);
+    }
+
+    private void addDutyEndColumnsIfMissing(SQLiteDatabase db) {
+        try {
+            db.execSQL("ALTER TABLE " + TABLE_DUTY_START_PROOFS + " ADD COLUMN " + COL_DUTY_END_TIME + " TEXT");
+        } catch (Exception ignored) {
+        }
+        try {
+            db.execSQL("ALTER TABLE " + TABLE_DUTY_START_PROOFS + " ADD COLUMN " + COL_DUTY_END_LOCATION + " TEXT");
+        } catch (Exception ignored) {
+        }
+        try {
+            db.execSQL("ALTER TABLE " + TABLE_DUTY_START_PROOFS + " ADD COLUMN " + COL_DUTY_END_IMAGE_PATH + " TEXT");
+        } catch (Exception ignored) {
+        }
     }
 
     private void migrateAdvancesToPayments(SQLiteDatabase db) {
@@ -484,6 +508,42 @@ public class WorkerDbHelper extends SQLiteOpenHelper {
     }
 
     /**
+     * Update an existing duty proof record with end-duty proof details.
+     */
+    public boolean saveDutyEndProof(
+            long workerId,
+            String attendanceDate,
+            String dutyEndTime,
+            String endLocation,
+            String endImagePath
+    ) {
+        if (workerId <= 0L) return false;
+        if (attendanceDate == null || attendanceDate.trim().isEmpty()) return false;
+        if (dutyEndTime == null || dutyEndTime.trim().isEmpty()) return false;
+        if (endImagePath == null || endImagePath.trim().isEmpty()) return false;
+
+        SQLiteDatabase db = getWritableDatabase();
+        try {
+            ContentValues cv = new ContentValues();
+            cv.put(COL_DUTY_END_TIME, dutyEndTime.trim());
+            cv.put(COL_DUTY_END_LOCATION, endLocation != null ? endLocation.trim() : "");
+            cv.put(COL_DUTY_END_IMAGE_PATH, endImagePath.trim());
+
+            int updated = db.update(
+                    TABLE_DUTY_START_PROOFS,
+                    cv,
+                    COL_DUTY_WORKER_ID + "=? AND " + COL_DUTY_ATTENDANCE_DATE + "=?",
+                    new String[]{String.valueOf(workerId), attendanceDate.trim()}
+            );
+            return updated > 0;
+        } catch (Exception ignored) {
+            return false;
+        } finally {
+            db.close();
+        }
+    }
+
+    /**
      * Returns worker ids that already have a duty-start proof for a date.
      */
     public Set<Long> getDutyStartedWorkerIdsForDate(String attendanceDate) {
@@ -495,6 +555,35 @@ public class WorkerDbHelper extends SQLiteOpenHelper {
                 TABLE_DUTY_START_PROOFS,
                 new String[]{COL_DUTY_WORKER_ID},
                 COL_DUTY_ATTENDANCE_DATE + "=?",
+                new String[]{attendanceDate.trim()},
+                null,
+                null,
+                null
+        );
+        if (c != null) {
+            int iWorkerId = c.getColumnIndex(COL_DUTY_WORKER_ID);
+            while (c.moveToNext()) {
+                long workerId = iWorkerId >= 0 ? c.getLong(iWorkerId) : -1L;
+                if (workerId > 0L) ids.add(workerId);
+            }
+            c.close();
+        }
+        db.close();
+        return ids;
+    }
+
+    /**
+     * Returns worker ids that already have end-duty proof for a date.
+     */
+    public Set<Long> getDutyEndedWorkerIdsForDate(String attendanceDate) {
+        Set<Long> ids = new HashSet<>();
+        if (attendanceDate == null || attendanceDate.trim().isEmpty()) return ids;
+
+        SQLiteDatabase db = getReadableDatabase();
+        Cursor c = db.query(
+                TABLE_DUTY_START_PROOFS,
+                new String[]{COL_DUTY_WORKER_ID},
+                COL_DUTY_ATTENDANCE_DATE + "=? AND " + COL_DUTY_END_TIME + " IS NOT NULL AND TRIM(" + COL_DUTY_END_TIME + ")!=''",
                 new String[]{attendanceDate.trim()},
                 null,
                 null,
