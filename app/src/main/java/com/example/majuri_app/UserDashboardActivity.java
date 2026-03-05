@@ -46,7 +46,7 @@ public class UserDashboardActivity extends AppCompatActivity {
                 return true;
             }
             if (id == R.id.nav_user_payslips) {
-                Toast.makeText(this, getString(R.string.user_dashboard_payslips), Toast.LENGTH_SHORT).show();
+                openFundsScreen();
                 return true;
             }
             if (id == R.id.nav_user_profile) {
@@ -88,6 +88,11 @@ public class UserDashboardActivity extends AppCompatActivity {
         Intent intent = new Intent(this, WorkersListActivity.class);
         intent.putExtra(WorkersListActivity.EXTRA_FORCE_USER_FLOW, true);
         startActivity(intent);
+        finish();
+    }
+
+    private void openFundsScreen() {
+        startActivity(new Intent(this, FundsActivity.class));
         finish();
     }
 

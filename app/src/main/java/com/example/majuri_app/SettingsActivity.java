@@ -31,6 +31,8 @@ public class SettingsActivity extends AppCompatActivity {
                 Toast.makeText(this, R.string.backup_data, Toast.LENGTH_SHORT).show());
         findViewById(R.id.rowLanguage).setOnClickListener(v ->
                 Toast.makeText(this, R.string.language, Toast.LENGTH_SHORT).show());
+        findViewById(R.id.btnRequestFund).setOnClickListener(v ->
+                startActivity(new Intent(this, FundRequestsActivity.class)));
         findViewById(R.id.btnLogout).setOnClickListener(v -> doLogout());
 
         BottomNavigationView bottomNav = findViewById(R.id.bottomNav);

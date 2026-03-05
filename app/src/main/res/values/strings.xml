@@ -257,6 +257,7 @@
     <string name="notifications_subtitle">Attendance and report alerts</string>
     <string name="support">SUPPORT</string>
     <string name="help_center">Help Center</string>
+    <string name="request_fund">Request Fund</string>
     <string name="logout_account">Logout Account</string>
     <string name="app_version">Majduri Hajri v2.4.0 (Build 102)</string>
     <string name="copyright">© 2024 TechLabour Systems</string>
@@ -337,9 +338,71 @@
     <string name="user_dashboard_absent">Absent</string>
     <string name="user_dashboard_my_attendance">MY ATTENDANCE</string>
     <string name="user_dashboard_my_dues">MY DUES</string>
-    <string name="user_dashboard_payslips">Payslips</string>
+    <string name="user_dashboard_payslips">Funds</string>
 
     <!-- Notifications -->
     <string name="no_notifications_found">No notifications yet.</string>
     <string name="location_api_key">SyBjtOlN6T2tIOtO_CwIzf2QZZOLgLne3oc</string>
+
+    <!-- Fund Requests -->
+    <string name="fund_requests">Fund Requests</string>
+    <string name="new_request">New Request</string>
+    <string name="amount">Amount</string>
+    <string name="usd">USD</string>
+    <string name="select_builder">Select Builder</string>
+    <string name="choose_a_builder">Choose a builder</string>
+    <string name="optional_note">Optional Note</string>
+    <string name="fund_request_reason_hint">Reason for fund request...</string>
+    <string name="submit_request">Submit Request</string>
+    <string name="request_history">Request History</string>
+    <string name="view_all_small">View All</string>
+    <string name="pending">PENDING</string>
+    <string name="approved">APPROVED</string>
+    <string name="rejected">REJECTED</string>
+    <string name="history_horizon_developments">Horizon Developments</string>
+    <string name="history_apex_construction">Apex Construction</string>
+    <string name="history_blue_sky_properties">Blue Sky Properties</string>
+    <string name="history_oct_24_2023">Oct 24, 2023</string>
+    <string name="history_oct_21_2023">Oct 21, 2023</string>
+    <string name="history_oct_18_2023">Oct 18, 2023</string>
+    <string name="history_amount_2450">$2,450.00</string>
+    <string name="history_amount_1200">$1,200.00</string>
+    <string name="history_amount_500">$500.00</string>
+
+    <!-- Funds -->
+    <string name="pending_approvals">Pending Approvals</string>
+    <string name="all_requests_count">All Requests (12)</string>
+    <string name="recent">Recent</string>
+    <string name="critical">Critical</string>
+    <string name="foundation_earthwork">FOUNDATION &amp; EARTHWORK</string>
+    <string name="project_882">PROJECT #882</string>
+    <string name="requested_on_oct_12_2023">Requested on Oct 12, 2023</string>
+    <string name="fund_request_note">"Urgent: For reinforced concrete foundation and site prep for Phase 2."</string>
+    <string name="reject">Reject</string>
+    <string name="approve_fund">Approve Fund</string>
+    <string name="funds_transaction_history">Transaction History</string>
+    <string name="funds_approved_credit">Fund Approved · Credit</string>
+    <string name="funds_rejected_refund">Fund Rejected · Returned</string>
+    <string name="funds_history_mar_02_2026">Mar 02, 2026</string>
+    <string name="funds_history_mar_01_2026">Mar 01, 2026</string>
+    <string name="funds_amount_45000">$45,000.00</string>
+    <string name="funds_amount_9500">$9,500.00</string>
+    <string name="approve_payment">Approve Payment</string>
+    <string name="requested_amount">REQUESTED AMOUNT</string>
+    <string name="pending_approval">PENDING APPROVAL</string>
+    <string name="contractor">Contractor</string>
+    <string name="date_requested">Date Requested</string>
+    <string name="payment_note">Payment Note</string>
+    <string name="payment_note_text">"For site materials - 50 bags of cement and reinforcement steel rods for Block B foundation."</string>
+    <string name="select_payment_method_title">Select Payment Method</string>
+    <string name="upi_payment">UPI Payment</string>
+    <string name="upi_payment_subtitle">Instant transfer via QR or ID</string>
+    <string name="cash_payment">Cash Payment</string>
+    <string name="cash_payment_subtitle">Handover physical currency</string>
+    <string name="total_payable">Total Payable</string>
+    <string name="funds_amount_1500">$1,500</string>
+    <string name="funds_amount_1500_decimal">$1,500.00</string>
+    <string name="confirm_payment">Confirm Payment</string>
+    <string name="transaction_id_fund">Transaction ID: FND-9844-2023</string>
+    <string name="confirmed_payment_method">%1$s payment confirmed.</string>
 </resources>

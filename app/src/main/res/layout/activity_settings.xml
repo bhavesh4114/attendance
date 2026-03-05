@@ -375,6 +375,19 @@
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
 
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnRequestFund"
+                android:layout_width="match_parent"
+                android:layout_height="@dimen/settings_logout_btn_height"
+                android:layout_marginTop="8dp"
+                android:background="@drawable/bg_button_primary"
+                android:fontFamily="sans-serif"
+                android:text="@string/request_fund"
+                android:textAllCaps="false"
+                android:textColor="@color/white"
+                android:textSize="18sp"
+                android:textStyle="bold" />
+
             <!-- Logout button -->
             <FrameLayout
                 android:id="@+id/btnLogout"

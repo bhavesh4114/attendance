@@ -88,6 +88,15 @@
             android:name=".NotificationActivity"
             android:exported="false" />
         <activity
+            android:name=".ApprovePaymentActivity"
+            android:exported="false" />
+        <activity
+            android:name=".FundsActivity"
+            android:exported="false" />
+        <activity
+            android:name=".FundRequestsActivity"
+            android:exported="false" />
+        <activity
             android:name=".FaceCaptureActivity"
             android:exported="false"
             android:screenOrientation="portrait" />

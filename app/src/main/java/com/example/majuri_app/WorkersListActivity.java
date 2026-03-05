@@ -144,7 +144,8 @@ public class WorkersListActivity extends AppCompatActivity {
             return true;
         }
         if (id == R.id.nav_user_payslips) {
-            Toast.makeText(this, getString(R.string.user_dashboard_payslips), Toast.LENGTH_SHORT).show();
+            startActivity(new Intent(this, FundsActivity.class));
+            finish();
             return true;
         }
         if (id == R.id.nav_user_profile) {
