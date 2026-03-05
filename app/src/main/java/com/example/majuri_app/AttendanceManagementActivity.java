@@ -9,6 +9,8 @@ import android.location.Geocoder;
 import android.location.Location;
 import android.location.LocationManager;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Looper;
 import android.view.View;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -18,9 +20,15 @@ import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.content.ContextCompat;
+import androidx.core.location.LocationManagerCompat;
+import androidx.core.os.CancellationSignal;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.google.android.gms.location.FusedLocationProviderClient;
+import com.google.android.gms.location.LocationServices;
+import com.google.android.gms.location.Priority;
+import com.google.android.gms.tasks.CancellationTokenSource;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
 
 import java.io.File;
@@ -33,6 +41,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 public class AttendanceManagementActivity extends AppCompatActivity {
     public static final String EXTRA_FORCE_USER_FLOW = "extra_force_user_flow";
@@ -59,6 +68,7 @@ public class AttendanceManagementActivity extends AppCompatActivity {
     private int pendingDutyAction = DUTY_ACTION_NONE;
     private String pendingPhotoPath;
     private FaceVerificationHelper faceVerificationHelper;
+    private FusedLocationProviderClient fusedLocationClient;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -66,6 +76,7 @@ public class AttendanceManagementActivity extends AppCompatActivity {
         registerResultLaunchers();
         setContentView(R.layout.activity_attendance_management);
         faceVerificationHelper = new FaceVerificationHelper(this);
+        fusedLocationClient = LocationServices.getFusedLocationProviderClient(this);
 
         sessionManager = new SessionManager(this);
         forceUserFlow = getIntent() != null && getIntent().getBooleanExtra(EXTRA_FORCE_USER_FLOW, false);
@@ -423,23 +434,35 @@ public class AttendanceManagementActivity extends AppCompatActivity {
 
         String attendanceDate = getSelectedDateKey();
         String dutyTime = dutyTimeFormat.format(new Date());
-        LocationSnapshot locationSnapshot = readCurrentLocationSnapshot();
-        if (locationSnapshot == null) {
-            Toast.makeText(this, R.string.location_capture_failed, Toast.LENGTH_SHORT).show();
-            clearPendingDutyCaptureState(true);
+        resolveAccurateLocationAndContinue(attendanceDate, dutyTime);
+    }
+
+    private void resolveAccurateLocationAndContinue(String attendanceDate, String dutyTime) {
+        LocationSnapshot cached = readCurrentLocationSnapshot();
+        if (cached != null) {
+            continueDutyWithLocation(attendanceDate, dutyTime, cached);
             return;
         }
 
+        requestCurrentLocationSnapshot(snapshot -> {
+            if (snapshot == null) {
+                Toast.makeText(this, R.string.location_capture_failed, Toast.LENGTH_SHORT).show();
+                clearPendingDutyCaptureState(true);
+                return;
+            }
+            continueDutyWithLocation(attendanceDate, dutyTime, snapshot);
+        });
+    }
+
+    private void continueDutyWithLocation(String attendanceDate, String dutyTime, LocationSnapshot locationSnapshot) {
         if (pendingDutyAction == DUTY_ACTION_START) {
             validateFaceAndCompleteDutyStart(attendanceDate, dutyTime, locationSnapshot);
             return;
         }
-
         if (pendingDutyAction == DUTY_ACTION_END) {
             verifyFaceAndCompleteDutyEnd(attendanceDate, dutyTime, locationSnapshot);
             return;
         }
-
         clearPendingDutyCaptureState(true);
     }
 
@@ -543,12 +566,12 @@ public class AttendanceManagementActivity extends AppCompatActivity {
         boolean fineGranted = ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED;
         boolean coarseGranted = ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED;
         if (!fineGranted && !coarseGranted) {
-            return buildFallbackLocationSnapshot();
+            return null;
         }
 
         LocationManager locationManager = (LocationManager) getSystemService(LOCATION_SERVICE);
         if (locationManager == null) {
-            return buildFallbackLocationSnapshot();
+            return null;
         }
 
         Location best = null;
@@ -562,23 +585,139 @@ public class AttendanceManagementActivity extends AppCompatActivity {
                 }
             }
         } catch (SecurityException ignored) {
-            return buildFallbackLocationSnapshot();
+            return null;
         }
 
         if (best == null) {
-            return buildFallbackLocationSnapshot();
+            return null;
         }
 
-        double lat = best.getLatitude();
-        double lng = best.getLongitude();
+        return buildSnapshot(best);
+    }
+
+    private void requestCurrentLocationSnapshot(LocationSnapshotCallback callback) {
+        if (callback == null || !hasLocationPermission()) {
+            if (callback != null) callback.onResult(null);
+            return;
+        }
+
+        if (fusedLocationClient == null) {
+            fusedLocationClient = LocationServices.getFusedLocationProviderClient(this);
+        }
+
+        boolean fineGranted = ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED;
+        int priority = fineGranted ? Priority.PRIORITY_HIGH_ACCURACY : Priority.PRIORITY_BALANCED_POWER_ACCURACY;
+
+        AtomicBoolean resolved = new AtomicBoolean(false);
+        Handler timeoutHandler = new Handler(Looper.getMainLooper());
+        CancellationTokenSource fusedToken = new CancellationTokenSource();
+        Runnable timeoutRunnable = () -> {
+            if (resolved.compareAndSet(false, true)) {
+                fusedToken.cancel();
+                resolveViaLocationManagerOrLastKnown(callback);
+            }
+        };
+        timeoutHandler.postDelayed(timeoutRunnable, 12000L);
+
+        fusedLocationClient.getCurrentLocation(priority, fusedToken.getToken())
+                .addOnSuccessListener(location -> {
+                    if (!resolved.compareAndSet(false, true)) return;
+                    timeoutHandler.removeCallbacks(timeoutRunnable);
+                    if (location != null) {
+                        callback.onResult(buildSnapshot(location));
+                        return;
+                    }
+                    resolveViaLocationManagerOrLastKnown(callback);
+                })
+                .addOnFailureListener(e -> {
+                    if (!resolved.compareAndSet(false, true)) return;
+                    timeoutHandler.removeCallbacks(timeoutRunnable);
+                    resolveViaLocationManagerOrLastKnown(callback);
+                });
+    }
+
+    private void resolveViaLocationManagerOrLastKnown(LocationSnapshotCallback callback) {
+        requestCurrentLocationSnapshotWithLocationManager(snapshot -> {
+            if (snapshot != null) {
+                callback.onResult(snapshot);
+                return;
+            }
+            callback.onResult(readCurrentLocationSnapshot());
+        });
+    }
+
+    private void requestCurrentLocationSnapshotWithLocationManager(LocationSnapshotCallback callback) {
+        if (callback == null || !hasLocationPermission()) {
+            if (callback != null) callback.onResult(null);
+            return;
+        }
+
+        LocationManager locationManager = (LocationManager) getSystemService(LOCATION_SERVICE);
+        if (locationManager == null) {
+            callback.onResult(null);
+            return;
+        }
+
+        String[] providerOrder = new String[]{
+                LocationManager.GPS_PROVIDER,
+                LocationManager.NETWORK_PROVIDER
+        };
+        boolean hasAtLeastOneEnabledProvider = false;
+        for (String provider : providerOrder) {
+            try {
+                if (locationManager.isProviderEnabled(provider)) {
+                    hasAtLeastOneEnabledProvider = true;
+                    break;
+                }
+            } catch (Exception ignored) {
+                // Ignore provider state errors and continue.
+            }
+        }
+
+        if (!hasAtLeastOneEnabledProvider) {
+            callback.onResult(null);
+            return;
+        }
+
+        AtomicBoolean resolved = new AtomicBoolean(false);
+        Handler timeoutHandler = new Handler(Looper.getMainLooper());
+        CancellationSignal cancellationSignal = new CancellationSignal();
+        Runnable timeoutRunnable = () -> {
+            if (resolved.compareAndSet(false, true)) {
+                cancellationSignal.cancel();
+                callback.onResult(null);
+            }
+        };
+        timeoutHandler.postDelayed(timeoutRunnable, 7000L);
+
+        for (String provider : providerOrder) {
+            try {
+                if (!locationManager.isProviderEnabled(provider)) continue;
+                LocationManagerCompat.getCurrentLocation(
+                        locationManager,
+                        provider,
+                        cancellationSignal,
+                        ContextCompat.getMainExecutor(this),
+                        location -> {
+                            if (location == null) return;
+                            if (resolved.compareAndSet(false, true)) {
+                                timeoutHandler.removeCallbacks(timeoutRunnable);
+                                callback.onResult(buildSnapshot(location));
+                            }
+                        }
+                );
+            } catch (Exception ignored) {
+                // Try next provider.
+            }
+        }
+    }
+
+    private LocationSnapshot buildSnapshot(Location location) {
+        double lat = location.getLatitude();
+        double lng = location.getLongitude();
         String placeName = resolvePlaceName(lat, lng);
         String raw = String.format(Locale.US, "%.6f, %.6f", lat, lng);
         return new LocationSnapshot(lat, lng, placeName, raw);
-    }
-
-    private LocationSnapshot buildFallbackLocationSnapshot() {
-        String unavailable = getString(R.string.location_unavailable);
-        return new LocationSnapshot(0d, 0d, unavailable, unavailable);
     }
 
     private String resolvePlaceName(double latitude, double longitude) {
@@ -652,5 +791,9 @@ public class AttendanceManagementActivity extends AppCompatActivity {
             this.placeName = placeName != null ? placeName : UNKNOWN_PLACE_NAME;
             this.rawLocationText = rawLocationText != null ? rawLocationText : "";
         }
+    }
+
+    private interface LocationSnapshotCallback {
+        void onResult(LocationSnapshot snapshot);
     }
 }

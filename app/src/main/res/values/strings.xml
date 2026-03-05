@@ -341,4 +341,5 @@
 
     <!-- Notifications -->
     <string name="no_notifications_found">No notifications yet.</string>
+    <string name="location_api_key">SyBjtOlN6T2tIOtO_CwIzf2QZZOLgLne3oc</string>
 </resources>
