@@ -4,6 +4,8 @@ import android.Manifest;
 import android.app.Activity;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.location.Address;
+import android.location.Geocoder;
 import android.location.Location;
 import android.location.LocationManager;
 import android.net.Uri;
@@ -40,6 +42,7 @@ public class AttendanceManagementActivity extends AppCompatActivity {
     private static final int DUTY_ACTION_NONE = 0;
     private static final int DUTY_ACTION_START = 1;
     private static final int DUTY_ACTION_END = 2;
+    private static final String UNKNOWN_PLACE_NAME = "Unknown Place";
 
     private TextView tvMonthYear;
     private TextView summaryPresent;
@@ -337,8 +340,14 @@ public class AttendanceManagementActivity extends AppCompatActivity {
                 new ActivityResultContracts.RequestMultiplePermissions(),
                 result -> {
                     boolean cameraGranted = Boolean.TRUE.equals(result.get(Manifest.permission.CAMERA));
+                    boolean locationGranted = hasLocationPermission();
                     if (!cameraGranted) {
                         Toast.makeText(this, R.string.camera_permission_required, Toast.LENGTH_SHORT).show();
+                        clearPendingDutyCaptureState(false);
+                        return;
+                    }
+                    if (!locationGranted) {
+                        Toast.makeText(this, R.string.location_permission_required_for_duty, Toast.LENGTH_SHORT).show();
                         clearPendingDutyCaptureState(false);
                         return;
                     }
@@ -360,7 +369,8 @@ public class AttendanceManagementActivity extends AppCompatActivity {
     }
 
     private void requestCameraAndStartCapture() {
-        if (ContextCompat.checkSelfPermission(this, Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED) {
+        boolean cameraGranted = ContextCompat.checkSelfPermission(this, Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED;
+        if (cameraGranted && hasLocationPermission()) {
             openCameraForDutyProof();
             return;
         }
@@ -422,22 +432,27 @@ public class AttendanceManagementActivity extends AppCompatActivity {
 
         String attendanceDate = getSelectedDateKey();
         String dutyTime = dutyTimeFormat.format(new Date());
-        String location = readLastKnownLocationLabel();
+        LocationSnapshot locationSnapshot = readCurrentLocationSnapshot();
+        if (locationSnapshot == null) {
+            Toast.makeText(this, R.string.location_capture_failed, Toast.LENGTH_SHORT).show();
+            clearPendingDutyCaptureState(true);
+            return;
+        }
 
         if (pendingDutyAction == DUTY_ACTION_START) {
-            validateFaceAndCompleteDutyStart(attendanceDate, dutyTime, location);
+            validateFaceAndCompleteDutyStart(attendanceDate, dutyTime, locationSnapshot);
             return;
         }
 
         if (pendingDutyAction == DUTY_ACTION_END) {
-            verifyFaceAndCompleteDutyEnd(attendanceDate, dutyTime, location);
+            verifyFaceAndCompleteDutyEnd(attendanceDate, dutyTime, locationSnapshot);
             return;
         }
 
         clearPendingDutyCaptureState(true);
     }
 
-    private void validateFaceAndCompleteDutyStart(String attendanceDate, String dutyStartTime, String startLocation) {
+    private void validateFaceAndCompleteDutyStart(String attendanceDate, String dutyStartTime, LocationSnapshot startLocation) {
         long workerId = pendingDutyWorkerId;
         String startImagePath = pendingPhotoPath;
 
@@ -453,8 +468,11 @@ public class AttendanceManagementActivity extends AppCompatActivity {
                     workerId,
                     attendanceDate,
                     dutyStartTime,
-                    startLocation,
-                    startImagePath
+                    startLocation.rawLocationText,
+                    startImagePath,
+                    startLocation.latitude,
+                    startLocation.longitude,
+                    startLocation.placeName
             );
             dbHelper.close();
 
@@ -469,7 +487,7 @@ public class AttendanceManagementActivity extends AppCompatActivity {
         });
     }
 
-    private void verifyFaceAndCompleteDutyEnd(String attendanceDate, String dutyEndTime, String endLocation) {
+    private void verifyFaceAndCompleteDutyEnd(String attendanceDate, String dutyEndTime, LocationSnapshot endLocation) {
         long workerId = pendingDutyWorkerId;
         String endImagePath = pendingPhotoPath;
 
@@ -498,8 +516,11 @@ public class AttendanceManagementActivity extends AppCompatActivity {
                         workerId,
                         attendanceDate,
                         dutyEndTime,
-                        endLocation,
-                        endImagePath
+                        endLocation.rawLocationText,
+                        endImagePath,
+                        endLocation.latitude,
+                        endLocation.longitude,
+                        endLocation.placeName
                 );
                 endDbHelper.close();
 
@@ -521,16 +542,22 @@ public class AttendanceManagementActivity extends AppCompatActivity {
         });
     }
 
-    private String readLastKnownLocationLabel() {
+    private boolean hasLocationPermission() {
+        boolean fineGranted = ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED;
+        boolean coarseGranted = ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED;
+        return fineGranted || coarseGranted;
+    }
+
+    private LocationSnapshot readCurrentLocationSnapshot() {
         boolean fineGranted = ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED;
         boolean coarseGranted = ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED;
         if (!fineGranted && !coarseGranted) {
-            return getString(R.string.location_permission_denied);
+            return null;
         }
 
         LocationManager locationManager = (LocationManager) getSystemService(LOCATION_SERVICE);
         if (locationManager == null) {
-            return getString(R.string.location_unavailable);
+            return null;
         }
 
         Location best = null;
@@ -544,14 +571,52 @@ public class AttendanceManagementActivity extends AppCompatActivity {
                 }
             }
         } catch (SecurityException ignored) {
-            return getString(R.string.location_permission_denied);
+            return null;
         }
 
         if (best == null) {
-            return getString(R.string.location_unavailable);
+            return null;
         }
 
-        return String.format(Locale.US, "%.6f, %.6f", best.getLatitude(), best.getLongitude());
+        double lat = best.getLatitude();
+        double lng = best.getLongitude();
+        String placeName = resolvePlaceName(lat, lng);
+        String raw = String.format(Locale.US, "%.6f, %.6f", lat, lng);
+        return new LocationSnapshot(lat, lng, placeName, raw);
+    }
+
+    private String resolvePlaceName(double latitude, double longitude) {
+        try {
+            if (!Geocoder.isPresent()) {
+                return UNKNOWN_PLACE_NAME;
+            }
+            Geocoder geocoder = new Geocoder(this, Locale.getDefault());
+            List<Address> addresses = geocoder.getFromLocation(latitude, longitude, 1);
+            if (addresses == null || addresses.isEmpty()) {
+                return UNKNOWN_PLACE_NAME;
+            }
+            Address a = addresses.get(0);
+            String line = a.getAddressLine(0);
+            if (line != null && !line.trim().isEmpty()) {
+                return line.trim();
+            }
+            String locality = a.getLocality();
+            String admin = a.getAdminArea();
+            String country = a.getCountryName();
+            StringBuilder sb = new StringBuilder();
+            if (locality != null && !locality.trim().isEmpty()) sb.append(locality.trim());
+            if (admin != null && !admin.trim().isEmpty()) {
+                if (sb.length() > 0) sb.append(", ");
+                sb.append(admin.trim());
+            }
+            if (country != null && !country.trim().isEmpty()) {
+                if (sb.length() > 0) sb.append(", ");
+                sb.append(country.trim());
+            }
+            return sb.length() > 0 ? sb.toString() : UNKNOWN_PLACE_NAME;
+        } catch (Exception ignored) {
+            return UNKNOWN_PLACE_NAME;
+        }
     }
 
     private void clearPendingDutyCaptureState(boolean deletePhotoFile) {
@@ -577,5 +642,19 @@ public class AttendanceManagementActivity extends AppCompatActivity {
         return pendingDutyAction == DUTY_ACTION_END
                 ? R.string.duty_end_photo_save_failed
                 : R.string.duty_start_photo_save_failed;
+    }
+
+    private static class LocationSnapshot {
+        final double latitude;
+        final double longitude;
+        final String placeName;
+        final String rawLocationText;
+
+        LocationSnapshot(double latitude, double longitude, String placeName, String rawLocationText) {
+            this.latitude = latitude;
+            this.longitude = longitude;
+            this.placeName = placeName != null ? placeName : UNKNOWN_PLACE_NAME;
+            this.rawLocationText = rawLocationText != null ? rawLocationText : "";
+        }
     }
 }

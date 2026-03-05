@@ -22,7 +22,7 @@ import java.util.Set;
 public class WorkerDbHelper extends SQLiteOpenHelper {
 
     private static final String DB_NAME = "majuri_workers.db";
-    private static final int DB_VERSION = 5;
+    private static final int DB_VERSION = 6;
 
     private static final String TABLE_WORKERS = "workers";
     private static final String TABLE_ATTENDANCE = "attendance_records";
@@ -46,9 +46,15 @@ public class WorkerDbHelper extends SQLiteOpenHelper {
     private static final String COL_DUTY_START_TIME = "duty_start_time";
     private static final String COL_DUTY_LOCATION = "location";
     private static final String COL_DUTY_IMAGE_PATH = "image_path";
+    private static final String COL_DUTY_START_LAT = "start_lat";
+    private static final String COL_DUTY_START_LNG = "start_lng";
+    private static final String COL_DUTY_START_PLACE = "start_place_name";
     private static final String COL_DUTY_END_TIME = "duty_end_time";
     private static final String COL_DUTY_END_LOCATION = "end_location";
     private static final String COL_DUTY_END_IMAGE_PATH = "end_image_path";
+    private static final String COL_DUTY_END_LAT = "end_lat";
+    private static final String COL_DUTY_END_LNG = "end_lng";
+    private static final String COL_DUTY_END_PLACE = "end_place_name";
 
     private static final String COL_ADVANCE_WORKER_ID = "worker_id";
     private static final String COL_ADVANCE_AMOUNT = "amount";
@@ -90,6 +96,9 @@ public class WorkerDbHelper extends SQLiteOpenHelper {
         }
         if (oldVersion < 5) {
             addDutyEndColumnsIfMissing(db);
+        }
+        if (oldVersion < 6) {
+            addDutyLocationColumnsIfMissing(db);
         }
     }
 
@@ -143,9 +152,15 @@ public class WorkerDbHelper extends SQLiteOpenHelper {
                 + COL_DUTY_START_TIME + " TEXT NOT NULL, "
                 + COL_DUTY_LOCATION + " TEXT, "
                 + COL_DUTY_IMAGE_PATH + " TEXT NOT NULL, "
+                + COL_DUTY_START_LAT + " REAL, "
+                + COL_DUTY_START_LNG + " REAL, "
+                + COL_DUTY_START_PLACE + " TEXT, "
                 + COL_DUTY_END_TIME + " TEXT, "
                 + COL_DUTY_END_LOCATION + " TEXT, "
                 + COL_DUTY_END_IMAGE_PATH + " TEXT, "
+                + COL_DUTY_END_LAT + " REAL, "
+                + COL_DUTY_END_LNG + " REAL, "
+                + COL_DUTY_END_PLACE + " TEXT, "
                 + "UNIQUE(" + COL_DUTY_WORKER_ID + ", " + COL_DUTY_ATTENDANCE_DATE + "))";
         db.execSQL(sql);
     }
@@ -161,6 +176,33 @@ public class WorkerDbHelper extends SQLiteOpenHelper {
         }
         try {
             db.execSQL("ALTER TABLE " + TABLE_DUTY_START_PROOFS + " ADD COLUMN " + COL_DUTY_END_IMAGE_PATH + " TEXT");
+        } catch (Exception ignored) {
+        }
+    }
+
+    private void addDutyLocationColumnsIfMissing(SQLiteDatabase db) {
+        try {
+            db.execSQL("ALTER TABLE " + TABLE_DUTY_START_PROOFS + " ADD COLUMN " + COL_DUTY_START_LAT + " REAL");
+        } catch (Exception ignored) {
+        }
+        try {
+            db.execSQL("ALTER TABLE " + TABLE_DUTY_START_PROOFS + " ADD COLUMN " + COL_DUTY_START_LNG + " REAL");
+        } catch (Exception ignored) {
+        }
+        try {
+            db.execSQL("ALTER TABLE " + TABLE_DUTY_START_PROOFS + " ADD COLUMN " + COL_DUTY_START_PLACE + " TEXT");
+        } catch (Exception ignored) {
+        }
+        try {
+            db.execSQL("ALTER TABLE " + TABLE_DUTY_START_PROOFS + " ADD COLUMN " + COL_DUTY_END_LAT + " REAL");
+        } catch (Exception ignored) {
+        }
+        try {
+            db.execSQL("ALTER TABLE " + TABLE_DUTY_START_PROOFS + " ADD COLUMN " + COL_DUTY_END_LNG + " REAL");
+        } catch (Exception ignored) {
+        }
+        try {
+            db.execSQL("ALTER TABLE " + TABLE_DUTY_START_PROOFS + " ADD COLUMN " + COL_DUTY_END_PLACE + " TEXT");
         } catch (Exception ignored) {
         }
     }
@@ -477,7 +519,10 @@ public class WorkerDbHelper extends SQLiteOpenHelper {
             String attendanceDate,
             String dutyStartTime,
             String location,
-            String imagePath
+            String imagePath,
+            double startLat,
+            double startLng,
+            String startPlaceName
     ) {
         if (workerId <= 0L) return false;
         if (attendanceDate == null || attendanceDate.trim().isEmpty()) return false;
@@ -492,6 +537,9 @@ public class WorkerDbHelper extends SQLiteOpenHelper {
             cv.put(COL_DUTY_START_TIME, dutyStartTime.trim());
             cv.put(COL_DUTY_LOCATION, location != null ? location.trim() : "");
             cv.put(COL_DUTY_IMAGE_PATH, imagePath.trim());
+            cv.put(COL_DUTY_START_LAT, startLat);
+            cv.put(COL_DUTY_START_LNG, startLng);
+            cv.put(COL_DUTY_START_PLACE, startPlaceName != null ? startPlaceName.trim() : "");
 
             long rowId = db.insertWithOnConflict(
                     TABLE_DUTY_START_PROOFS,
@@ -515,7 +563,10 @@ public class WorkerDbHelper extends SQLiteOpenHelper {
             String attendanceDate,
             String dutyEndTime,
             String endLocation,
-            String endImagePath
+            String endImagePath,
+            double endLat,
+            double endLng,
+            String endPlaceName
     ) {
         if (workerId <= 0L) return false;
         if (attendanceDate == null || attendanceDate.trim().isEmpty()) return false;
@@ -528,6 +579,9 @@ public class WorkerDbHelper extends SQLiteOpenHelper {
             cv.put(COL_DUTY_END_TIME, dutyEndTime.trim());
             cv.put(COL_DUTY_END_LOCATION, endLocation != null ? endLocation.trim() : "");
             cv.put(COL_DUTY_END_IMAGE_PATH, endImagePath.trim());
+            cv.put(COL_DUTY_END_LAT, endLat);
+            cv.put(COL_DUTY_END_LNG, endLng);
+            cv.put(COL_DUTY_END_PLACE, endPlaceName != null ? endPlaceName.trim() : "");
 
             int updated = db.update(
                     TABLE_DUTY_START_PROOFS,

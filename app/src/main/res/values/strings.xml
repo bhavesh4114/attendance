@@ -139,6 +139,8 @@
     <string name="face_mismatch_error">Face mismatch. End duty not allowed.</string>
     <string name="face_verification_failed">Face verification failed. Try again.</string>
     <string name="selfie_face_not_detected">No valid single face detected in selfie.</string>
+    <string name="location_permission_required_for_duty">Location permission is required for duty attendance.</string>
+    <string name="location_capture_failed">Unable to capture exact location for attendance.</string>
     <string name="location_unavailable">Location unavailable</string>
     <string name="location_permission_denied">Location permission denied</string>
 
