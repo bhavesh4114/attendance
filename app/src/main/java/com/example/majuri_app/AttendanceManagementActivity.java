@@ -8,9 +8,7 @@ import android.location.Address;
 import android.location.Geocoder;
 import android.location.Location;
 import android.location.LocationManager;
-import android.net.Uri;
 import android.os.Bundle;
-import android.provider.MediaStore;
 import android.view.View;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -20,7 +18,6 @@ import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.content.ContextCompat;
-import androidx.core.content.FileProvider;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
@@ -359,6 +356,13 @@ public class AttendanceManagementActivity extends AppCompatActivity {
                 new ActivityResultContracts.StartActivityForResult(),
                 result -> {
                     if (result != null && result.getResultCode() == Activity.RESULT_OK) {
+                        Intent data = result.getData();
+                        if (data != null) {
+                            String capturedPath = data.getStringExtra(FaceCaptureActivity.EXTRA_CAPTURED_PATH);
+                            if (capturedPath != null && !capturedPath.trim().isEmpty()) {
+                                pendingPhotoPath = capturedPath;
+                            }
+                        }
                         persistDutyProofAfterCapture();
                     } else {
                         Toast.makeText(this, getDutyPhotoRequiredMessage(), Toast.LENGTH_SHORT).show();
@@ -387,22 +391,9 @@ public class AttendanceManagementActivity extends AppCompatActivity {
         try {
             File imageFile = createDutyProofImageFile(pendingDutyWorkerId);
             pendingPhotoPath = imageFile.getAbsolutePath();
-            Uri imageUri = FileProvider.getUriForFile(
-                    this,
-                    getPackageName() + ".fileprovider",
-                    imageFile
-            );
-            Intent intent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
-            intent.putExtra(MediaStore.EXTRA_OUTPUT, imageUri);
-            intent.putExtra("android.intent.extras.CAMERA_FACING", 1);
-            intent.putExtra("android.intent.extras.LENS_FACING_FRONT", 1);
-            intent.putExtra("android.intent.extra.USE_FRONT_CAMERA", true);
-            intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION | Intent.FLAG_GRANT_WRITE_URI_PERMISSION);
-            if (intent.resolveActivity(getPackageManager()) == null) {
-                Toast.makeText(this, R.string.camera_app_not_found, Toast.LENGTH_SHORT).show();
-                clearPendingDutyCaptureState(true);
-                return;
-            }
+            Intent intent = new Intent(this, FaceCaptureActivity.class);
+            intent.putExtra(FaceCaptureActivity.EXTRA_OUTPUT_PATH, pendingPhotoPath);
+            intent.putExtra(FaceCaptureActivity.EXTRA_DUTY_ACTION, pendingDutyAction);
             selfieCaptureLauncher.launch(intent);
         } catch (Exception ignored) {
             Toast.makeText(this, R.string.camera_open_failed, Toast.LENGTH_SHORT).show();
@@ -552,12 +543,12 @@ public class AttendanceManagementActivity extends AppCompatActivity {
         boolean fineGranted = ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED;
         boolean coarseGranted = ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED;
         if (!fineGranted && !coarseGranted) {
-            return null;
+            return buildFallbackLocationSnapshot();
         }
 
         LocationManager locationManager = (LocationManager) getSystemService(LOCATION_SERVICE);
         if (locationManager == null) {
-            return null;
+            return buildFallbackLocationSnapshot();
         }
 
         Location best = null;
@@ -571,11 +562,11 @@ public class AttendanceManagementActivity extends AppCompatActivity {
                 }
             }
         } catch (SecurityException ignored) {
-            return null;
+            return buildFallbackLocationSnapshot();
         }
 
         if (best == null) {
-            return null;
+            return buildFallbackLocationSnapshot();
         }
 
         double lat = best.getLatitude();
@@ -583,6 +574,11 @@ public class AttendanceManagementActivity extends AppCompatActivity {
         String placeName = resolvePlaceName(lat, lng);
         String raw = String.format(Locale.US, "%.6f, %.6f", lat, lng);
         return new LocationSnapshot(lat, lng, placeName, raw);
+    }
+
+    private LocationSnapshot buildFallbackLocationSnapshot() {
+        String unavailable = getString(R.string.location_unavailable);
+        return new LocationSnapshot(0d, 0d, unavailable, unavailable);
     }
 
     private String resolvePlaceName(double latitude, double longitude) {
