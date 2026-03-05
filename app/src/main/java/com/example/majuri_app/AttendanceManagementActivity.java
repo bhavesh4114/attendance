@@ -1,12 +1,14 @@
 package com.example.majuri_app;
 
 import android.Manifest;
+import android.app.Activity;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.location.Location;
 import android.location.LocationManager;
 import android.net.Uri;
 import android.os.Bundle;
+import android.provider.MediaStore;
 import android.view.View;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -52,16 +54,18 @@ public class AttendanceManagementActivity extends AppCompatActivity {
     private final SimpleDateFormat dutyTimeFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.US);
 
     private ActivityResultLauncher<String[]> permissionLauncher;
-    private ActivityResultLauncher<Uri> takePictureLauncher;
+    private ActivityResultLauncher<Intent> selfieCaptureLauncher;
     private long pendingDutyWorkerId = -1L;
     private int pendingDutyAction = DUTY_ACTION_NONE;
     private String pendingPhotoPath;
+    private FaceVerificationHelper faceVerificationHelper;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         registerResultLaunchers();
         setContentView(R.layout.activity_attendance_management);
+        faceVerificationHelper = new FaceVerificationHelper(this);
 
         sessionManager = new SessionManager(this);
         forceUserFlow = getIntent() != null && getIntent().getBooleanExtra(EXTRA_FORCE_USER_FLOW, false);
@@ -128,6 +132,14 @@ public class AttendanceManagementActivity extends AppCompatActivity {
     protected void onResume() {
         super.onResume();
         loadAttendanceForSelectedDate();
+    }
+
+    @Override
+    protected void onDestroy() {
+        if (faceVerificationHelper != null) {
+            faceVerificationHelper.close();
+        }
+        super.onDestroy();
     }
 
     private void installBackHandler() {
@@ -334,10 +346,10 @@ public class AttendanceManagementActivity extends AppCompatActivity {
                 }
         );
 
-        takePictureLauncher = registerForActivityResult(
-                new ActivityResultContracts.TakePicture(),
-                success -> {
-                    if (Boolean.TRUE.equals(success)) {
+        selfieCaptureLauncher = registerForActivityResult(
+                new ActivityResultContracts.StartActivityForResult(),
+                result -> {
+                    if (result != null && result.getResultCode() == Activity.RESULT_OK) {
                         persistDutyProofAfterCapture();
                     } else {
                         Toast.makeText(this, getDutyPhotoRequiredMessage(), Toast.LENGTH_SHORT).show();
@@ -370,9 +382,20 @@ public class AttendanceManagementActivity extends AppCompatActivity {
                     getPackageName() + ".fileprovider",
                     imageFile
             );
-            takePictureLauncher.launch(imageUri);
+            Intent intent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
+            intent.putExtra(MediaStore.EXTRA_OUTPUT, imageUri);
+            intent.putExtra("android.intent.extras.CAMERA_FACING", 1);
+            intent.putExtra("android.intent.extras.LENS_FACING_FRONT", 1);
+            intent.putExtra("android.intent.extra.USE_FRONT_CAMERA", true);
+            intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION | Intent.FLAG_GRANT_WRITE_URI_PERMISSION);
+            if (intent.resolveActivity(getPackageManager()) == null) {
+                Toast.makeText(this, R.string.camera_app_not_found, Toast.LENGTH_SHORT).show();
+                clearPendingDutyCaptureState(true);
+                return;
+            }
+            selfieCaptureLauncher.launch(intent);
         } catch (Exception ignored) {
-            Toast.makeText(this, R.string.duty_start_photo_save_failed, Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, R.string.camera_open_failed, Toast.LENGTH_SHORT).show();
             clearPendingDutyCaptureState(true);
         }
     }
@@ -401,40 +424,101 @@ public class AttendanceManagementActivity extends AppCompatActivity {
         String dutyTime = dutyTimeFormat.format(new Date());
         String location = readLastKnownLocationLabel();
 
-        WorkerDbHelper dbHelper = new WorkerDbHelper(this);
-        boolean saved;
         if (pendingDutyAction == DUTY_ACTION_START) {
-            saved = dbHelper.saveDutyStartProof(
-                    pendingDutyWorkerId,
-                    attendanceDate,
-                    dutyTime,
-                    location,
-                    pendingPhotoPath
-            );
-        } else {
-            saved = dbHelper.saveDutyEndProof(
-                    pendingDutyWorkerId,
-                    attendanceDate,
-                    dutyTime,
-                    location,
-                    pendingPhotoPath
-            );
+            validateFaceAndCompleteDutyStart(attendanceDate, dutyTime, location);
+            return;
         }
+
+        if (pendingDutyAction == DUTY_ACTION_END) {
+            verifyFaceAndCompleteDutyEnd(attendanceDate, dutyTime, location);
+            return;
+        }
+
+        clearPendingDutyCaptureState(true);
+    }
+
+    private void validateFaceAndCompleteDutyStart(String attendanceDate, String dutyStartTime, String startLocation) {
+        long workerId = pendingDutyWorkerId;
+        String startImagePath = pendingPhotoPath;
+
+        faceVerificationHelper.validateSingleFace(startImagePath, (valid, message) -> {
+            if (!valid) {
+                Toast.makeText(AttendanceManagementActivity.this, R.string.selfie_face_not_detected, Toast.LENGTH_SHORT).show();
+                clearPendingDutyCaptureState(true);
+                return;
+            }
+
+            WorkerDbHelper dbHelper = new WorkerDbHelper(AttendanceManagementActivity.this);
+            boolean saved = dbHelper.saveDutyStartProof(
+                    workerId,
+                    attendanceDate,
+                    dutyStartTime,
+                    startLocation,
+                    startImagePath
+            );
+            dbHelper.close();
+
+            if (saved) {
+                adapter.markDutyStarted(workerId, true);
+                Toast.makeText(AttendanceManagementActivity.this, R.string.duty_started_with_proof, Toast.LENGTH_SHORT).show();
+                clearPendingDutyCaptureState(false);
+            } else {
+                Toast.makeText(AttendanceManagementActivity.this, R.string.duty_start_photo_save_failed, Toast.LENGTH_SHORT).show();
+                clearPendingDutyCaptureState(true);
+            }
+        });
+    }
+
+    private void verifyFaceAndCompleteDutyEnd(String attendanceDate, String dutyEndTime, String endLocation) {
+        long workerId = pendingDutyWorkerId;
+        String endImagePath = pendingPhotoPath;
+
+        WorkerDbHelper dbHelper = new WorkerDbHelper(this);
+        String startImagePath = dbHelper.getDutyStartImagePath(workerId, attendanceDate);
         dbHelper.close();
 
-        if (saved) {
-            if (pendingDutyAction == DUTY_ACTION_START) {
-                adapter.markDutyStarted(pendingDutyWorkerId, true);
-                Toast.makeText(this, R.string.duty_started_with_proof, Toast.LENGTH_SHORT).show();
-            } else {
-                adapter.markDutyEnded(pendingDutyWorkerId, true);
-                Toast.makeText(this, R.string.duty_ended_with_proof, Toast.LENGTH_SHORT).show();
-            }
-            clearPendingDutyCaptureState(false);
-        } else {
-            Toast.makeText(this, getDutySaveFailedMessage(), Toast.LENGTH_SHORT).show();
+        if (startImagePath == null || startImagePath.trim().isEmpty()) {
+            Toast.makeText(this, R.string.duty_start_selfie_missing, Toast.LENGTH_SHORT).show();
             clearPendingDutyCaptureState(true);
+            return;
         }
+
+        Toast.makeText(this, R.string.face_verification_in_progress, Toast.LENGTH_SHORT).show();
+        faceVerificationHelper.verifyFaces(startImagePath, endImagePath, new FaceVerificationHelper.Callback() {
+            @Override
+            public void onVerified(boolean matched, float similarity, String message) {
+                if (!matched) {
+                    Toast.makeText(AttendanceManagementActivity.this, R.string.face_mismatch_error, Toast.LENGTH_SHORT).show();
+                    clearPendingDutyCaptureState(true);
+                    return;
+                }
+
+                WorkerDbHelper endDbHelper = new WorkerDbHelper(AttendanceManagementActivity.this);
+                boolean saved = endDbHelper.saveDutyEndProof(
+                        workerId,
+                        attendanceDate,
+                        dutyEndTime,
+                        endLocation,
+                        endImagePath
+                );
+                endDbHelper.close();
+
+                if (saved) {
+                    adapter.markDutyEnded(workerId, true);
+                    Toast.makeText(AttendanceManagementActivity.this, R.string.duty_ended_with_proof, Toast.LENGTH_SHORT).show();
+                    clearPendingDutyCaptureState(false);
+                } else {
+                    Toast.makeText(AttendanceManagementActivity.this, R.string.duty_end_photo_save_failed, Toast.LENGTH_SHORT).show();
+                    clearPendingDutyCaptureState(true);
+                }
+            }
+
+            @Override
+            public void onFailure(String message) {
+                Toast.makeText(AttendanceManagementActivity.this, R.string.face_verification_failed, Toast.LENGTH_SHORT).show();
+                clearPendingDutyCaptureState(true);
+            }
+        });
     }
 
     private String readLastKnownLocationLabel() {

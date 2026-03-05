@@ -573,6 +573,37 @@ public class WorkerDbHelper extends SQLiteOpenHelper {
     }
 
     /**
+     * Returns start-duty image path for one worker/date, or null.
+     */
+    @Nullable
+    public String getDutyStartImagePath(long workerId, String attendanceDate) {
+        if (workerId <= 0L) return null;
+        if (attendanceDate == null || attendanceDate.trim().isEmpty()) return null;
+
+        SQLiteDatabase db = getReadableDatabase();
+        Cursor c = db.query(
+                TABLE_DUTY_START_PROOFS,
+                new String[]{COL_DUTY_IMAGE_PATH},
+                COL_DUTY_WORKER_ID + "=? AND " + COL_DUTY_ATTENDANCE_DATE + "=?",
+                new String[]{String.valueOf(workerId), attendanceDate.trim()},
+                null,
+                null,
+                null,
+                "1"
+        );
+        String path = null;
+        if (c != null) {
+            if (c.moveToFirst()) {
+                path = c.getString(0);
+            }
+            c.close();
+        }
+        db.close();
+        if (path == null || path.trim().isEmpty()) return null;
+        return path.trim();
+    }
+
+    /**
      * Returns worker ids that already have end-duty proof for a date.
      */
     public Set<Long> getDutyEndedWorkerIdsForDate(String attendanceDate) {

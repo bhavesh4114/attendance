@@ -126,12 +126,19 @@
     <string name="end_duty">End Duty</string>
     <string name="start_duty">Start Duty</string>
     <string name="camera_permission_required">Camera permission is required for duty proof capture.</string>
+    <string name="camera_app_not_found">No camera app available.</string>
+    <string name="camera_open_failed">Unable to open camera.</string>
     <string name="duty_start_photo_required">Please capture a photo to start duty.</string>
     <string name="duty_start_photo_save_failed">Failed to save duty start proof.</string>
     <string name="duty_started_with_proof">Duty started with attendance proof.</string>
     <string name="duty_end_photo_required">Please capture a photo to end duty.</string>
     <string name="duty_end_photo_save_failed">Failed to save duty end proof.</string>
     <string name="duty_ended_with_proof">Duty ended with attendance proof.</string>
+    <string name="duty_start_selfie_missing">Start duty selfie not found for face verification.</string>
+    <string name="face_verification_in_progress">Verifying face...</string>
+    <string name="face_mismatch_error">Face mismatch. End duty not allowed.</string>
+    <string name="face_verification_failed">Face verification failed. Try again.</string>
+    <string name="selfie_face_not_detected">No valid single face detected in selfie.</string>
     <string name="location_unavailable">Location unavailable</string>
     <string name="location_permission_denied">Location permission denied</string>
 
