@@ -10,9 +10,11 @@ import androidx.annotation.Nullable;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * SQLite helper for saving workers and payroll-related data.
@@ -20,12 +22,13 @@ import java.util.Map;
 public class WorkerDbHelper extends SQLiteOpenHelper {
 
     private static final String DB_NAME = "majuri_workers.db";
-    private static final int DB_VERSION = 3;
+    private static final int DB_VERSION = 4;
 
     private static final String TABLE_WORKERS = "workers";
     private static final String TABLE_ATTENDANCE = "attendance_records";
     private static final String TABLE_ADVANCES = "payment_advances";
     private static final String TABLE_PAYMENTS = "payment_records";
+    private static final String TABLE_DUTY_START_PROOFS = "duty_start_proofs";
 
     public static final String COL_ID = "id";
     public static final String COL_NAME = "name";
@@ -37,6 +40,12 @@ public class WorkerDbHelper extends SQLiteOpenHelper {
     private static final String COL_ATTENDANCE_DATE = "attendance_date";
     private static final String COL_ATTENDANCE_STATUS = "status";
     private static final String COL_ATTENDANCE_LOCKED = "locked";
+
+    private static final String COL_DUTY_WORKER_ID = "worker_id";
+    private static final String COL_DUTY_ATTENDANCE_DATE = "attendance_date";
+    private static final String COL_DUTY_START_TIME = "duty_start_time";
+    private static final String COL_DUTY_LOCATION = "location";
+    private static final String COL_DUTY_IMAGE_PATH = "image_path";
 
     private static final String COL_ADVANCE_WORKER_ID = "worker_id";
     private static final String COL_ADVANCE_AMOUNT = "amount";
@@ -59,6 +68,7 @@ public class WorkerDbHelper extends SQLiteOpenHelper {
         createAttendanceTable(db);
         createAdvancesTable(db);
         createPaymentsTable(db);
+        createDutyStartProofsTable(db);
         migrateAdvancesToPayments(db);
     }
 
@@ -71,6 +81,9 @@ public class WorkerDbHelper extends SQLiteOpenHelper {
         if (oldVersion < 3) {
             createPaymentsTable(db);
             migrateAdvancesToPayments(db);
+        }
+        if (oldVersion < 4) {
+            createDutyStartProofsTable(db);
         }
     }
 
@@ -113,6 +126,18 @@ public class WorkerDbHelper extends SQLiteOpenHelper {
                 + COL_PAYMENT_DATE + " TEXT NOT NULL, "
                 + COL_PAYMENT_METHOD + " TEXT, "
                 + COL_PAYMENT_NOTE + " TEXT)";
+        db.execSQL(sql);
+    }
+
+    private void createDutyStartProofsTable(SQLiteDatabase db) {
+        String sql = "CREATE TABLE IF NOT EXISTS " + TABLE_DUTY_START_PROOFS + " ("
+                + COL_ID + " INTEGER PRIMARY KEY AUTOINCREMENT, "
+                + COL_DUTY_WORKER_ID + " INTEGER NOT NULL, "
+                + COL_DUTY_ATTENDANCE_DATE + " TEXT NOT NULL, "
+                + COL_DUTY_START_TIME + " TEXT NOT NULL, "
+                + COL_DUTY_LOCATION + " TEXT, "
+                + COL_DUTY_IMAGE_PATH + " TEXT NOT NULL, "
+                + "UNIQUE(" + COL_DUTY_WORKER_ID + ", " + COL_DUTY_ATTENDANCE_DATE + "))";
         db.execSQL(sql);
     }
 
@@ -418,6 +443,73 @@ public class WorkerDbHelper extends SQLiteOpenHelper {
      */
     public long recordAdvancePayment(long workerId, double amount, String paymentDate, String note) {
         return recordPayment(workerId, amount, paymentDate, "Manual", note);
+    }
+
+    /**
+     * Save (or replace) a worker duty-start proof for one date.
+     */
+    public boolean saveDutyStartProof(
+            long workerId,
+            String attendanceDate,
+            String dutyStartTime,
+            String location,
+            String imagePath
+    ) {
+        if (workerId <= 0L) return false;
+        if (attendanceDate == null || attendanceDate.trim().isEmpty()) return false;
+        if (dutyStartTime == null || dutyStartTime.trim().isEmpty()) return false;
+        if (imagePath == null || imagePath.trim().isEmpty()) return false;
+
+        SQLiteDatabase db = getWritableDatabase();
+        try {
+            ContentValues cv = new ContentValues();
+            cv.put(COL_DUTY_WORKER_ID, workerId);
+            cv.put(COL_DUTY_ATTENDANCE_DATE, attendanceDate.trim());
+            cv.put(COL_DUTY_START_TIME, dutyStartTime.trim());
+            cv.put(COL_DUTY_LOCATION, location != null ? location.trim() : "");
+            cv.put(COL_DUTY_IMAGE_PATH, imagePath.trim());
+
+            long rowId = db.insertWithOnConflict(
+                    TABLE_DUTY_START_PROOFS,
+                    null,
+                    cv,
+                    SQLiteDatabase.CONFLICT_REPLACE
+            );
+            return rowId != -1L;
+        } catch (Exception ignored) {
+            return false;
+        } finally {
+            db.close();
+        }
+    }
+
+    /**
+     * Returns worker ids that already have a duty-start proof for a date.
+     */
+    public Set<Long> getDutyStartedWorkerIdsForDate(String attendanceDate) {
+        Set<Long> ids = new HashSet<>();
+        if (attendanceDate == null || attendanceDate.trim().isEmpty()) return ids;
+
+        SQLiteDatabase db = getReadableDatabase();
+        Cursor c = db.query(
+                TABLE_DUTY_START_PROOFS,
+                new String[]{COL_DUTY_WORKER_ID},
+                COL_DUTY_ATTENDANCE_DATE + "=?",
+                new String[]{attendanceDate.trim()},
+                null,
+                null,
+                null
+        );
+        if (c != null) {
+            int iWorkerId = c.getColumnIndex(COL_DUTY_WORKER_ID);
+            while (c.moveToNext()) {
+                long workerId = iWorkerId >= 0 ? c.getLong(iWorkerId) : -1L;
+                if (workerId > 0L) ids.add(workerId);
+            }
+            c.close();
+        }
+        db.close();
+        return ids;
     }
 
     /**

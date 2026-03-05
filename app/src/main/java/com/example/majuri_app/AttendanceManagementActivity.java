@@ -1,24 +1,37 @@
 package com.example.majuri_app;
 
+import android.Manifest;
 import android.content.Intent;
+import android.content.pm.PackageManager;
+import android.location.Location;
+import android.location.LocationManager;
+import android.net.Uri;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.activity.OnBackPressedCallback;
+import androidx.activity.result.ActivityResultLauncher;
+import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.content.ContextCompat;
+import androidx.core.content.FileProvider;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.google.android.material.bottomnavigation.BottomNavigationView;
 
+import java.io.File;
+import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.Date;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Set;
 
 public class AttendanceManagementActivity extends AppCompatActivity {
     public static final String EXTRA_FORCE_USER_FLOW = "extra_force_user_flow";
@@ -33,10 +46,17 @@ public class AttendanceManagementActivity extends AppCompatActivity {
     private SessionManager sessionManager;
     private boolean forceUserFlow;
     private final SimpleDateFormat dateKeyFormat = new SimpleDateFormat("yyyy-MM-dd", Locale.US);
+    private final SimpleDateFormat dutyStartTimeFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.US);
+
+    private ActivityResultLauncher<String[]> permissionLauncher;
+    private ActivityResultLauncher<Uri> takePictureLauncher;
+    private long pendingDutyWorkerId = -1L;
+    private String pendingPhotoPath;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        registerResultLaunchers();
         setContentView(R.layout.activity_attendance_management);
 
         sessionManager = new SessionManager(this);
@@ -58,6 +78,25 @@ public class AttendanceManagementActivity extends AppCompatActivity {
             summaryPresent.setText(String.valueOf(present));
             summaryHalfDay.setText(String.valueOf(halfDay));
             summaryAbsent.setText(String.valueOf(absent));
+        });
+        adapter.setOnDutyActionListener(new AttendanceManagementAdapter.OnDutyActionListener() {
+            @Override
+            public void onStartDutyRequested(AttendanceStaffItem item, int adapterPosition) {
+                if (item == null || item.getWorkerDbId() <= 0L) {
+                    Toast.makeText(AttendanceManagementActivity.this, R.string.duty_start_photo_save_failed, Toast.LENGTH_SHORT).show();
+                    return;
+                }
+                pendingDutyWorkerId = item.getWorkerDbId();
+                requestCameraAndStartCapture();
+            }
+
+            @Override
+            public void onEndDutyRequested(AttendanceStaffItem item, int adapterPosition) {
+                if (item == null || item.getWorkerDbId() <= 0L) {
+                    return;
+                }
+                adapter.markDutyEnded(item.getWorkerDbId(), true);
+            }
         });
 
         RecyclerView recyclerStaff = findViewById(R.id.recyclerStaff);
@@ -137,6 +176,7 @@ public class AttendanceManagementActivity extends AppCompatActivity {
         WorkerDbHelper dbHelper = new WorkerDbHelper(this);
         List<WorkerListItem> workers = dbHelper.getAllWorkers();
         Map<Long, Integer> savedStatus = dbHelper.getAttendanceStatusByDate(attendanceDate);
+        Set<Long> dutyStartedIds = dbHelper.getDutyStartedWorkerIdsForDate(attendanceDate);
         boolean locked = dbHelper.isAttendanceLockedForDate(attendanceDate);
         dbHelper.close();
 
@@ -156,6 +196,7 @@ public class AttendanceManagementActivity extends AppCompatActivity {
         }
 
         adapter.setItems(list);
+        adapter.setDutyStartedWorkerIds(dutyStartedIds);
         adapter.setEditable(!locked);
 
         if (tvTotalWorkers != null) {
@@ -268,5 +309,147 @@ public class AttendanceManagementActivity extends AppCompatActivity {
             return true;
         }
         return false;
+    }
+
+    private void registerResultLaunchers() {
+        permissionLauncher = registerForActivityResult(
+                new ActivityResultContracts.RequestMultiplePermissions(),
+                result -> {
+                    boolean cameraGranted = Boolean.TRUE.equals(result.get(Manifest.permission.CAMERA));
+                    if (!cameraGranted) {
+                        Toast.makeText(this, R.string.camera_permission_required, Toast.LENGTH_SHORT).show();
+                        clearPendingDutyCaptureState(false);
+                        return;
+                    }
+                    openCameraForDutyProof();
+                }
+        );
+
+        takePictureLauncher = registerForActivityResult(
+                new ActivityResultContracts.TakePicture(),
+                success -> {
+                    if (Boolean.TRUE.equals(success)) {
+                        persistDutyStartProofAfterCapture();
+                    } else {
+                        Toast.makeText(this, R.string.duty_start_photo_required, Toast.LENGTH_SHORT).show();
+                        clearPendingDutyCaptureState(true);
+                    }
+                }
+        );
+    }
+
+    private void requestCameraAndStartCapture() {
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED) {
+            openCameraForDutyProof();
+            return;
+        }
+        permissionLauncher.launch(new String[]{
+                Manifest.permission.CAMERA,
+                Manifest.permission.ACCESS_FINE_LOCATION,
+                Manifest.permission.ACCESS_COARSE_LOCATION
+        });
+    }
+
+    private void openCameraForDutyProof() {
+        if (pendingDutyWorkerId <= 0L) return;
+
+        try {
+            File imageFile = createDutyProofImageFile(pendingDutyWorkerId);
+            pendingPhotoPath = imageFile.getAbsolutePath();
+            Uri imageUri = FileProvider.getUriForFile(
+                    this,
+                    getPackageName() + ".fileprovider",
+                    imageFile
+            );
+            takePictureLauncher.launch(imageUri);
+        } catch (Exception ignored) {
+            Toast.makeText(this, R.string.duty_start_photo_save_failed, Toast.LENGTH_SHORT).show();
+            clearPendingDutyCaptureState(true);
+        }
+    }
+
+    private File createDutyProofImageFile(long workerId) throws IOException {
+        File parent = new File(getExternalFilesDir(null), "attendance_proofs");
+        if (!parent.exists() && !parent.mkdirs()) {
+            throw new IOException("Failed to create proof folder");
+        }
+        String timestamp = new SimpleDateFormat("yyyyMMdd_HHmmss", Locale.US).format(new Date());
+        return File.createTempFile("duty_" + workerId + "_" + timestamp + "_", ".jpg", parent);
+    }
+
+    private void persistDutyStartProofAfterCapture() {
+        if (pendingDutyWorkerId <= 0L || pendingPhotoPath == null || pendingPhotoPath.trim().isEmpty()) {
+            Toast.makeText(this, R.string.duty_start_photo_save_failed, Toast.LENGTH_SHORT).show();
+            clearPendingDutyCaptureState(true);
+            return;
+        }
+
+        String attendanceDate = getSelectedDateKey();
+        String dutyStartTime = dutyStartTimeFormat.format(new Date());
+        String location = readLastKnownLocationLabel();
+
+        WorkerDbHelper dbHelper = new WorkerDbHelper(this);
+        boolean saved = dbHelper.saveDutyStartProof(
+                pendingDutyWorkerId,
+                attendanceDate,
+                dutyStartTime,
+                location,
+                pendingPhotoPath
+        );
+        dbHelper.close();
+
+        if (saved) {
+            adapter.markDutyStarted(pendingDutyWorkerId, true);
+            Toast.makeText(this, R.string.duty_started_with_proof, Toast.LENGTH_SHORT).show();
+            clearPendingDutyCaptureState(false);
+        } else {
+            Toast.makeText(this, R.string.duty_start_photo_save_failed, Toast.LENGTH_SHORT).show();
+            clearPendingDutyCaptureState(true);
+        }
+    }
+
+    private String readLastKnownLocationLabel() {
+        boolean fineGranted = ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED;
+        boolean coarseGranted = ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED;
+        if (!fineGranted && !coarseGranted) {
+            return getString(R.string.location_permission_denied);
+        }
+
+        LocationManager locationManager = (LocationManager) getSystemService(LOCATION_SERVICE);
+        if (locationManager == null) {
+            return getString(R.string.location_unavailable);
+        }
+
+        Location best = null;
+        try {
+            List<String> providers = locationManager.getProviders(true);
+            for (String provider : providers) {
+                Location location = locationManager.getLastKnownLocation(provider);
+                if (location == null) continue;
+                if (best == null || location.getAccuracy() < best.getAccuracy()) {
+                    best = location;
+                }
+            }
+        } catch (SecurityException ignored) {
+            return getString(R.string.location_permission_denied);
+        }
+
+        if (best == null) {
+            return getString(R.string.location_unavailable);
+        }
+
+        return String.format(Locale.US, "%.6f, %.6f", best.getLatitude(), best.getLongitude());
+    }
+
+    private void clearPendingDutyCaptureState(boolean deletePhotoFile) {
+        if (deletePhotoFile && pendingPhotoPath != null && !pendingPhotoPath.trim().isEmpty()) {
+            File f = new File(pendingPhotoPath);
+            if (f.exists()) {
+                //noinspection ResultOfMethodCallIgnored
+                f.delete();
+            }
+        }
+        pendingDutyWorkerId = -1L;
+        pendingPhotoPath = null;
     }
 }

@@ -18,6 +18,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * Adapter for the Attendance Management staff list (item_attendance_management).
@@ -37,14 +38,24 @@ public class AttendanceManagementAdapter extends RecyclerView.Adapter<Attendance
     private final Map<Long, Boolean> dutyStartedByWorkerKey = new HashMap<>();
     private final Map<Long, Boolean> dutyEndedByWorkerKey = new HashMap<>();
     private OnSummaryChangedListener summaryListener;
+    private OnDutyActionListener dutyActionListener;
     private boolean editable = true;
 
     public interface OnSummaryChangedListener {
         void onSummaryChanged(int present, int halfDay, int absent);
     }
 
+    public interface OnDutyActionListener {
+        void onStartDutyRequested(AttendanceStaffItem item, int adapterPosition);
+        void onEndDutyRequested(AttendanceStaffItem item, int adapterPosition);
+    }
+
     public void setOnSummaryChangedListener(OnSummaryChangedListener listener) {
         this.summaryListener = listener;
+    }
+
+    public void setOnDutyActionListener(OnDutyActionListener listener) {
+        this.dutyActionListener = listener;
     }
 
     public void setItems(List<AttendanceStaffItem> list) {
@@ -66,6 +77,29 @@ public class AttendanceManagementAdapter extends RecyclerView.Adapter<Attendance
     public void setEditable(boolean editable) {
         this.editable = editable;
         notifyDataSetChanged();
+    }
+
+    public void setDutyStartedWorkerIds(Set<Long> workerIds) {
+        dutyStartedByWorkerKey.clear();
+        if (workerIds != null) {
+            for (Long workerId : workerIds) {
+                if (workerId == null || workerId <= 0L) continue;
+                dutyStartedByWorkerKey.put(workerId, true);
+            }
+        }
+        notifyDataSetChanged();
+    }
+
+    public void markDutyStarted(long workerDbId, boolean started) {
+        int position = findPositionByWorkerDbId(workerDbId);
+        if (position < 0 || position >= items.size()) return;
+        setDutyStarted(position, started);
+    }
+
+    public void markDutyEnded(long workerDbId, boolean ended) {
+        int position = findPositionByWorkerDbId(workerDbId);
+        if (position < 0 || position >= items.size()) return;
+        setDutyEnded(position, ended);
     }
 
     public boolean isEditable() {
@@ -122,9 +156,17 @@ public class AttendanceManagementAdapter extends RecyclerView.Adapter<Attendance
             long workerKey = getWorkerKey(clickedItem, adapterPosition);
             boolean started = Boolean.TRUE.equals(dutyStartedByWorkerKey.get(workerKey));
             if (!started) {
-                setDutyStarted(adapterPosition, true);
+                if (dutyActionListener != null) {
+                    dutyActionListener.onStartDutyRequested(clickedItem, adapterPosition);
+                } else {
+                    setDutyStarted(adapterPosition, true);
+                }
             } else {
-                setDutyEnded(adapterPosition, true);
+                if (dutyActionListener != null) {
+                    dutyActionListener.onEndDutyRequested(clickedItem, adapterPosition);
+                } else {
+                    setDutyEnded(adapterPosition, true);
+                }
             }
         });
         holder.btnPayNow.setOnClickListener(v -> {
@@ -190,6 +232,17 @@ public class AttendanceManagementAdapter extends RecyclerView.Adapter<Attendance
         AttendanceStaffItem item = items.get(position);
         dutyStartedByWorkerKey.put(getWorkerKey(item, position), started);
         notifyItemChanged(position);
+    }
+
+    private int findPositionByWorkerDbId(long workerDbId) {
+        if (workerDbId <= 0L) return -1;
+        for (int i = 0; i < items.size(); i++) {
+            AttendanceStaffItem item = items.get(i);
+            if (item != null && item.getWorkerDbId() == workerDbId) {
+                return i;
+            }
+        }
+        return -1;
     }
 
     private int resolveUiMode(AttendanceStaffItem item, int position) {
