@@ -1,7 +1,18 @@
 package com.example.majuri_app;
 
+import android.Manifest;
+import android.app.NotificationChannel;
+import android.app.NotificationManager;
+import android.app.PendingIntent;
 import android.content.Context;
+import android.content.Intent;
 import android.content.SharedPreferences;
+import android.content.pm.PackageManager;
+import android.os.Build;
+
+import androidx.core.app.NotificationCompat;
+import androidx.core.app.NotificationManagerCompat;
+import androidx.core.content.ContextCompat;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -18,6 +29,8 @@ public final class NotificationStore {
     private static final String PREF_NAME = "MajuriAppNotifications";
     private static final String KEY_ITEMS = "items";
     private static final int MAX_ITEMS = 30;
+    private static final String CHANNEL_ID_GENERAL = "majuri_general_alerts";
+    private static final String CHANNEL_NAME_GENERAL = "General Alerts";
 
     private NotificationStore() {
     }
@@ -99,13 +112,15 @@ public final class NotificationStore {
     }
 
     public static void pushNotification(Context context, String title, String message) {
+        String safeTitle = safe(title, "Notification");
+        String safeMessage = safe(message, "");
         List<AppNotification> list = getNotifications(context);
         List<AppNotification> updated = new ArrayList<>();
 
         updated.add(new AppNotification(
                 System.currentTimeMillis(),
-                safe(title, "Notification"),
-                safe(message, ""),
+                safeTitle,
+                safeMessage,
                 new SimpleDateFormat("dd MMM, hh:mm a", Locale.US).format(new Date()),
                 true
         ));
@@ -118,6 +133,7 @@ public final class NotificationStore {
         }
 
         saveNotifications(context, updated);
+        showSystemNotification(context, safeTitle, safeMessage);
     }
 
     private static String safe(String value, String fallback) {
@@ -158,5 +174,76 @@ public final class NotificationStore {
         SharedPreferences prefs = context.getApplicationContext()
                 .getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE);
         prefs.edit().putString(KEY_ITEMS, array.toString()).apply();
+    }
+
+    private static void showSystemNotification(Context context, String title, String message) {
+        Context appContext = context.getApplicationContext();
+        if (!hasNotificationPermission(appContext)) {
+            return;
+        }
+
+        NotificationManager notificationManager =
+                (NotificationManager) appContext.getSystemService(Context.NOTIFICATION_SERVICE);
+        if (notificationManager == null) {
+            return;
+        }
+
+        ensureNotificationChannel(notificationManager);
+
+        Intent openIntent = new Intent(appContext, NotificationActivity.class);
+        openIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TOP);
+
+        int pendingIntentFlags = PendingIntent.FLAG_UPDATE_CURRENT;
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            pendingIntentFlags |= PendingIntent.FLAG_IMMUTABLE;
+        }
+        PendingIntent contentIntent = PendingIntent.getActivity(
+                appContext,
+                0,
+                openIntent,
+                pendingIntentFlags
+        );
+
+        NotificationCompat.Builder builder = new NotificationCompat.Builder(appContext, CHANNEL_ID_GENERAL)
+                .setSmallIcon(R.drawable.ic_notifications_bell)
+                .setContentTitle(title)
+                .setContentText(message)
+                .setStyle(new NotificationCompat.BigTextStyle().bigText(message))
+                .setPriority(NotificationCompat.PRIORITY_HIGH)
+                .setAutoCancel(true)
+                .setContentIntent(contentIntent)
+                .setCategory(NotificationCompat.CATEGORY_MESSAGE)
+                .setDefaults(NotificationCompat.DEFAULT_ALL);
+
+        int notificationId = (int) (System.currentTimeMillis() & 0x7FFFFFFF);
+        NotificationManagerCompat.from(appContext).notify(notificationId, builder.build());
+    }
+
+    private static void ensureNotificationChannel(NotificationManager notificationManager) {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O) {
+            return;
+        }
+        NotificationChannel existing = notificationManager.getNotificationChannel(CHANNEL_ID_GENERAL);
+        if (existing != null) {
+            return;
+        }
+        NotificationChannel channel = new NotificationChannel(
+                CHANNEL_ID_GENERAL,
+                CHANNEL_NAME_GENERAL,
+                NotificationManager.IMPORTANCE_HIGH
+        );
+        channel.setDescription("Attendance, payments and report alerts.");
+        channel.enableVibration(true);
+        notificationManager.createNotificationChannel(channel);
+    }
+
+    private static boolean hasNotificationPermission(Context context) {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU) {
+            return true;
+        }
+        return ContextCompat.checkSelfPermission(
+                context,
+                Manifest.permission.POST_NOTIFICATIONS
+        ) == PackageManager.PERMISSION_GRANTED;
     }
 }
