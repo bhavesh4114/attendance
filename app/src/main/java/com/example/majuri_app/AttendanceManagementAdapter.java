@@ -23,7 +23,7 @@ import java.util.Set;
 /**
  * Adapter for the Attendance Management staff list (item_attendance_management).
  * Keeps attendance status persistence behavior unchanged for full-day/half-day/absent.
- * Hourly and Overtime are UI display modes only.
+ * Hourly is a UI display mode only.
  */
 public class AttendanceManagementAdapter extends RecyclerView.Adapter<AttendanceManagementAdapter.StaffViewHolder> {
 
@@ -31,7 +31,6 @@ public class AttendanceManagementAdapter extends RecyclerView.Adapter<Attendance
     private static final int MODE_HALF_DAY = 1;
     private static final int MODE_ABSENT = 2;
     private static final int MODE_HOURLY = 3;
-    private static final int MODE_OVERTIME = 4;
 
     private final List<AttendanceStaffItem> items = new ArrayList<>();
     private final Map<Long, Integer> uiModeByWorkerKey = new HashMap<>();
@@ -157,9 +156,6 @@ public class AttendanceManagementAdapter extends RecyclerView.Adapter<Attendance
         holder.optionHourly.setOnClickListener(editable
                 ? v -> setUiModeOnly(holder.getAdapterPosition(), MODE_HOURLY)
                 : null);
-        holder.optionOvertime.setOnClickListener(editable
-                ? v -> setUiModeOnly(holder.getAdapterPosition(), MODE_OVERTIME)
-                : null);
         holder.btnInlineSaveAttendance.setOnClickListener(v -> {
             int adapterPosition = holder.getAdapterPosition();
             if (adapterPosition < 0 || adapterPosition >= items.size()) return;
@@ -200,7 +196,6 @@ public class AttendanceManagementAdapter extends RecyclerView.Adapter<Attendance
         setOptionEnabledState(holder.optionHalfDay, editable);
         setOptionEnabledState(holder.optionAbsent, editable);
         setOptionEnabledState(holder.optionHourly, editable);
-        setOptionEnabledState(holder.optionOvertime, editable);
         setOptionEnabledState(holder.btnPayNow, true);
         setOptionEnabledState(holder.btnPayLater, true);
 
@@ -286,16 +281,13 @@ public class AttendanceManagementAdapter extends RecyclerView.Adapter<Attendance
         boolean isHalf = mode == MODE_HALF_DAY;
         boolean isAbsent = mode == MODE_ABSENT;
         boolean isHourly = mode == MODE_HOURLY;
-        boolean isOvertime = mode == MODE_OVERTIME;
 
         applyOptionUi(holder.optionPresent, holder.textPresent, isFull, blueBg, transparent, white, grey);
         applyOptionUi(holder.optionHalfDay, holder.textHalfDay, isHalf, blueBg, transparent, white, grey);
         applyOptionUi(holder.optionAbsent, holder.textAbsent, isAbsent, blueBg, transparent, white, grey);
         applyOptionUi(holder.optionHourly, holder.textHourly, isHourly, blueBg, transparent, white, grey);
-        applyOptionUi(holder.optionOvertime, holder.textOvertime, isOvertime, blueBg, transparent, white, grey);
 
         holder.hourlyContainer.setVisibility(isHourly ? View.VISIBLE : View.GONE);
-        holder.overtimeContainer.setVisibility(isOvertime ? View.VISIBLE : View.GONE);
         boolean showDutyActions = isFull || isHalf;
         boolean dutyStarted = Boolean.TRUE.equals(dutyStartedByWorkerKey.get(getWorkerKey(item, position)));
         boolean dutyEnded = Boolean.TRUE.equals(dutyEndedByWorkerKey.get(getWorkerKey(item, position)));
@@ -338,14 +330,11 @@ public class AttendanceManagementAdapter extends RecyclerView.Adapter<Attendance
         final FrameLayout optionHalfDay;
         final FrameLayout optionAbsent;
         final FrameLayout optionHourly;
-        final FrameLayout optionOvertime;
         final TextView textPresent;
         final TextView textHalfDay;
         final TextView textAbsent;
         final TextView textHourly;
-        final TextView textOvertime;
         final View hourlyContainer;
-        final View overtimeContainer;
         final MaterialButton btnInlineSaveAttendance;
         final View paymentActionContainer;
         final View btnPayNow;
@@ -362,14 +351,11 @@ public class AttendanceManagementAdapter extends RecyclerView.Adapter<Attendance
             optionHalfDay = itemView.findViewById(R.id.optionHalfDay);
             optionAbsent = itemView.findViewById(R.id.optionAbsent);
             optionHourly = itemView.findViewById(R.id.optionHourly);
-            optionOvertime = itemView.findViewById(R.id.optionOvertime);
             textPresent = itemView.findViewById(R.id.textPresent);
             textHalfDay = itemView.findViewById(R.id.textHalfDay);
             textAbsent = itemView.findViewById(R.id.textAbsent);
             textHourly = itemView.findViewById(R.id.textHourly);
-            textOvertime = itemView.findViewById(R.id.textOvertime);
             hourlyContainer = itemView.findViewById(R.id.hourlyContainer);
-            overtimeContainer = itemView.findViewById(R.id.overtimeContainer);
             btnInlineSaveAttendance = itemView.findViewById(R.id.btnInlineSaveAttendance);
             paymentActionContainer = itemView.findViewById(R.id.paymentActionContainer);
             btnPayNow = itemView.findViewById(R.id.btnPayNow);

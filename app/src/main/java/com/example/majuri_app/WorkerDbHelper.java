@@ -66,6 +66,9 @@ public class WorkerDbHelper extends SQLiteOpenHelper {
     private static final String COL_PAYMENT_DATE = "payment_date";
     private static final String COL_PAYMENT_METHOD = "payment_method";
     private static final String COL_PAYMENT_NOTE = "note";
+    private static final double STANDARD_DUTY_HOURS = 8d;
+    private static final double OVERTIME_RATE_MULTIPLIER = 1.5d;
+    private static final double OVERTIME_BONUS_MULTIPLIER = OVERTIME_RATE_MULTIPLIER - 1d;
 
     public WorkerDbHelper(@Nullable Context context) {
         super(context, DB_NAME, null, DB_VERSION);
@@ -716,6 +719,8 @@ public class WorkerDbHelper extends SQLiteOpenHelper {
 
         String monthPrefix = String.format(Locale.US, "%04d-%02d-%%", year, monthZeroBased + 1);
         Map<Long, Double> workedDaysMap = readWorkedDaysMap(db, monthPrefix);
+        Map<Long, Double> payableDayUnitsMap = readPayableDayUnitsMap(db, monthPrefix);
+        Map<Long, Double> overtimeHoursMap = readOvertimeHoursMap(db, monthPrefix);
         Map<Long, Double> paidMap = readPaidAmountMap(db, monthPrefix);
 
         Cursor c = db.query(TABLE_WORKERS, null, null, null, null, null, COL_ID + " DESC");
@@ -733,7 +738,9 @@ public class WorkerDbHelper extends SQLiteOpenHelper {
 
                 double dailyWage = parseAmount(wageText);
                 double workedDays = workedDaysMap.containsKey(workerId) ? workedDaysMap.get(workerId) : 0d;
-                double grossAmount = dailyWage * workedDays;
+                double payableDayUnits = payableDayUnitsMap.containsKey(workerId) ? payableDayUnitsMap.get(workerId) : workedDays;
+                double overtimeHours = overtimeHoursMap.containsKey(workerId) ? overtimeHoursMap.get(workerId) : 0d;
+                double grossAmount = dailyWage * payableDayUnits;
                 double paidAmount = paidMap.containsKey(workerId) ? paidMap.get(workerId) : 0d;
                 double pendingAmount = Math.max(0d, grossAmount - paidAmount);
 
@@ -743,6 +750,7 @@ public class WorkerDbHelper extends SQLiteOpenHelper {
                         role,
                         dailyWage,
                         workedDays,
+                        overtimeHours,
                         grossAmount,
                         paidAmount,
                         pendingAmount
@@ -831,15 +839,32 @@ public class WorkerDbHelper extends SQLiteOpenHelper {
     }
 
     private Map<Long, Double> readWorkedDaysMap(SQLiteDatabase db, String monthPrefixLike) {
+        Map<Long, Double> map = readWorkedDaysFromDutyDurationMap(db, monthPrefixLike);
+        Map<Long, Double> attendanceFallbackMap = readWorkedDaysFromAttendanceFallbackMap(db, monthPrefixLike);
+        mergeWorkedDaysMaps(map, attendanceFallbackMap);
+        return map;
+    }
+
+    private Map<Long, Double> readPayableDayUnitsMap(SQLiteDatabase db, String monthPrefixLike) {
+        Map<Long, Double> map = readPayableDayUnitsFromDutyDurationMap(db, monthPrefixLike);
+        Map<Long, Double> attendanceFallbackMap = readWorkedDaysFromAttendanceFallbackMap(db, monthPrefixLike);
+        mergeWorkedDaysMaps(map, attendanceFallbackMap);
+        return map;
+    }
+
+    private Map<Long, Double> readWorkedDaysFromDutyDurationMap(SQLiteDatabase db, String monthPrefixLike) {
         Map<Long, Double> map = new HashMap<>();
-        String sql = "SELECT " + COL_ATTENDANCE_WORKER_ID + ", "
-                + "SUM(CASE " + COL_ATTENDANCE_STATUS
-                + " WHEN " + AttendanceStaffItem.STATUS_PRESENT + " THEN 1.0"
-                + " WHEN " + AttendanceStaffItem.STATUS_HALF_DAY + " THEN 0.5"
-                + " ELSE 0.0 END) AS worked_days "
-                + "FROM " + TABLE_ATTENDANCE + " "
-                + "WHERE " + COL_ATTENDANCE_DATE + " LIKE ? AND " + COL_ATTENDANCE_LOCKED + "=1 "
-                + "GROUP BY " + COL_ATTENDANCE_WORKER_ID;
+        String dutyHoursExpr = "((julianday(" + COL_DUTY_END_TIME + ") - julianday(" + COL_DUTY_START_TIME + ")) * 24.0)";
+        String sql = "SELECT " + COL_DUTY_WORKER_ID + ", "
+                + "SUM(CASE "
+                + "WHEN " + COL_DUTY_START_TIME + " IS NOT NULL AND TRIM(" + COL_DUTY_START_TIME + ")!='' "
+                + "AND " + COL_DUTY_END_TIME + " IS NOT NULL AND TRIM(" + COL_DUTY_END_TIME + ")!='' "
+                + "AND julianday(" + COL_DUTY_END_TIME + ") > julianday(" + COL_DUTY_START_TIME + ") "
+                + "THEN " + dutyHoursExpr + " / " + STANDARD_DUTY_HOURS + " "
+                + "ELSE 0.0 END) AS worked_days "
+                + "FROM " + TABLE_DUTY_START_PROOFS + " "
+                + "WHERE " + COL_DUTY_ATTENDANCE_DATE + " LIKE ? "
+                + "GROUP BY " + COL_DUTY_WORKER_ID;
         Cursor c = db.rawQuery(sql, new String[]{ monthPrefixLike });
         if (c != null) {
             while (c.moveToNext()) {
@@ -850,6 +875,102 @@ public class WorkerDbHelper extends SQLiteOpenHelper {
             c.close();
         }
         return map;
+    }
+
+    private Map<Long, Double> readPayableDayUnitsFromDutyDurationMap(SQLiteDatabase db, String monthPrefixLike) {
+        Map<Long, Double> map = new HashMap<>();
+        String dutyHoursExpr = "((julianday(" + COL_DUTY_END_TIME + ") - julianday(" + COL_DUTY_START_TIME + ")) * 24.0)";
+        String sql = "SELECT " + COL_DUTY_WORKER_ID + ", "
+                + "SUM(CASE "
+                + "WHEN " + COL_DUTY_START_TIME + " IS NOT NULL AND TRIM(" + COL_DUTY_START_TIME + ")!='' "
+                + "AND " + COL_DUTY_END_TIME + " IS NOT NULL AND TRIM(" + COL_DUTY_END_TIME + ")!='' "
+                + "AND julianday(" + COL_DUTY_END_TIME + ") > julianday(" + COL_DUTY_START_TIME + ") "
+                + "THEN (" + dutyHoursExpr + " / " + STANDARD_DUTY_HOURS + ") "
+                + "+ (CASE WHEN " + dutyHoursExpr + " > " + STANDARD_DUTY_HOURS
+                + " THEN ((" + dutyHoursExpr + " - " + STANDARD_DUTY_HOURS + ") * " + OVERTIME_BONUS_MULTIPLIER + " / " + STANDARD_DUTY_HOURS + ") "
+                + "ELSE 0.0 END) "
+                + "ELSE 0.0 END) AS payable_day_units "
+                + "FROM " + TABLE_DUTY_START_PROOFS + " "
+                + "WHERE " + COL_DUTY_ATTENDANCE_DATE + " LIKE ? "
+                + "GROUP BY " + COL_DUTY_WORKER_ID;
+        Cursor c = db.rawQuery(sql, new String[]{ monthPrefixLike });
+        if (c != null) {
+            while (c.moveToNext()) {
+                long workerId = c.getLong(0);
+                double payableUnits = c.getDouble(1);
+                map.put(workerId, payableUnits);
+            }
+            c.close();
+        }
+        return map;
+    }
+
+    private Map<Long, Double> readWorkedDaysFromAttendanceFallbackMap(SQLiteDatabase db, String monthPrefixLike) {
+        Map<Long, Double> map = new HashMap<>();
+        String validDutyDurationCondition =
+                "d." + COL_DUTY_START_TIME + " IS NOT NULL AND TRIM(d." + COL_DUTY_START_TIME + ")!='' "
+                        + "AND d." + COL_DUTY_END_TIME + " IS NOT NULL AND TRIM(d." + COL_DUTY_END_TIME + ")!='' "
+                        + "AND julianday(d." + COL_DUTY_END_TIME + ") > julianday(d." + COL_DUTY_START_TIME + ")";
+        String sql = "SELECT a." + COL_ATTENDANCE_WORKER_ID + ", "
+                + "SUM(CASE a." + COL_ATTENDANCE_STATUS
+                + " WHEN " + AttendanceStaffItem.STATUS_PRESENT + " THEN 1.0"
+                + " WHEN " + AttendanceStaffItem.STATUS_HALF_DAY + " THEN 0.5"
+                + " ELSE 0.0 END) AS worked_days "
+                + "FROM " + TABLE_ATTENDANCE + " a "
+                + "LEFT JOIN " + TABLE_DUTY_START_PROOFS + " d "
+                + "ON d." + COL_DUTY_WORKER_ID + "=a." + COL_ATTENDANCE_WORKER_ID + " "
+                + "AND d." + COL_DUTY_ATTENDANCE_DATE + "=a." + COL_ATTENDANCE_DATE + " "
+                + "WHERE a." + COL_ATTENDANCE_DATE + " LIKE ? AND a." + COL_ATTENDANCE_LOCKED + "=1 "
+                + "AND NOT (" + validDutyDurationCondition + ") "
+                + "GROUP BY a." + COL_ATTENDANCE_WORKER_ID;
+        Cursor c = db.rawQuery(sql, new String[]{ monthPrefixLike });
+        if (c != null) {
+            while (c.moveToNext()) {
+                long workerId = c.getLong(0);
+                double workedDays = c.getDouble(1);
+                map.put(workerId, workedDays);
+            }
+            c.close();
+        }
+        return map;
+    }
+
+    private Map<Long, Double> readOvertimeHoursMap(SQLiteDatabase db, String monthPrefixLike) {
+        Map<Long, Double> map = new HashMap<>();
+        String dutyHoursExpr = "((julianday(" + COL_DUTY_END_TIME + ") - julianday(" + COL_DUTY_START_TIME + ")) * 24.0)";
+        String sql = "SELECT " + COL_DUTY_WORKER_ID + ", "
+                + "SUM(CASE "
+                + "WHEN " + COL_DUTY_START_TIME + " IS NOT NULL AND TRIM(" + COL_DUTY_START_TIME + ")!='' "
+                + "AND " + COL_DUTY_END_TIME + " IS NOT NULL AND TRIM(" + COL_DUTY_END_TIME + ")!='' "
+                + "AND julianday(" + COL_DUTY_END_TIME + ") > julianday(" + COL_DUTY_START_TIME + ") "
+                + "AND " + dutyHoursExpr + " > " + STANDARD_DUTY_HOURS + " "
+                + "THEN (" + dutyHoursExpr + " - " + STANDARD_DUTY_HOURS + ") "
+                + "ELSE 0.0 END) AS overtime_hours "
+                + "FROM " + TABLE_DUTY_START_PROOFS + " "
+                + "WHERE " + COL_DUTY_ATTENDANCE_DATE + " LIKE ? "
+                + "GROUP BY " + COL_DUTY_WORKER_ID;
+        Cursor c = db.rawQuery(sql, new String[]{ monthPrefixLike });
+        if (c != null) {
+            while (c.moveToNext()) {
+                long workerId = c.getLong(0);
+                double overtimeHours = c.getDouble(1);
+                map.put(workerId, overtimeHours);
+            }
+            c.close();
+        }
+        return map;
+    }
+
+    private void mergeWorkedDaysMaps(Map<Long, Double> target, Map<Long, Double> source) {
+        if (target == null || source == null || source.isEmpty()) return;
+        for (Map.Entry<Long, Double> entry : source.entrySet()) {
+            if (entry == null) continue;
+            Long workerId = entry.getKey();
+            if (workerId == null || workerId <= 0L) continue;
+            double current = target.containsKey(workerId) ? target.get(workerId) : 0d;
+            double incoming = entry.getValue() != null ? entry.getValue() : 0d;
+            target.put(workerId, current + incoming);
+        }
     }
 
     private Map<Long, Double> readPaidAmountMap(SQLiteDatabase db, String monthPrefixLike) {

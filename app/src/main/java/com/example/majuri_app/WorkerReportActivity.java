@@ -118,6 +118,7 @@ public class WorkerReportActivity extends AppCompatActivity {
         double presentEquivalent = presentCount + (halfDayCount * 0.5d);
 
         double dailyWage = summary != null ? summary.getDailyWage() : 0d;
+        double overtimeHours = summary != null ? summary.getOvertimeHours() : 0d;
         double gross = summary != null ? summary.getGrossAmount() : 0d;
         double paid = summary != null ? summary.getPaidAmount() : 0d;
         double pending = summary != null ? summary.getPendingAmount() : 0d;
@@ -130,7 +131,7 @@ public class WorkerReportActivity extends AppCompatActivity {
         setText(R.id.tvWorkingDays, formatNumber(workingEntries));
         setText(R.id.tvPresentDays, formatNumber(presentEquivalent));
         setText(R.id.tvAbsentDays, String.format(Locale.US, "%02d", Math.max(absentCount, 0)));
-        setText(R.id.tvOvertimeHours, "0h");
+        setText(R.id.tvOvertimeHours, formatNumber(overtimeHours) + "h");
 
         setText(R.id.tvDailyWage, formatCurrency(dailyWage));
         setText(R.id.tvGrossSalary, formatCurrency(gross));

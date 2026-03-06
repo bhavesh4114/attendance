@@ -9,6 +9,7 @@ public class WorkerPaymentSummary {
     private final String role;
     private final double dailyWage;
     private final double workedDays;
+    private final double overtimeHours;
     private final double grossAmount;
     private final double paidAmount;
     private final double pendingAmount;
@@ -19,6 +20,7 @@ public class WorkerPaymentSummary {
             String role,
             double dailyWage,
             double workedDays,
+            double overtimeHours,
             double grossAmount,
             double paidAmount,
             double pendingAmount
@@ -28,6 +30,7 @@ public class WorkerPaymentSummary {
         this.role = role;
         this.dailyWage = dailyWage;
         this.workedDays = workedDays;
+        this.overtimeHours = overtimeHours;
         this.grossAmount = grossAmount;
         this.paidAmount = paidAmount;
         this.pendingAmount = pendingAmount;
@@ -51,6 +54,10 @@ public class WorkerPaymentSummary {
 
     public double getWorkedDays() {
         return workedDays;
+    }
+
+    public double getOvertimeHours() {
+        return overtimeHours;
     }
 
     public double getGrossAmount() {

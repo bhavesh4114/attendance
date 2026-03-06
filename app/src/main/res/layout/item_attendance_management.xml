@@ -168,7 +168,6 @@
                 android:layout_height="match_parent"
                 android:layout_weight="1"
                 android:layout_marginStart="2dp"
-                android:layout_marginEnd="2dp"
                 android:clickable="true"
                 android:focusable="true">
 
@@ -179,27 +178,6 @@
                     android:layout_gravity="center"
                     android:fontFamily="sans-serif-medium"
                     android:text="HOURLY"
-                    android:textAllCaps="true"
-                    android:textColor="#64748B"
-                    android:textSize="10sp" />
-            </FrameLayout>
-
-            <FrameLayout
-                android:id="@+id/optionOvertime"
-                android:layout_width="0dp"
-                android:layout_height="match_parent"
-                android:layout_weight="1"
-                android:layout_marginStart="2dp"
-                android:clickable="true"
-                android:focusable="true">
-
-                <TextView
-                    android:id="@+id/textOvertime"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_gravity="center"
-                    android:fontFamily="sans-serif-medium"
-                    android:text="OVERTIME"
                     android:textAllCaps="true"
                     android:textColor="#64748B"
                     android:textSize="10sp" />
@@ -279,66 +257,6 @@
                     android:textStyle="bold" />
             </LinearLayout>
         </LinearLayout>
-
-        <com.google.android.material.card.MaterialCardView
-            android:id="@+id/overtimeContainer"
-            android:layout_width="match_parent"
-            android:layout_height="58dp"
-            android:layout_marginTop="12dp"
-            android:visibility="gone"
-            app:cardBackgroundColor="#EFF3FA"
-            app:cardCornerRadius="22dp"
-            app:cardElevation="0dp"
-            app:strokeColor="#DCE4F2"
-            app:strokeWidth="1dp">
-
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:gravity="center_vertical"
-                android:orientation="horizontal"
-                android:paddingStart="14dp"
-                android:paddingEnd="14dp">
-
-                <TextView
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:fontFamily="sans-serif-medium"
-                    android:text="Overtime Hours"
-                    android:textColor="#3B5DCC"
-                    android:textSize="13sp"
-                    android:textStyle="bold" />
-
-                <com.google.android.material.card.MaterialCardView
-                    android:layout_width="72dp"
-                    android:layout_height="34dp"
-                    app:cardBackgroundColor="#F8FAFC"
-                    app:cardCornerRadius="8dp"
-                    app:cardElevation="0dp"
-                    app:strokeColor="#D7DFEA"
-                    app:strokeWidth="1dp">
-
-                    <TextView
-                        android:layout_width="match_parent"
-                        android:layout_height="match_parent"
-                        android:gravity="center"
-                        android:text="2.5"
-                        android:textColor="#0F172A"
-                        android:textSize="14sp"
-                        android:textStyle="bold"
-                        tools:ignore="HardcodedText" />
-                </com.google.android.material.card.MaterialCardView>
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginStart="8dp"
-                    android:text="hrs"
-                    android:textColor="#64748B"
-                    android:textSize="12sp" />
-            </LinearLayout>
-        </com.google.android.material.card.MaterialCardView>
 
         <com.google.android.material.button.MaterialButton
             android:id="@+id/btnInlineSaveAttendance"
