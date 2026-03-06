@@ -9,12 +9,14 @@ import android.database.sqlite.SQLiteOpenHelper;
 import androidx.annotation.Nullable;
 
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
+import java.text.SimpleDateFormat;
 
 /**
  * SQLite helper for saving workers and payroll-related data.
@@ -22,13 +24,14 @@ import java.util.Set;
 public class WorkerDbHelper extends SQLiteOpenHelper {
 
     private static final String DB_NAME = "majuri_workers.db";
-    private static final int DB_VERSION = 6;
+    private static final int DB_VERSION = 8;
 
     private static final String TABLE_WORKERS = "workers";
     private static final String TABLE_ATTENDANCE = "attendance_records";
     private static final String TABLE_ADVANCES = "payment_advances";
     private static final String TABLE_PAYMENTS = "payment_records";
     private static final String TABLE_DUTY_START_PROOFS = "duty_start_proofs";
+    private static final String TABLE_FUND_REQUESTS = "fund_requests";
 
     public static final String COL_ID = "id";
     public static final String COL_NAME = "name";
@@ -70,6 +73,16 @@ public class WorkerDbHelper extends SQLiteOpenHelper {
     private static final double OVERTIME_RATE_MULTIPLIER = 1.5d;
     private static final double OVERTIME_BONUS_MULTIPLIER = OVERTIME_RATE_MULTIPLIER - 1d;
 
+    private static final String COL_FUND_CONTRACTOR_ID = "contractor_id";
+    private static final String COL_FUND_COMPANY_NAME = "company_name";
+    private static final String COL_FUND_AMOUNT = "amount";
+    private static final String COL_FUND_NOTE = "note";
+    private static final String COL_FUND_STATUS = "status";
+    private static final String COL_FUND_CREATED_AT = "created_at";
+    private static final String COL_FUND_PAYMENT_METHOD = "payment_method";
+    private static final String COL_FUND_PAYMENT_REF = "payment_ref";
+    private static final String COL_FUND_UPDATED_AT = "updated_at";
+
     public WorkerDbHelper(@Nullable Context context) {
         super(context, DB_NAME, null, DB_VERSION);
     }
@@ -81,6 +94,7 @@ public class WorkerDbHelper extends SQLiteOpenHelper {
         createAdvancesTable(db);
         createPaymentsTable(db);
         createDutyStartProofsTable(db);
+        createFundRequestsTable(db);
         migrateAdvancesToPayments(db);
     }
 
@@ -102,6 +116,12 @@ public class WorkerDbHelper extends SQLiteOpenHelper {
         }
         if (oldVersion < 6) {
             addDutyLocationColumnsIfMissing(db);
+        }
+        if (oldVersion < 7) {
+            createFundRequestsTable(db);
+        }
+        if (oldVersion < 8) {
+            addFundPaymentColumnsIfMissing(db);
         }
     }
 
@@ -166,6 +186,36 @@ public class WorkerDbHelper extends SQLiteOpenHelper {
                 + COL_DUTY_END_PLACE + " TEXT, "
                 + "UNIQUE(" + COL_DUTY_WORKER_ID + ", " + COL_DUTY_ATTENDANCE_DATE + "))";
         db.execSQL(sql);
+    }
+
+    private void createFundRequestsTable(SQLiteDatabase db) {
+        String sql = "CREATE TABLE IF NOT EXISTS " + TABLE_FUND_REQUESTS + " ("
+                + COL_ID + " INTEGER PRIMARY KEY AUTOINCREMENT, "
+                + COL_FUND_CONTRACTOR_ID + " TEXT NOT NULL, "
+                + COL_FUND_COMPANY_NAME + " TEXT NOT NULL, "
+                + COL_FUND_AMOUNT + " REAL NOT NULL, "
+                + COL_FUND_NOTE + " TEXT, "
+                + COL_FUND_STATUS + " TEXT NOT NULL DEFAULT 'Pending', "
+                + COL_FUND_CREATED_AT + " TEXT NOT NULL, "
+                + COL_FUND_PAYMENT_METHOD + " TEXT, "
+                + COL_FUND_PAYMENT_REF + " TEXT, "
+                + COL_FUND_UPDATED_AT + " TEXT)";
+        db.execSQL(sql);
+    }
+
+    private void addFundPaymentColumnsIfMissing(SQLiteDatabase db) {
+        try {
+            db.execSQL("ALTER TABLE " + TABLE_FUND_REQUESTS + " ADD COLUMN " + COL_FUND_PAYMENT_METHOD + " TEXT");
+        } catch (Exception ignored) {
+        }
+        try {
+            db.execSQL("ALTER TABLE " + TABLE_FUND_REQUESTS + " ADD COLUMN " + COL_FUND_PAYMENT_REF + " TEXT");
+        } catch (Exception ignored) {
+        }
+        try {
+            db.execSQL("ALTER TABLE " + TABLE_FUND_REQUESTS + " ADD COLUMN " + COL_FUND_UPDATED_AT + " TEXT");
+        } catch (Exception ignored) {
+        }
     }
 
     private void addDutyEndColumnsIfMissing(SQLiteDatabase db) {
@@ -707,6 +757,246 @@ public class WorkerDbHelper extends SQLiteOpenHelper {
         long id = db.insert(TABLE_PAYMENTS, null, cv);
         db.close();
         return id;
+    }
+
+    /**
+     * Save contractor fund request entry.
+     */
+    public long insertFundRequest(String contractorId, String companyName, double amount, String note) {
+        if (contractorId == null || contractorId.trim().isEmpty()) return -1L;
+        if (companyName == null || companyName.trim().isEmpty()) return -1L;
+        if (amount <= 0d) return -1L;
+
+        SQLiteDatabase db = getWritableDatabase();
+        ContentValues cv = new ContentValues();
+        cv.put(COL_FUND_CONTRACTOR_ID, contractorId.trim());
+        cv.put(COL_FUND_COMPANY_NAME, companyName.trim());
+        cv.put(COL_FUND_AMOUNT, amount);
+        cv.put(COL_FUND_NOTE, note != null ? note.trim() : "");
+        cv.put(COL_FUND_STATUS, "Pending");
+        String createdAt = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.US).format(new Date());
+        cv.put(COL_FUND_CREATED_AT, createdAt);
+        long id = db.insert(TABLE_FUND_REQUESTS, null, cv);
+        db.close();
+        return id;
+    }
+
+    /**
+     * Returns latest fund requests for a contractor.
+     */
+    public List<FundRequestRecord> getFundRequestsForContractor(String contractorId) {
+        List<FundRequestRecord> requests = new ArrayList<>();
+        if (contractorId == null || contractorId.trim().isEmpty()) {
+            return requests;
+        }
+
+        SQLiteDatabase db = getReadableDatabase();
+        Cursor c = db.query(
+                TABLE_FUND_REQUESTS,
+                null,
+                COL_FUND_CONTRACTOR_ID + "=?",
+                new String[]{contractorId.trim()},
+                null,
+                null,
+                COL_ID + " DESC"
+        );
+        if (c != null) {
+            int iId = c.getColumnIndex(COL_ID);
+            int iContractorId = c.getColumnIndex(COL_FUND_CONTRACTOR_ID);
+            int iCompany = c.getColumnIndex(COL_FUND_COMPANY_NAME);
+            int iAmount = c.getColumnIndex(COL_FUND_AMOUNT);
+            int iNote = c.getColumnIndex(COL_FUND_NOTE);
+            int iStatus = c.getColumnIndex(COL_FUND_STATUS);
+            int iCreatedAt = c.getColumnIndex(COL_FUND_CREATED_AT);
+            while (c.moveToNext()) {
+                requests.add(new FundRequestRecord(
+                        iId >= 0 ? c.getLong(iId) : -1L,
+                        iContractorId >= 0 ? c.getString(iContractorId) : "",
+                        iCompany >= 0 ? c.getString(iCompany) : "",
+                        iAmount >= 0 ? c.getDouble(iAmount) : 0d,
+                        iNote >= 0 ? c.getString(iNote) : "",
+                        iStatus >= 0 ? c.getString(iStatus) : "Pending",
+                        iCreatedAt >= 0 ? c.getString(iCreatedAt) : ""
+                ));
+            }
+            c.close();
+        }
+        db.close();
+        return requests;
+    }
+
+    /**
+     * Returns latest fund requests across all contractors.
+     */
+    public List<FundRequestRecord> getAllFundRequests() {
+        List<FundRequestRecord> requests = new ArrayList<>();
+
+        SQLiteDatabase db = getReadableDatabase();
+        Cursor c = db.query(
+                TABLE_FUND_REQUESTS,
+                null,
+                null,
+                null,
+                null,
+                null,
+                COL_ID + " DESC"
+        );
+        if (c != null) {
+            int iId = c.getColumnIndex(COL_ID);
+            int iContractorId = c.getColumnIndex(COL_FUND_CONTRACTOR_ID);
+            int iCompany = c.getColumnIndex(COL_FUND_COMPANY_NAME);
+            int iAmount = c.getColumnIndex(COL_FUND_AMOUNT);
+            int iNote = c.getColumnIndex(COL_FUND_NOTE);
+            int iStatus = c.getColumnIndex(COL_FUND_STATUS);
+            int iCreatedAt = c.getColumnIndex(COL_FUND_CREATED_AT);
+            while (c.moveToNext()) {
+                requests.add(new FundRequestRecord(
+                        iId >= 0 ? c.getLong(iId) : -1L,
+                        iContractorId >= 0 ? c.getString(iContractorId) : "",
+                        iCompany >= 0 ? c.getString(iCompany) : "",
+                        iAmount >= 0 ? c.getDouble(iAmount) : 0d,
+                        iNote >= 0 ? c.getString(iNote) : "",
+                        iStatus >= 0 ? c.getString(iStatus) : "Pending",
+                        iCreatedAt >= 0 ? c.getString(iCreatedAt) : ""
+                ));
+            }
+            c.close();
+        }
+        db.close();
+        return requests;
+    }
+
+    /**
+     * Returns a single fund request by id.
+     */
+    @Nullable
+    public FundRequestRecord getFundRequestById(long requestId) {
+        if (requestId <= 0L) return null;
+
+        SQLiteDatabase db = getReadableDatabase();
+        Cursor c = db.query(
+                TABLE_FUND_REQUESTS,
+                null,
+                COL_ID + "=?",
+                new String[]{String.valueOf(requestId)},
+                null,
+                null,
+                null,
+                "1"
+        );
+        FundRequestRecord record = null;
+        if (c != null) {
+            int iId = c.getColumnIndex(COL_ID);
+            int iContractorId = c.getColumnIndex(COL_FUND_CONTRACTOR_ID);
+            int iCompany = c.getColumnIndex(COL_FUND_COMPANY_NAME);
+            int iAmount = c.getColumnIndex(COL_FUND_AMOUNT);
+            int iNote = c.getColumnIndex(COL_FUND_NOTE);
+            int iStatus = c.getColumnIndex(COL_FUND_STATUS);
+            int iCreatedAt = c.getColumnIndex(COL_FUND_CREATED_AT);
+            if (c.moveToFirst()) {
+                record = new FundRequestRecord(
+                        iId >= 0 ? c.getLong(iId) : -1L,
+                        iContractorId >= 0 ? c.getString(iContractorId) : "",
+                        iCompany >= 0 ? c.getString(iCompany) : "",
+                        iAmount >= 0 ? c.getDouble(iAmount) : 0d,
+                        iNote >= 0 ? c.getString(iNote) : "",
+                        iStatus >= 0 ? c.getString(iStatus) : "Pending",
+                        iCreatedAt >= 0 ? c.getString(iCreatedAt) : ""
+                );
+            }
+            c.close();
+        }
+        db.close();
+        return record;
+    }
+
+    /**
+     * Mark fund request as approved and save payment details.
+     */
+    public boolean approveFundRequest(long requestId, String paymentMethod, String paymentRef) {
+        if (requestId <= 0L) return false;
+
+        SQLiteDatabase db = getWritableDatabase();
+        try {
+            ContentValues cv = new ContentValues();
+            cv.put(COL_FUND_STATUS, "Approved");
+            cv.put(COL_FUND_PAYMENT_METHOD, paymentMethod != null ? paymentMethod.trim() : "");
+            cv.put(COL_FUND_PAYMENT_REF, paymentRef != null ? paymentRef.trim() : "");
+            cv.put(COL_FUND_UPDATED_AT, new SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.US).format(new Date()));
+
+            int updated = db.update(
+                    TABLE_FUND_REQUESTS,
+                    cv,
+                    COL_ID + "=?",
+                    new String[]{String.valueOf(requestId)}
+            );
+            return updated > 0;
+        } catch (Exception ignored) {
+            return false;
+        } finally {
+            db.close();
+        }
+    }
+
+    /**
+     * Returns non-pending fund requests for transaction history.
+     */
+    public List<FundRequestRecord> getFundTransactionHistory() {
+        List<FundRequestRecord> list = new ArrayList<>();
+        SQLiteDatabase db = getReadableDatabase();
+        Cursor c = db.query(
+                TABLE_FUND_REQUESTS,
+                null,
+                COL_FUND_STATUS + "!=?",
+                new String[]{"Pending"},
+                null,
+                null,
+                COL_ID + " DESC"
+        );
+        if (c != null) {
+            int iId = c.getColumnIndex(COL_ID);
+            int iContractorId = c.getColumnIndex(COL_FUND_CONTRACTOR_ID);
+            int iCompany = c.getColumnIndex(COL_FUND_COMPANY_NAME);
+            int iAmount = c.getColumnIndex(COL_FUND_AMOUNT);
+            int iNote = c.getColumnIndex(COL_FUND_NOTE);
+            int iStatus = c.getColumnIndex(COL_FUND_STATUS);
+            int iCreatedAt = c.getColumnIndex(COL_FUND_CREATED_AT);
+            while (c.moveToNext()) {
+                list.add(new FundRequestRecord(
+                        iId >= 0 ? c.getLong(iId) : -1L,
+                        iContractorId >= 0 ? c.getString(iContractorId) : "",
+                        iCompany >= 0 ? c.getString(iCompany) : "",
+                        iAmount >= 0 ? c.getDouble(iAmount) : 0d,
+                        iNote >= 0 ? c.getString(iNote) : "",
+                        iStatus >= 0 ? c.getString(iStatus) : "Pending",
+                        iCreatedAt >= 0 ? c.getString(iCreatedAt) : ""
+                ));
+            }
+            c.close();
+        }
+        db.close();
+        return list;
+    }
+
+    /**
+     * Returns total amount of approved fund payments.
+     */
+    public double getTotalApprovedFundAmount() {
+        SQLiteDatabase db = getReadableDatabase();
+        Cursor c = db.rawQuery(
+                "SELECT SUM(" + COL_FUND_AMOUNT + ") FROM " + TABLE_FUND_REQUESTS
+                        + " WHERE " + COL_FUND_STATUS + "=?",
+                new String[]{"Approved"}
+        );
+        double total = 0d;
+        if (c != null) {
+            if (c.moveToFirst()) {
+                total = c.isNull(0) ? 0d : c.getDouble(0);
+            }
+            c.close();
+        }
+        db.close();
+        return Math.max(0d, total);
     }
 
     /**
