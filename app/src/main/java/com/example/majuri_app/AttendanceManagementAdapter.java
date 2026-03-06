@@ -43,6 +43,7 @@ public class AttendanceManagementAdapter extends RecyclerView.Adapter<Attendance
     private final Map<Long, Boolean> hourlyConfirmedByWorkerKey = new HashMap<>();
     private final Map<Long, Boolean> dutyStartedByWorkerKey = new HashMap<>();
     private final Map<Long, Boolean> dutyEndedByWorkerKey = new HashMap<>();
+    private final Map<Long, Boolean> paymentDoneByWorkerKey = new HashMap<>();
     private OnSummaryChangedListener summaryListener;
     private OnDutyActionListener dutyActionListener;
     private boolean editable = true;
@@ -71,6 +72,7 @@ public class AttendanceManagementAdapter extends RecyclerView.Adapter<Attendance
         hourlyConfirmedByWorkerKey.clear();
         dutyStartedByWorkerKey.clear();
         dutyEndedByWorkerKey.clear();
+        paymentDoneByWorkerKey.clear();
         if (list != null) {
             items.addAll(list);
         }
@@ -84,6 +86,17 @@ public class AttendanceManagementAdapter extends RecyclerView.Adapter<Attendance
 
     public void setEditable(boolean editable) {
         this.editable = editable;
+        notifyDataSetChanged();
+    }
+
+    public void setPaymentDoneWorkerIds(Set<Long> workerIds) {
+        paymentDoneByWorkerKey.clear();
+        if (workerIds != null) {
+            for (Long workerId : workerIds) {
+                if (workerId == null || workerId <= 0L) continue;
+                paymentDoneByWorkerKey.put(workerId, true);
+            }
+        }
         notifyDataSetChanged();
     }
 
@@ -148,6 +161,7 @@ public class AttendanceManagementAdapter extends RecyclerView.Adapter<Attendance
     public void onBindViewHolder(@NonNull StaffViewHolder holder, int position) {
         AttendanceStaffItem item = items.get(position);
         holder.avatarInitials.setText(item.getInitials());
+        holder.avatarInitials.setVisibility(View.GONE);
         holder.avatarImage.setVisibility(View.GONE);
         holder.avatarPlaceholder.setVisibility(View.VISIBLE);
         holder.staffName.setText(item.getName());
@@ -331,18 +345,25 @@ public class AttendanceManagementAdapter extends RecyclerView.Adapter<Attendance
         long workerKey = getWorkerKey(item, position);
         boolean dutyStarted = Boolean.TRUE.equals(dutyStartedByWorkerKey.get(workerKey));
         boolean dutyEnded = Boolean.TRUE.equals(dutyEndedByWorkerKey.get(workerKey));
+        boolean paymentDone = Boolean.TRUE.equals(paymentDoneByWorkerKey.get(workerKey));
+        boolean isActiveDuty = dutyStarted && !dutyEnded;
         boolean isHourlyConfirmed = Boolean.TRUE.equals(hourlyConfirmedByWorkerKey.get(workerKey));
 
         holder.btnInlineSaveAttendance.setVisibility(showDutyActions && !dutyEnded ? View.VISIBLE : View.GONE);
-        holder.paymentActionContainer.setVisibility(showDutyActions && dutyEnded ? View.VISIBLE : View.GONE);
+        holder.paymentActionContainer.setVisibility(showDutyActions && dutyEnded && !paymentDone ? View.VISIBLE : View.GONE);
+        holder.btnPaymentDone.setVisibility(showDutyActions && dutyEnded && paymentDone ? View.VISIBLE : View.GONE);
         holder.btnInlineSaveAttendance.setText(dutyStarted ? R.string.end_duty : R.string.start_duty);
         holder.btnHourlyConfirm.setText(isHourlyConfirmed ? R.string.confirmed : R.string.confirm);
         holder.btnHourlyConfirm.setEnabled(editable && isHourly);
         holder.btnHourlyConfirm.setAlpha(editable && isHourly ? 1f : 0.8f);
         holder.btnInlineSaveAttendance.setEnabled(true);
         holder.paymentActionContainer.setEnabled(true);
+        holder.btnPaymentDone.setClickable(false);
+        holder.btnPaymentDone.setFocusable(false);
         holder.btnInlineSaveAttendance.setAlpha(1f);
         holder.paymentActionContainer.setAlpha(1f);
+        holder.btnPaymentDone.setAlpha(1f);
+        holder.avatarStatusDot.setVisibility(isActiveDuty ? View.VISIBLE : View.GONE);
     }
 
     private void bindHourlyRate(StaffViewHolder holder, AttendanceStaffItem item) {
@@ -430,6 +451,7 @@ public class AttendanceManagementAdapter extends RecyclerView.Adapter<Attendance
     static class StaffViewHolder extends RecyclerView.ViewHolder {
         final View avatarPlaceholder;
         final TextView avatarInitials;
+        final View avatarStatusDot;
         final android.widget.ImageView avatarImage;
         final TextView staffName;
         final TextView staffSubtitle;
@@ -449,12 +471,14 @@ public class AttendanceManagementAdapter extends RecyclerView.Adapter<Attendance
         final View paymentActionContainer;
         final View btnPayNow;
         final View btnPayLater;
+        final MaterialButton btnPaymentDone;
         TextWatcher hourlyHoursWatcher;
 
         StaffViewHolder(@NonNull View itemView) {
             super(itemView);
             avatarPlaceholder = itemView.findViewById(R.id.avatarPlaceholder);
             avatarInitials = itemView.findViewById(R.id.avatarInitials);
+            avatarStatusDot = itemView.findViewById(R.id.avatarStatusDot);
             avatarImage = itemView.findViewById(R.id.avatarImage);
             staffName = itemView.findViewById(R.id.staffName);
             staffSubtitle = itemView.findViewById(R.id.staffSubtitle);
@@ -474,6 +498,7 @@ public class AttendanceManagementAdapter extends RecyclerView.Adapter<Attendance
             paymentActionContainer = itemView.findViewById(R.id.paymentActionContainer);
             btnPayNow = itemView.findViewById(R.id.btnPayNow);
             btnPayLater = itemView.findViewById(R.id.btnPayLater);
+            btnPaymentDone = itemView.findViewById(R.id.btnPaymentDone);
         }
     }
 }

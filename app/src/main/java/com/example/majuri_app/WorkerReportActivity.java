@@ -42,6 +42,7 @@ public class WorkerReportActivity extends AppCompatActivity {
     public static final String EXTRA_TO_DATE = "extra_to_date";
 
     private final SimpleDateFormat inputDateFormat = new SimpleDateFormat("dd MMM yyyy", Locale.getDefault());
+    private final SimpleDateFormat isoDateFormat = new SimpleDateFormat("yyyy-MM-dd", Locale.US);
     private final SimpleDateFormat generatedDateFormat = new SimpleDateFormat("MMMM d, yyyy", Locale.US);
     private ActivityResultLauncher<String> storagePermissionLauncher;
 
@@ -95,15 +96,20 @@ public class WorkerReportActivity extends AppCompatActivity {
         String fromDate = safeText(getIntent() != null ? getIntent().getStringExtra(EXTRA_FROM_DATE) : "", "");
         String toDate = safeText(getIntent() != null ? getIntent().getStringExtra(EXTRA_TO_DATE) : "", "");
 
-        Calendar reportMonth = resolveReportMonth(fromDate, toDate);
-        int year = reportMonth.get(Calendar.YEAR);
-        int monthZeroBased = reportMonth.get(Calendar.MONTH);
+        Date fromParsed = parseDate(fromDate);
+        Date toParsed = parseDate(toDate);
+        if (fromParsed != null && toParsed != null && fromParsed.after(toParsed)) {
+            Date tmp = fromParsed;
+            fromParsed = toParsed;
+            toParsed = tmp;
+        }
+        String fromIso = toIsoDate(fromParsed);
+        String toIso = toIsoDate(toParsed);
 
         WorkerDbHelper dbHelper = new WorkerDbHelper(this);
         WorkerProfile profile = dbHelper.getWorkerProfileById(workerId);
-        List<WorkerPaymentSummary> summaries = dbHelper.getWorkerPaymentSummariesForMonth(year, monthZeroBased);
-        WorkerPaymentSummary summary = findSummaryByWorkerId(summaries, workerId);
-        int[] attendanceCounts = dbHelper.getWorkerAttendanceCountsForMonth(workerId, year, monthZeroBased);
+        WorkerPaymentSummary summary = dbHelper.getWorkerPaymentSummaryForRange(workerId, fromIso, toIso);
+        int[] attendanceCounts = dbHelper.getWorkerAttendanceCountsForRange(workerId, fromIso, toIso);
         dbHelper.close();
 
         String workerName = profile != null ? safeText(profile.getFullName(), "Worker") :
@@ -114,7 +120,7 @@ public class WorkerReportActivity extends AppCompatActivity {
         int presentCount = attendanceCounts[0];
         int halfDayCount = attendanceCounts[1];
         int absentCount = attendanceCounts[2];
-        int workingEntries = presentCount + halfDayCount + absentCount;
+        double workingEntries = presentCount + halfDayCount + absentCount;
         double presentEquivalent = presentCount + (halfDayCount * 0.5d);
 
         double dailyWage = summary != null ? summary.getDailyWage() : 0d;
@@ -122,6 +128,13 @@ public class WorkerReportActivity extends AppCompatActivity {
         double gross = summary != null ? summary.getGrossAmount() : 0d;
         double paid = summary != null ? summary.getPaidAmount() : 0d;
         double pending = summary != null ? summary.getPendingAmount() : 0d;
+
+        // Fallback to computed backend summary when attendance rows are unavailable for the range.
+        if (workingEntries <= 0d && summary != null) {
+            double workedDaysFromSummary = Math.max(0d, summary.getWorkedDays());
+            workingEntries = workedDaysFromSummary;
+            presentEquivalent = workedDaysFromSummary;
+        }
 
         setText(R.id.tvReportWorkerName, workerName);
         setText(R.id.tvReportEmployeeId, employeeId);
@@ -140,28 +153,6 @@ public class WorkerReportActivity extends AppCompatActivity {
         setText(R.id.tvGeneratedDate, generatedDateFormat.format(new Date()));
     }
 
-    private WorkerPaymentSummary findSummaryByWorkerId(List<WorkerPaymentSummary> summaries, long workerId) {
-        if (summaries == null) return null;
-        for (WorkerPaymentSummary item : summaries) {
-            if (item != null && item.getWorkerId() == workerId) {
-                return item;
-            }
-        }
-        return null;
-    }
-
-    private Calendar resolveReportMonth(String fromDate, String toDate) {
-        Calendar calendar = Calendar.getInstance();
-        Date parsed = parseDate(toDate);
-        if (parsed == null) {
-            parsed = parseDate(fromDate);
-        }
-        if (parsed != null) {
-            calendar.setTime(parsed);
-        }
-        return calendar;
-    }
-
     private Date parseDate(String raw) {
         if (raw == null || raw.trim().isEmpty()) return null;
         try {
@@ -169,6 +160,11 @@ public class WorkerReportActivity extends AppCompatActivity {
         } catch (ParseException ignored) {
             return null;
         }
+    }
+
+    private String toIsoDate(Date date) {
+        if (date == null) return "";
+        return isoDateFormat.format(date);
     }
 
     private String formatCurrency(double value) {

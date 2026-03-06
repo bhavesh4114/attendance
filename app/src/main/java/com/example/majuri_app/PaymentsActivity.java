@@ -208,6 +208,14 @@ public class PaymentsActivity extends AppCompatActivity {
         }
 
         WorkerDbHelper dbHelper = new WorkerDbHelper(this);
+        double availableBalance = dbHelper.getAvailableWalletBalance();
+        String walletFailureReason = getWalletPaymentFailureReason(item.getPendingAmountValue(), availableBalance);
+        if (!walletFailureReason.isEmpty()) {
+            dbHelper.close();
+            showPaymentFailurePopup(walletFailureReason);
+            return;
+        }
+
         long rowId = dbHelper.recordPayment(
                 item.getWorkerId(),
                 item.getPendingAmountValue(),
@@ -236,6 +244,20 @@ public class PaymentsActivity extends AppCompatActivity {
     private void markAllPaid() {
         int count = 0;
         WorkerDbHelper dbHelper = new WorkerDbHelper(this);
+        double totalRequired = 0d;
+        for (PaymentQueueItem item : allItems) {
+            if (item == null || item.getWorkerId() <= 0L || item.getPendingAmountValue() <= 0d) continue;
+            totalRequired += item.getPendingAmountValue();
+        }
+
+        double availableBalance = dbHelper.getAvailableWalletBalance();
+        String walletFailureReason = getWalletPaymentFailureReason(totalRequired, availableBalance);
+        if (!walletFailureReason.isEmpty()) {
+            dbHelper.close();
+            showPaymentFailurePopup(walletFailureReason);
+            return;
+        }
+
         for (PaymentQueueItem item : allItems) {
             if (item.getWorkerId() <= 0L || item.getPendingAmountValue() <= 0d) {
                 continue;
@@ -307,6 +329,29 @@ public class PaymentsActivity extends AppCompatActivity {
         formatter.setMaximumFractionDigits(2);
         formatter.setMinimumFractionDigits(0);
         return formatter.format(Math.max(0d, amount));
+    }
+
+    private String getWalletPaymentFailureReason(double requiredAmount, double availableBalance) {
+        if (requiredAmount <= 0d) return "";
+        if (availableBalance <= 0d) {
+            return getString(R.string.payment_failed_wallet_zero);
+        }
+        if (availableBalance + 0.0001d < requiredAmount) {
+            return getString(
+                    R.string.payment_failed_wallet_insufficient,
+                    formatCurrency(requiredAmount),
+                    formatCurrency(availableBalance)
+            );
+        }
+        return "";
+    }
+
+    private void showPaymentFailurePopup(String message) {
+        new androidx.appcompat.app.AlertDialog.Builder(this)
+                .setTitle(R.string.payment_failed)
+                .setMessage(message)
+                .setPositiveButton(android.R.string.ok, null)
+                .show();
     }
 
     private boolean onNavItemSelected(int id) {

@@ -112,6 +112,11 @@ public class WorkerPaymentActivity extends AppCompatActivity implements PaymentR
             Toast.makeText(this, R.string.no_pending_payments, Toast.LENGTH_SHORT).show();
             return;
         }
+        String walletFailureReason = getWalletPaymentFailureReason(currentPendingAmount);
+        if (!walletFailureReason.isEmpty()) {
+            showPaymentFailurePopup(walletFailureReason);
+            return;
+        }
         if (isCashSelected) {
             recordPayment(currentPendingAmount, "Cash", "Cash payment");
             return;
@@ -120,6 +125,12 @@ public class WorkerPaymentActivity extends AppCompatActivity implements PaymentR
     }
 
     private void startRazorpayCheckout() {
+        String walletFailureReason = getWalletPaymentFailureReason(currentPendingAmount);
+        if (!walletFailureReason.isEmpty()) {
+            showPaymentFailurePopup(walletFailureReason);
+            return;
+        }
+
         String keyId = getString(R.string.razorpay_key_id).trim();
         if (keyId.isEmpty() || keyId.contains("your_key_here")) {
             Toast.makeText(this, R.string.configure_razorpay_key, Toast.LENGTH_LONG).show();
@@ -221,6 +232,12 @@ public class WorkerPaymentActivity extends AppCompatActivity implements PaymentR
     }
 
     private void recordPayment(double amount, String paymentMethod, String note) {
+        String walletFailureReason = getWalletPaymentFailureReason(amount);
+        if (!walletFailureReason.isEmpty()) {
+            showPaymentFailurePopup(walletFailureReason);
+            return;
+        }
+
         WorkerDbHelper dbHelper = new WorkerDbHelper(this);
         long rowId = dbHelper.recordPayment(
                 currentWorkerId,
@@ -237,6 +254,34 @@ public class WorkerPaymentActivity extends AppCompatActivity implements PaymentR
             return;
         }
         Toast.makeText(this, R.string.payment_record_failed, Toast.LENGTH_SHORT).show();
+    }
+
+    private String getWalletPaymentFailureReason(double requiredAmount) {
+        if (requiredAmount <= 0d) return "";
+
+        WorkerDbHelper dbHelper = new WorkerDbHelper(this);
+        double availableBalance = dbHelper.getAvailableWalletBalance();
+        dbHelper.close();
+
+        if (availableBalance <= 0d) {
+            return getString(R.string.payment_failed_wallet_zero);
+        }
+        if (availableBalance + 0.0001d < requiredAmount) {
+            return getString(
+                    R.string.payment_failed_wallet_insufficient,
+                    formatCurrency(requiredAmount),
+                    formatCurrency(availableBalance)
+            );
+        }
+        return "";
+    }
+
+    private void showPaymentFailurePopup(String message) {
+        new androidx.appcompat.app.AlertDialog.Builder(this)
+                .setTitle(R.string.payment_failed)
+                .setMessage(message)
+                .setPositiveButton(android.R.string.ok, null)
+                .show();
     }
 
     private String safeText(String value, String fallback) {

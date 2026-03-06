@@ -43,6 +43,7 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -223,6 +224,7 @@ public class AttendanceManagementActivity extends AppCompatActivity {
         Map<Long, Integer> savedStatus = dbHelper.getAttendanceStatusByDate(attendanceDate);
         Set<Long> dutyStartedIds = dbHelper.getDutyStartedWorkerIdsForDate(attendanceDate);
         Set<Long> dutyEndedIds = dbHelper.getDutyEndedWorkerIdsForDate(attendanceDate);
+        Set<Long> paymentDoneIds = getPaymentDoneWorkerIdsForCurrentMonth(dbHelper);
         boolean locked = dbHelper.isAttendanceLockedForDate(attendanceDate);
         dbHelper.close();
 
@@ -245,6 +247,7 @@ public class AttendanceManagementActivity extends AppCompatActivity {
         adapter.setItems(list);
         adapter.setDutyStartedWorkerIds(dutyStartedIds);
         adapter.setDutyEndedWorkerIds(dutyEndedIds);
+        adapter.setPaymentDoneWorkerIds(paymentDoneIds);
         adapter.setEditable(!locked);
 
         if (tvTotalWorkers != null) {
@@ -252,6 +255,24 @@ public class AttendanceManagementActivity extends AppCompatActivity {
         }
 
         updateSaveButtonState(locked);
+    }
+
+    private Set<Long> getPaymentDoneWorkerIdsForCurrentMonth(WorkerDbHelper dbHelper) {
+        Set<Long> workerIds = new HashSet<>();
+        if (dbHelper == null) {
+            return workerIds;
+        }
+        List<WorkerPaymentSummary> summaries = dbHelper.getWorkerPaymentSummariesForMonth(
+                calendar.get(Calendar.YEAR),
+                calendar.get(Calendar.MONTH)
+        );
+        for (WorkerPaymentSummary summary : summaries) {
+            if (summary == null || summary.getWorkerId() <= 0L) continue;
+            if (summary.getPendingAmount() <= 0.0001d) {
+                workerIds.add(summary.getWorkerId());
+            }
+        }
+        return workerIds;
     }
 
     private void saveAttendanceForSelectedDate() {

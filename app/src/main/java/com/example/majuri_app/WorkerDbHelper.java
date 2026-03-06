@@ -1023,6 +1023,43 @@ public class WorkerDbHelper extends SQLiteOpenHelper {
     }
 
     /**
+     * Returns total pending worker payment amount across all saved attendance history.
+     * pending = max(0, total gross payable - total paid) per worker.
+     */
+    public double getTotalPendingWorkerPaymentAmount() {
+        SQLiteDatabase db = getReadableDatabase();
+        double totalPending = 0d;
+
+        try {
+            Map<Long, Double> payableDayUnitsMap = readPayableDayUnitsMap(db, "%");
+            Map<Long, Double> paidMap = readPaidAmountMap(db, "%");
+
+            Cursor c = db.query(TABLE_WORKERS, null, null, null, null, null, null);
+            if (c != null) {
+                int iId = c.getColumnIndex(COL_ID);
+                int iWage = c.getColumnIndex(COL_DAILY_WAGE);
+                while (c.moveToNext()) {
+                    long workerId = iId >= 0 ? c.getLong(iId) : -1L;
+                    String wageText = iWage >= 0 ? c.getString(iWage) : "";
+
+                    double dailyWage = parseAmount(wageText);
+                    double payableUnits = payableDayUnitsMap.containsKey(workerId)
+                            ? payableDayUnitsMap.get(workerId)
+                            : 0d;
+                    double grossAmount = dailyWage * payableUnits;
+                    double paidAmount = paidMap.containsKey(workerId) ? paidMap.get(workerId) : 0d;
+                    totalPending += Math.max(0d, grossAmount - paidAmount);
+                }
+                c.close();
+            }
+        } finally {
+            db.close();
+        }
+
+        return Math.max(0d, totalPending);
+    }
+
+    /**
      * Returns available wallet balance:
      * approved fund credits - worker payouts.
      */
@@ -1127,6 +1164,119 @@ public class WorkerDbHelper extends SQLiteOpenHelper {
     }
 
     /**
+     * Returns attendance counts for one worker in an optional date range.
+     * Date format: yyyy-MM-dd. Pass null/empty for open-ended range.
+     * Array order: [presentCount, halfDayCount, absentCount].
+     */
+    public int[] getWorkerAttendanceCountsForRange(long workerId, String fromDateIso, String toDateIso) {
+        int presentCount = 0;
+        int halfDayCount = 0;
+        int absentCount = 0;
+        if (workerId <= 0L) {
+            return new int[]{0, 0, 0};
+        }
+
+        SQLiteDatabase db = getReadableDatabase();
+        List<String> args = new ArrayList<>();
+        StringBuilder sql = new StringBuilder();
+        sql.append("SELECT ").append(COL_ATTENDANCE_STATUS).append(", COUNT(1) ")
+                .append("FROM ").append(TABLE_ATTENDANCE).append(" ")
+                .append("WHERE ").append(COL_ATTENDANCE_WORKER_ID).append("=? ")
+                .append("AND ").append(COL_ATTENDANCE_LOCKED).append("=1 ");
+        args.add(String.valueOf(workerId));
+        appendDateRangeClause(sql, COL_ATTENDANCE_DATE, fromDateIso, toDateIso, args);
+        sql.append("GROUP BY ").append(COL_ATTENDANCE_STATUS);
+
+        Cursor c = db.rawQuery(sql.toString(), args.toArray(new String[0]));
+        if (c != null) {
+            while (c.moveToNext()) {
+                int status = c.getInt(0);
+                int count = c.getInt(1);
+                if (status == AttendanceStaffItem.STATUS_PRESENT) {
+                    presentCount = count;
+                } else if (status == AttendanceStaffItem.STATUS_HALF_DAY) {
+                    halfDayCount = count;
+                } else if (status == AttendanceStaffItem.STATUS_ABSENT) {
+                    absentCount = count;
+                }
+            }
+            c.close();
+        }
+        db.close();
+
+        return new int[]{presentCount, halfDayCount, absentCount};
+    }
+
+    /**
+     * Returns a single worker payment summary for optional date range.
+     * Date format: yyyy-MM-dd. Pass null/empty for full history.
+     */
+    public WorkerPaymentSummary getWorkerPaymentSummaryForRange(long workerId, String fromDateIso, String toDateIso) {
+        if (workerId <= 0L) return null;
+
+        SQLiteDatabase db = getReadableDatabase();
+        WorkerPaymentSummary summary = null;
+
+        try {
+            Cursor workerCursor = db.query(
+                    TABLE_WORKERS,
+                    null,
+                    COL_ID + "=?",
+                    new String[]{String.valueOf(workerId)},
+                    null,
+                    null,
+                    null,
+                    "1"
+            );
+
+            if (workerCursor == null) {
+                return null;
+            }
+
+            String workerName = "";
+            String role = "";
+            double dailyWage = 0d;
+            if (workerCursor.moveToFirst()) {
+                int iName = workerCursor.getColumnIndex(COL_NAME);
+                int iRole = workerCursor.getColumnIndex(COL_SKILL);
+                int iWage = workerCursor.getColumnIndex(COL_DAILY_WAGE);
+                workerName = iName >= 0 ? workerCursor.getString(iName) : "";
+                role = iRole >= 0 ? workerCursor.getString(iRole) : "";
+                String wageText = iWage >= 0 ? workerCursor.getString(iWage) : "";
+                dailyWage = parseAmount(wageText);
+            }
+            workerCursor.close();
+
+            double workedDaysFromDuty = readWorkedDaysFromDutyDurationForWorker(db, workerId, fromDateIso, toDateIso);
+            double payableUnitsFromDuty = readPayableDayUnitsFromDutyDurationForWorker(db, workerId, fromDateIso, toDateIso);
+            double overtimeHours = readOvertimeHoursForWorker(db, workerId, fromDateIso, toDateIso);
+            double workedDaysFallback = readWorkedDaysFromAttendanceFallbackForWorker(db, workerId, fromDateIso, toDateIso);
+            double paidAmount = readPaidAmountForWorker(db, workerId, fromDateIso, toDateIso);
+
+            double workedDays = workedDaysFromDuty + workedDaysFallback;
+            double payableUnits = payableUnitsFromDuty + workedDaysFallback;
+            double grossAmount = dailyWage * payableUnits;
+            double pendingAmount = Math.max(0d, grossAmount - paidAmount);
+
+            summary = new WorkerPaymentSummary(
+                    workerId,
+                    workerName != null ? workerName : "",
+                    role != null ? role : "",
+                    dailyWage,
+                    workedDays,
+                    overtimeHours,
+                    grossAmount,
+                    paidAmount,
+                    pendingAmount
+            );
+        } finally {
+            db.close();
+        }
+
+        return summary;
+    }
+
+    /**
      * Returns overall attendance percentage for the given month across all workers.
      * present=1.0, half-day=0.5, absent=0.0
      */
@@ -1198,6 +1348,133 @@ public class WorkerDbHelper extends SQLiteOpenHelper {
             c.close();
         }
         return map;
+    }
+
+    private double readWorkedDaysFromDutyDurationForWorker(SQLiteDatabase db, long workerId, String fromDateIso, String toDateIso) {
+        List<String> args = new ArrayList<>();
+        String dutyHoursExpr = "((julianday(" + COL_DUTY_END_TIME + ") - julianday(" + COL_DUTY_START_TIME + ")) * 24.0)";
+        StringBuilder sql = new StringBuilder();
+        sql.append("SELECT SUM(CASE ")
+                .append("WHEN ").append(COL_DUTY_START_TIME).append(" IS NOT NULL AND TRIM(").append(COL_DUTY_START_TIME).append(")!='' ")
+                .append("AND ").append(COL_DUTY_END_TIME).append(" IS NOT NULL AND TRIM(").append(COL_DUTY_END_TIME).append(")!='' ")
+                .append("AND julianday(").append(COL_DUTY_END_TIME).append(") > julianday(").append(COL_DUTY_START_TIME).append(") ")
+                .append("THEN ").append(dutyHoursExpr).append(" / ").append(STANDARD_DUTY_HOURS).append(" ")
+                .append("ELSE 0.0 END) ")
+                .append("FROM ").append(TABLE_DUTY_START_PROOFS).append(" ")
+                .append("WHERE ").append(COL_DUTY_WORKER_ID).append("=? ");
+        args.add(String.valueOf(workerId));
+        appendDateRangeClause(sql, COL_DUTY_ATTENDANCE_DATE, fromDateIso, toDateIso, args);
+        return readSingleDouble(db, sql.toString(), args);
+    }
+
+    private double readPayableDayUnitsFromDutyDurationForWorker(SQLiteDatabase db, long workerId, String fromDateIso, String toDateIso) {
+        List<String> args = new ArrayList<>();
+        String dutyHoursExpr = "((julianday(" + COL_DUTY_END_TIME + ") - julianday(" + COL_DUTY_START_TIME + ")) * 24.0)";
+        StringBuilder sql = new StringBuilder();
+        sql.append("SELECT SUM(CASE ")
+                .append("WHEN ").append(COL_DUTY_START_TIME).append(" IS NOT NULL AND TRIM(").append(COL_DUTY_START_TIME).append(")!='' ")
+                .append("AND ").append(COL_DUTY_END_TIME).append(" IS NOT NULL AND TRIM(").append(COL_DUTY_END_TIME).append(")!='' ")
+                .append("AND julianday(").append(COL_DUTY_END_TIME).append(") > julianday(").append(COL_DUTY_START_TIME).append(") ")
+                .append("THEN (").append(dutyHoursExpr).append(" / ").append(STANDARD_DUTY_HOURS).append(") ")
+                .append("+ (CASE WHEN ").append(dutyHoursExpr).append(" > ").append(STANDARD_DUTY_HOURS)
+                .append(" THEN ((").append(dutyHoursExpr).append(" - ").append(STANDARD_DUTY_HOURS).append(") * ")
+                .append(OVERTIME_BONUS_MULTIPLIER).append(" / ").append(STANDARD_DUTY_HOURS).append(") ")
+                .append("ELSE 0.0 END) ")
+                .append("ELSE 0.0 END) ")
+                .append("FROM ").append(TABLE_DUTY_START_PROOFS).append(" ")
+                .append("WHERE ").append(COL_DUTY_WORKER_ID).append("=? ");
+        args.add(String.valueOf(workerId));
+        appendDateRangeClause(sql, COL_DUTY_ATTENDANCE_DATE, fromDateIso, toDateIso, args);
+        return readSingleDouble(db, sql.toString(), args);
+    }
+
+    private double readOvertimeHoursForWorker(SQLiteDatabase db, long workerId, String fromDateIso, String toDateIso) {
+        List<String> args = new ArrayList<>();
+        String dutyHoursExpr = "((julianday(" + COL_DUTY_END_TIME + ") - julianday(" + COL_DUTY_START_TIME + ")) * 24.0)";
+        StringBuilder sql = new StringBuilder();
+        sql.append("SELECT SUM(CASE ")
+                .append("WHEN ").append(COL_DUTY_START_TIME).append(" IS NOT NULL AND TRIM(").append(COL_DUTY_START_TIME).append(")!='' ")
+                .append("AND ").append(COL_DUTY_END_TIME).append(" IS NOT NULL AND TRIM(").append(COL_DUTY_END_TIME).append(")!='' ")
+                .append("AND julianday(").append(COL_DUTY_END_TIME).append(") > julianday(").append(COL_DUTY_START_TIME).append(") ")
+                .append("AND ").append(dutyHoursExpr).append(" > ").append(STANDARD_DUTY_HOURS).append(" ")
+                .append("THEN (").append(dutyHoursExpr).append(" - ").append(STANDARD_DUTY_HOURS).append(") ")
+                .append("ELSE 0.0 END) ")
+                .append("FROM ").append(TABLE_DUTY_START_PROOFS).append(" ")
+                .append("WHERE ").append(COL_DUTY_WORKER_ID).append("=? ");
+        args.add(String.valueOf(workerId));
+        appendDateRangeClause(sql, COL_DUTY_ATTENDANCE_DATE, fromDateIso, toDateIso, args);
+        return readSingleDouble(db, sql.toString(), args);
+    }
+
+    private double readWorkedDaysFromAttendanceFallbackForWorker(SQLiteDatabase db, long workerId, String fromDateIso, String toDateIso) {
+        List<String> args = new ArrayList<>();
+        String validDutyDurationCondition =
+                "d." + COL_DUTY_START_TIME + " IS NOT NULL AND TRIM(d." + COL_DUTY_START_TIME + ")!='' "
+                        + "AND d." + COL_DUTY_END_TIME + " IS NOT NULL AND TRIM(d." + COL_DUTY_END_TIME + ")!='' "
+                        + "AND julianday(d." + COL_DUTY_END_TIME + ") > julianday(d." + COL_DUTY_START_TIME + ")";
+        StringBuilder sql = new StringBuilder();
+        sql.append("SELECT SUM(CASE a.").append(COL_ATTENDANCE_STATUS)
+                .append(" WHEN ").append(AttendanceStaffItem.STATUS_PRESENT).append(" THEN 1.0")
+                .append(" WHEN ").append(AttendanceStaffItem.STATUS_HALF_DAY).append(" THEN 0.5")
+                .append(" ELSE 0.0 END) ")
+                .append("FROM ").append(TABLE_ATTENDANCE).append(" a ")
+                .append("LEFT JOIN ").append(TABLE_DUTY_START_PROOFS).append(" d ")
+                .append("ON d.").append(COL_DUTY_WORKER_ID).append("=a.").append(COL_ATTENDANCE_WORKER_ID).append(" ")
+                .append("AND d.").append(COL_DUTY_ATTENDANCE_DATE).append("=a.").append(COL_ATTENDANCE_DATE).append(" ")
+                .append("WHERE a.").append(COL_ATTENDANCE_WORKER_ID).append("=? ")
+                .append("AND a.").append(COL_ATTENDANCE_LOCKED).append("=1 ")
+                .append("AND NOT (").append(validDutyDurationCondition).append(") ");
+        args.add(String.valueOf(workerId));
+        appendDateRangeClause(sql, "a." + COL_ATTENDANCE_DATE, fromDateIso, toDateIso, args);
+        return readSingleDouble(db, sql.toString(), args);
+    }
+
+    private double readPaidAmountForWorker(SQLiteDatabase db, long workerId, String fromDateIso, String toDateIso) {
+        List<String> args = new ArrayList<>();
+        StringBuilder sql = new StringBuilder();
+        sql.append("SELECT SUM(").append(COL_PAYMENT_AMOUNT).append(") ")
+                .append("FROM ").append(TABLE_PAYMENTS).append(" ")
+                .append("WHERE ").append(COL_PAYMENT_WORKER_ID).append("=? ");
+        args.add(String.valueOf(workerId));
+        appendDateRangeClause(sql, COL_PAYMENT_DATE, fromDateIso, toDateIso, args);
+        return readSingleDouble(db, sql.toString(), args);
+    }
+
+    private double readSingleDouble(SQLiteDatabase db, String sql, List<String> args) {
+        if (db == null) return 0d;
+        Cursor c = db.rawQuery(sql, args != null ? args.toArray(new String[0]) : null);
+        double value = 0d;
+        if (c != null) {
+            if (c.moveToFirst()) {
+                value = c.isNull(0) ? 0d : c.getDouble(0);
+            }
+            c.close();
+        }
+        return value;
+    }
+
+    private void appendDateRangeClause(StringBuilder sql, String dateColumn, String fromDateIso, String toDateIso, List<String> args) {
+        if (sql == null || dateColumn == null || dateColumn.trim().isEmpty()) return;
+        String from = fromDateIso != null ? fromDateIso.trim() : "";
+        String to = toDateIso != null ? toDateIso.trim() : "";
+        boolean hasFrom = !from.isEmpty();
+        boolean hasTo = !to.isEmpty();
+
+        if (hasFrom && hasTo) {
+            sql.append("AND ").append(dateColumn).append(" BETWEEN ? AND ? ");
+            args.add(from);
+            args.add(to);
+            return;
+        }
+        if (hasFrom) {
+            sql.append("AND ").append(dateColumn).append(">=? ");
+            args.add(from);
+            return;
+        }
+        if (hasTo) {
+            sql.append("AND ").append(dateColumn).append("<=? ");
+            args.add(to);
+        }
     }
 
     private Map<Long, Double> readPayableDayUnitsFromDutyDurationMap(SQLiteDatabase db, String monthPrefixLike) {

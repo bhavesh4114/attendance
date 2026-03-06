@@ -197,6 +197,7 @@
     <string name="mark_as_paid">Mark as Paid</string>
     <string name="pay_now">Pay Now</string>
     <string name="pay_later">Pay Later</string>
+    <string name="payment_done">Payment Done</string>
     <string name="razorpay_key_id">rzp_test_RqBKFiC6cMIPx8</string>
     <string name="configure_razorpay_key">zGX7f8eNyEapXwGUFZl2lnfg</string>
     <string name="payment_successful">Payment successful.</string>
@@ -312,6 +313,8 @@
     <string name="overdue_label">OVERDUE</string>
     <string name="no_pending_payments">No pending payments.</string>
     <string name="payment_record_failed">Payment update failed.</string>
+    <string name="payment_failed_wallet_zero">Payment failed: No wallet balance available.</string>
+    <string name="payment_failed_wallet_insufficient">Payment failed: Insufficient wallet balance. Required %1$s, available %2$s.</string>
     <string name="payment_recorded_amount">Paid %1$s successfully.</string>
     <string name="marked_paid_count">%1$d workers marked as paid.</string>
     <string name="days_short">days</string>

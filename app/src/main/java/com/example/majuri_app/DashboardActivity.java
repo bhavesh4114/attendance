@@ -13,7 +13,6 @@ import androidx.appcompat.app.AppCompatActivity;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
 
 import java.util.Calendar;
-import java.util.List;
 import java.util.Locale;
 import java.text.NumberFormat;
 
@@ -100,16 +99,10 @@ public class DashboardActivity extends AppCompatActivity {
         int month = now.get(Calendar.MONTH);
 
         WorkerDbHelper dbHelper = new WorkerDbHelper(this);
-        List<WorkerPaymentSummary> summaries = dbHelper.getWorkerPaymentSummariesForMonth(year, month);
         float attendancePercent = dbHelper.getAttendancePercentageForMonth(year, month);
+        double pendingTotal = dbHelper.getTotalPendingWorkerPaymentAmount();
         double walletBalance = dbHelper.getAvailableWalletBalance();
         dbHelper.close();
-
-        double pendingTotal = 0d;
-        for (WorkerPaymentSummary summary : summaries) {
-            if (summary == null) continue;
-            pendingTotal += summary.getPendingAmount();
-        }
 
         TextView tvAttendanceValue = findViewById(R.id.tvAttendanceValue);
         if (tvAttendanceValue != null) {

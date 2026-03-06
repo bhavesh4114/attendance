@@ -34,7 +34,15 @@
                     android:id="@+id/avatarPlaceholder"
                     android:layout_width="match_parent"
                     android:layout_height="match_parent"
-                    android:background="@drawable/bg_soft_blue_circle_reports" />
+                    android:background="@drawable/bg_avatar_placeholder" />
+
+                <ImageView
+                    android:id="@+id/avatarDefaultIcon"
+                    android:layout_width="28dp"
+                    android:layout_height="28dp"
+                    android:layout_gravity="center"
+                    android:contentDescription="@string/worker_photo"
+                    android:src="@drawable/ic_person" />
 
                 <TextView
                     android:id="@+id/avatarInitials"
@@ -46,6 +54,15 @@
                     android:textSize="15sp"
                     android:textStyle="bold"
                     tools:text="MC" />
+
+                <View
+                    android:id="@+id/avatarStatusDot"
+                    android:layout_width="14dp"
+                    android:layout_height="14dp"
+                    android:layout_gravity="bottom|end"
+                    android:layout_marginEnd="1dp"
+                    android:layout_marginBottom="1dp"
+                    android:background="@drawable/bg_avatar_status_dot" />
 
                 <ImageView
                     android:id="@+id/avatarImage"
@@ -327,5 +344,18 @@
                 app:strokeColor="@color/primary_blue"
                 app:strokeWidth="1dp" />
         </LinearLayout>
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnPaymentDone"
+            android:layout_width="match_parent"
+            android:layout_height="46dp"
+            android:layout_marginTop="12dp"
+            android:text="@string/payment_done"
+            android:textAllCaps="false"
+            android:textColor="@color/white"
+            android:textStyle="bold"
+            android:visibility="gone"
+            app:backgroundTint="@color/primary_blue"
+            app:cornerRadius="12dp" />
     </LinearLayout>
 </com.google.android.material.card.MaterialCardView>
