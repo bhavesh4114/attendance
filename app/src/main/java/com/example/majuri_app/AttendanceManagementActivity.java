@@ -17,7 +17,10 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
 import android.provider.Settings;
+import android.text.Editable;
+import android.text.TextWatcher;
 import android.view.View;
+import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -62,6 +65,8 @@ public class AttendanceManagementActivity extends AppCompatActivity {
     private TextView summaryAbsent;
     private TextView summaryHalfDay;
     private TextView tvTotalWorkers;
+    private EditText etSearchAttendance;
+    private RecyclerView recyclerStaff;
     private Calendar calendar;
     private AttendanceManagementAdapter adapter;
     private SessionManager sessionManager;
@@ -94,6 +99,7 @@ public class AttendanceManagementActivity extends AppCompatActivity {
         summaryAbsent = findViewById(R.id.summaryAbsent);
         summaryHalfDay = findViewById(R.id.summaryHalfDay);
         tvTotalWorkers = findViewById(R.id.tvTotalWorkers);
+        etSearchAttendance = findViewById(R.id.etSearchAttendance);
 
         updateMonthLabel();
         updateWeekDates();
@@ -129,15 +135,15 @@ public class AttendanceManagementActivity extends AppCompatActivity {
             }
         });
 
-        RecyclerView recyclerStaff = findViewById(R.id.recyclerStaff);
+        recyclerStaff = findViewById(R.id.recyclerStaff);
         recyclerStaff.setLayoutManager(new LinearLayoutManager(this));
         recyclerStaff.setAdapter(adapter);
         recyclerStaff.setNestedScrollingEnabled(false);
 
         loadAttendanceForSelectedDate();
 
-        findViewById(R.id.btnSearch).setOnClickListener(v ->
-                Toast.makeText(this, getString(R.string.calendar), Toast.LENGTH_SHORT).show());
+        findViewById(R.id.btnSearch).setOnClickListener(v -> toggleInlineSearch());
+        bindInlineSearch();
 
         View btnSaveAttendance = findViewById(R.id.btnSaveAttendance);
         if (btnSaveAttendance != null) {
@@ -306,6 +312,37 @@ public class AttendanceManagementActivity extends AppCompatActivity {
             btnSaveAttendance.setEnabled(!locked);
             btnSaveAttendance.setAlpha(locked ? 0.6f : 1f);
         }
+    }
+
+    private void toggleInlineSearch() {
+        if (etSearchAttendance == null) return;
+        if (etSearchAttendance.getVisibility() == View.VISIBLE) {
+            etSearchAttendance.setText("");
+            etSearchAttendance.setVisibility(View.GONE);
+            return;
+        }
+        etSearchAttendance.setVisibility(View.VISIBLE);
+        etSearchAttendance.requestFocus();
+    }
+
+    private void bindInlineSearch() {
+        if (etSearchAttendance == null) return;
+        etSearchAttendance.addTextChangedListener(new TextWatcher() {
+            @Override
+            public void beforeTextChanged(CharSequence s, int start, int count, int after) {
+            }
+
+            @Override
+            public void onTextChanged(CharSequence s, int start, int before, int count) {
+                if (adapter == null) return;
+                String query = s != null ? s.toString().trim() : "";
+                adapter.filterByQuery(query);
+            }
+
+            @Override
+            public void afterTextChanged(Editable s) {
+            }
+        });
     }
 
     private void navigateToHomeByRole() {

@@ -1303,6 +1303,28 @@ public class WorkerDbHelper extends SQLiteOpenHelper {
             }
             c.close();
         }
+        if (totalEntries <= 0) {
+            String dutyHoursExpr = "((julianday(" + COL_DUTY_END_TIME + ") - julianday(" + COL_DUTY_START_TIME + ")) * 24.0)";
+            String dutySql = "SELECT "
+                    + "SUM(CASE "
+                    + "WHEN " + COL_DUTY_START_TIME + " IS NOT NULL AND TRIM(" + COL_DUTY_START_TIME + ")!='' "
+                    + "AND " + COL_DUTY_END_TIME + " IS NOT NULL AND TRIM(" + COL_DUTY_END_TIME + ")!='' "
+                    + "AND julianday(" + COL_DUTY_END_TIME + ") > julianday(" + COL_DUTY_START_TIME + ") "
+                    + "THEN MIN(1.0, (" + dutyHoursExpr + " / " + STANDARD_DUTY_HOURS + ")) "
+                    + "ELSE 0.0 END) AS present_equivalent, "
+                    + "COUNT(1) AS total_entries "
+                    + "FROM " + TABLE_DUTY_START_PROOFS + " "
+                    + "WHERE " + COL_DUTY_ATTENDANCE_DATE + " LIKE ?";
+
+            Cursor dutyCursor = db.rawQuery(dutySql, new String[]{monthPrefix});
+            if (dutyCursor != null) {
+                if (dutyCursor.moveToFirst()) {
+                    presentEquivalent = dutyCursor.isNull(0) ? 0d : dutyCursor.getDouble(0);
+                    totalEntries = dutyCursor.getInt(1);
+                }
+                dutyCursor.close();
+            }
+        }
         db.close();
 
         if (totalEntries <= 0) {

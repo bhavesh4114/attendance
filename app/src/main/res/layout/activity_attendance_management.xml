@@ -63,6 +63,23 @@
                 </FrameLayout>
             </LinearLayout>
 
+            <EditText
+                android:id="@+id/etSearchAttendance"
+                android:layout_width="match_parent"
+                android:layout_height="48dp"
+                android:layout_marginTop="12dp"
+                android:background="@drawable/bg_search_workers_list"
+                android:drawableStart="@drawable/ic_search_grey"
+                android:drawablePadding="10dp"
+                android:hint="@string/search_by_name_or_role"
+                android:imeOptions="actionSearch"
+                android:inputType="text"
+                android:paddingStart="14dp"
+                android:paddingEnd="14dp"
+                android:textColor="@color/dark_navy"
+                android:textColorHint="@color/medium_grey"
+                android:visibility="gone" />
+
             <View android:layout_width="match_parent" android:layout_height="20dp" />
 
             <!-- Month navigation -->

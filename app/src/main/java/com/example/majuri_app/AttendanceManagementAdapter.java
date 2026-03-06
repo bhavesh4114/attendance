@@ -38,6 +38,8 @@ public class AttendanceManagementAdapter extends RecyclerView.Adapter<Attendance
     private static final double STANDARD_DUTY_HOURS = 8d;
 
     private final List<AttendanceStaffItem> items = new ArrayList<>();
+    private final List<AttendanceStaffItem> allItems = new ArrayList<>();
+    private String currentQuery = "";
     private final Map<Long, Integer> uiModeByWorkerKey = new HashMap<>();
     private final Map<Long, String> hourlyHoursByWorkerKey = new HashMap<>();
     private final Map<Long, Boolean> hourlyConfirmedByWorkerKey = new HashMap<>();
@@ -66,7 +68,7 @@ public class AttendanceManagementAdapter extends RecyclerView.Adapter<Attendance
     }
 
     public void setItems(List<AttendanceStaffItem> list) {
-        items.clear();
+        allItems.clear();
         uiModeByWorkerKey.clear();
         hourlyHoursByWorkerKey.clear();
         hourlyConfirmedByWorkerKey.clear();
@@ -74,14 +76,59 @@ public class AttendanceManagementAdapter extends RecyclerView.Adapter<Attendance
         dutyEndedByWorkerKey.clear();
         paymentDoneByWorkerKey.clear();
         if (list != null) {
-            items.addAll(list);
+            allItems.addAll(list);
         }
-        notifyDataSetChanged();
+        applyFilterInternal();
         notifySummary();
     }
 
     public List<AttendanceStaffItem> getItems() {
-        return new ArrayList<>(items);
+        return new ArrayList<>(allItems);
+    }
+
+    public void filterByQuery(String query) {
+        currentQuery = query != null ? query.trim().toLowerCase(Locale.US) : "";
+        applyFilterInternal();
+    }
+
+    public int findFirstPositionByQuery(String query) {
+        if (query == null) {
+            return -1;
+        }
+        String normalized = query.trim().toLowerCase(Locale.US);
+        if (normalized.isEmpty()) {
+            return -1;
+        }
+        for (int i = 0; i < items.size(); i++) {
+            AttendanceStaffItem item = items.get(i);
+            if (item == null) continue;
+            String name = item.getName() != null ? item.getName().toLowerCase(Locale.US) : "";
+            String role = item.getRole() != null ? item.getRole().toLowerCase(Locale.US) : "";
+            String workerCode = item.getWorkerId() != null ? item.getWorkerId().toLowerCase(Locale.US) : "";
+            if (name.contains(normalized) || role.contains(normalized) || workerCode.contains(normalized)) {
+                return i;
+            }
+        }
+        return -1;
+    }
+
+    private void applyFilterInternal() {
+        items.clear();
+        if (currentQuery.isEmpty()) {
+            items.addAll(allItems);
+            notifyDataSetChanged();
+            return;
+        }
+        for (AttendanceStaffItem item : allItems) {
+            if (item == null) continue;
+            String name = item.getName() != null ? item.getName().toLowerCase(Locale.US) : "";
+            String role = item.getRole() != null ? item.getRole().toLowerCase(Locale.US) : "";
+            String workerCode = item.getWorkerId() != null ? item.getWorkerId().toLowerCase(Locale.US) : "";
+            if (name.contains(currentQuery) || role.contains(currentQuery) || workerCode.contains(currentQuery)) {
+                items.add(item);
+            }
+        }
+        notifyDataSetChanged();
     }
 
     public void setEditable(boolean editable) {
@@ -123,15 +170,21 @@ public class AttendanceManagementAdapter extends RecyclerView.Adapter<Attendance
     }
 
     public void markDutyStarted(long workerDbId, boolean started) {
+        if (workerDbId > 0L) {
+            dutyStartedByWorkerKey.put(workerDbId, started);
+        }
         int position = findPositionByWorkerDbId(workerDbId);
         if (position < 0 || position >= items.size()) return;
-        setDutyStarted(position, started);
+        notifyItemChanged(position);
     }
 
     public void markDutyEnded(long workerDbId, boolean ended) {
+        if (workerDbId > 0L) {
+            dutyEndedByWorkerKey.put(workerDbId, ended);
+        }
         int position = findPositionByWorkerDbId(workerDbId);
         if (position < 0 || position >= items.size()) return;
-        setDutyEnded(position, ended);
+        notifyItemChanged(position);
     }
 
     public boolean isEditable() {
@@ -141,7 +194,7 @@ public class AttendanceManagementAdapter extends RecyclerView.Adapter<Attendance
     private void notifySummary() {
         if (summaryListener == null) return;
         int p = 0, h = 0, a = 0;
-        for (AttendanceStaffItem item : items) {
+        for (AttendanceStaffItem item : allItems) {
             if (item.getStatus() == AttendanceStaffItem.STATUS_PRESENT) p++;
             else if (item.getStatus() == AttendanceStaffItem.STATUS_HALF_DAY) h++;
             else a++;
