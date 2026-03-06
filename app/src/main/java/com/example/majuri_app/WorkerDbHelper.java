@@ -319,12 +319,15 @@ public class WorkerDbHelper extends SQLiteOpenHelper {
             int iName = c.getColumnIndex(COL_NAME);
             int iMobile = c.getColumnIndex(COL_MOBILE);
             int iSkill = c.getColumnIndex(COL_SKILL);
+            int iWage = c.getColumnIndex(COL_DAILY_WAGE);
             while (c.moveToNext()) {
                 long id = iId >= 0 ? c.getLong(iId) : -1L;
                 String name = iName >= 0 ? c.getString(iName) : "";
                 String mobile = iMobile >= 0 ? c.getString(iMobile) : "";
                 String skill = iSkill >= 0 ? c.getString(iSkill) : "";
-                list.add(new WorkerListItem(id, name, skill, mobile, true));
+                String wageText = iWage >= 0 ? c.getString(iWage) : "";
+                double dailyWage = parseAmount(wageText);
+                list.add(new WorkerListItem(id, name, skill, mobile, true, dailyWage));
             }
             c.close();
         }

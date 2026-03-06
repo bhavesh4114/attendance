@@ -140,6 +140,8 @@
     <string name="face_verification_failed">Face verification failed. Try again.</string>
     <string name="selfie_face_not_detected">No valid single face detected in selfie.</string>
     <string name="location_permission_required_for_duty">Location permission is required for duty attendance.</string>
+    <string name="enable_device_location_for_duty">Enable device location to continue duty attendance.</string>
+    <string name="internet_required_for_duty">Internet is required for duty attendance. Please turn it on.</string>
     <string name="location_capture_failed">Unable to capture exact location for attendance.</string>
     <string name="location_unavailable">Location unavailable</string>
     <string name="location_permission_denied">Location permission denied</string>
@@ -157,6 +159,11 @@
     <string name="staff_list">Staff List</string>
     <string name="total_29_workers">Total: 29 Workers</string>
     <string name="total_workers_with_count">Total: %1$d Workers</string>
+    <string name="confirm">Confirm</string>
+    <string name="confirmed">Confirmed</string>
+    <string name="rate_per_hour_value">Rs %1$.2f</string>
+    <string name="enter_valid_working_hours">Please enter valid working hours.</string>
+    <string name="hourly_attendance_confirmed">Hourly attendance confirmed.</string>
     <string name="month_year_format">%1$s %2$d</string>
     <string name="worker_code_format">#WR-%1$d</string>
     <string name="attendance_saved_locked">Attendance saved and locked for this date.</string>

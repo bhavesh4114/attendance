@@ -8,9 +8,15 @@ import android.location.Address;
 import android.location.Geocoder;
 import android.location.Location;
 import android.location.LocationManager;
+import android.net.ConnectivityManager;
+import android.net.Network;
+import android.net.NetworkCapabilities;
+import android.net.NetworkInfo;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
+import android.provider.Settings;
 import android.view.View;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -67,6 +73,7 @@ public class AttendanceManagementActivity extends AppCompatActivity {
     private long pendingDutyWorkerId = -1L;
     private int pendingDutyAction = DUTY_ACTION_NONE;
     private String pendingPhotoPath;
+    private boolean awaitingLocationOrInternetEnable;
     private FaceVerificationHelper faceVerificationHelper;
     private FusedLocationProviderClient fusedLocationClient;
 
@@ -143,6 +150,14 @@ public class AttendanceManagementActivity extends AppCompatActivity {
     protected void onResume() {
         super.onResume();
         loadAttendanceForSelectedDate();
+
+        if (awaitingLocationOrInternetEnable
+                && pendingDutyWorkerId > 0L
+                && pendingDutyAction != DUTY_ACTION_NONE
+                && ensureLocationAndInternetReady(false)) {
+            awaitingLocationOrInternetEnable = false;
+            openCameraForDutyProof();
+        }
     }
 
     @Override
@@ -222,7 +237,8 @@ public class AttendanceManagementActivity extends AppCompatActivity {
                     worker.getName(),
                     worker.getRole(),
                     workerCode,
-                    status
+                    status,
+                    worker.getDailyWage()
             ));
         }
 
@@ -361,6 +377,10 @@ public class AttendanceManagementActivity extends AppCompatActivity {
                         clearPendingDutyCaptureState(false);
                         return;
                     }
+                    if (!ensureLocationAndInternetReady(true)) {
+                        awaitingLocationOrInternetEnable = true;
+                        return;
+                    }
                     openCameraForDutyProof();
                 }
         );
@@ -388,6 +408,10 @@ public class AttendanceManagementActivity extends AppCompatActivity {
     private void requestCameraAndStartCapture() {
         boolean cameraGranted = ContextCompat.checkSelfPermission(this, Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED;
         if (cameraGranted && hasLocationPermission()) {
+            if (!ensureLocationAndInternetReady(true)) {
+                awaitingLocationOrInternetEnable = true;
+                return;
+            }
             openCameraForDutyProof();
             return;
         }
@@ -402,6 +426,7 @@ public class AttendanceManagementActivity extends AppCompatActivity {
         if (pendingDutyWorkerId <= 0L) return;
 
         try {
+            awaitingLocationOrInternetEnable = false;
             File imageFile = createDutyProofImageFile(pendingDutyWorkerId);
             pendingPhotoPath = imageFile.getAbsolutePath();
             Intent intent = new Intent(this, FaceCaptureActivity.class);
@@ -562,6 +587,79 @@ public class AttendanceManagementActivity extends AppCompatActivity {
         boolean fineGranted = ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED;
         boolean coarseGranted = ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED;
         return fineGranted || coarseGranted;
+    }
+
+    private boolean ensureLocationAndInternetReady(boolean promptSettingsOnFailure) {
+        if (!isDeviceLocationEnabled()) {
+            if (promptSettingsOnFailure) {
+                Toast.makeText(this, R.string.enable_device_location_for_duty, Toast.LENGTH_SHORT).show();
+                openLocationSettings();
+            }
+            return false;
+        }
+        if (!isInternetConnected()) {
+            if (promptSettingsOnFailure) {
+                Toast.makeText(this, R.string.internet_required_for_duty, Toast.LENGTH_SHORT).show();
+                openInternetSettings();
+            }
+            return false;
+        }
+        return true;
+    }
+
+    private boolean isDeviceLocationEnabled() {
+        LocationManager locationManager = (LocationManager) getSystemService(LOCATION_SERVICE);
+        if (locationManager == null) return false;
+        try {
+            return LocationManagerCompat.isLocationEnabled(locationManager);
+        } catch (Exception ignored) {
+            return false;
+        }
+    }
+
+    private boolean isInternetConnected() {
+        ConnectivityManager connectivityManager = (ConnectivityManager) getSystemService(CONNECTIVITY_SERVICE);
+        if (connectivityManager == null) return false;
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            Network activeNetwork = connectivityManager.getActiveNetwork();
+            if (activeNetwork == null) return false;
+            NetworkCapabilities capabilities = connectivityManager.getNetworkCapabilities(activeNetwork);
+            if (capabilities == null) return false;
+            return capabilities.hasCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET)
+                    && capabilities.hasCapability(NetworkCapabilities.NET_CAPABILITY_VALIDATED);
+        }
+
+        NetworkInfo info = connectivityManager.getActiveNetworkInfo();
+        return info != null && info.isConnected();
+    }
+
+    private void openLocationSettings() {
+        try {
+            startActivity(new Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS));
+        } catch (Exception ignored) {
+            openGeneralSettings();
+        }
+    }
+
+    private void openInternetSettings() {
+        try {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                startActivity(new Intent(Settings.Panel.ACTION_INTERNET_CONNECTIVITY));
+            } else {
+                startActivity(new Intent(Settings.ACTION_WIRELESS_SETTINGS));
+            }
+        } catch (Exception ignored) {
+            openGeneralSettings();
+        }
+    }
+
+    private void openGeneralSettings() {
+        try {
+            startActivity(new Intent(Settings.ACTION_SETTINGS));
+        } catch (Exception ignored) {
+            // Ignore when no settings activity is available.
+        }
     }
 
     private LocationSnapshot readCurrentLocationSnapshot() {
@@ -767,6 +865,7 @@ public class AttendanceManagementActivity extends AppCompatActivity {
         pendingDutyWorkerId = -1L;
         pendingDutyAction = DUTY_ACTION_NONE;
         pendingPhotoPath = null;
+        awaitingLocationOrInternetEnable = false;
     }
 
     private int getDutyPhotoRequiredMessage() {

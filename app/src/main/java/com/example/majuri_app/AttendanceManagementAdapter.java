@@ -20,13 +20,14 @@ import com.google.android.material.button.MaterialButton;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 
 /**
  * Adapter for the Attendance Management staff list (item_attendance_management).
  * Keeps attendance status persistence behavior unchanged for full-day/half-day/absent.
- * Hourly is a UI display mode only.
+ * Hourly mode can capture working hours and confirm attendance status.
  */
 public class AttendanceManagementAdapter extends RecyclerView.Adapter<AttendanceManagementAdapter.StaffViewHolder> {
 
@@ -34,10 +35,12 @@ public class AttendanceManagementAdapter extends RecyclerView.Adapter<Attendance
     private static final int MODE_HALF_DAY = 1;
     private static final int MODE_ABSENT = 2;
     private static final int MODE_HOURLY = 3;
+    private static final double STANDARD_DUTY_HOURS = 8d;
 
     private final List<AttendanceStaffItem> items = new ArrayList<>();
     private final Map<Long, Integer> uiModeByWorkerKey = new HashMap<>();
     private final Map<Long, String> hourlyHoursByWorkerKey = new HashMap<>();
+    private final Map<Long, Boolean> hourlyConfirmedByWorkerKey = new HashMap<>();
     private final Map<Long, Boolean> dutyStartedByWorkerKey = new HashMap<>();
     private final Map<Long, Boolean> dutyEndedByWorkerKey = new HashMap<>();
     private OnSummaryChangedListener summaryListener;
@@ -65,6 +68,7 @@ public class AttendanceManagementAdapter extends RecyclerView.Adapter<Attendance
         items.clear();
         uiModeByWorkerKey.clear();
         hourlyHoursByWorkerKey.clear();
+        hourlyConfirmedByWorkerKey.clear();
         dutyStartedByWorkerKey.clear();
         dutyEndedByWorkerKey.clear();
         if (list != null) {
@@ -182,6 +186,32 @@ public class AttendanceManagementAdapter extends RecyclerView.Adapter<Attendance
                 }
             }
         });
+        holder.btnHourlyConfirm.setOnClickListener(v -> {
+            int adapterPosition = holder.getAdapterPosition();
+            if (adapterPosition < 0 || adapterPosition >= items.size()) return;
+
+            AttendanceStaffItem clickedItem = items.get(adapterPosition);
+            long clickedWorkerKey = getWorkerKey(clickedItem, adapterPosition);
+            String hoursValue = holder.etWorkingHours != null && holder.etWorkingHours.getText() != null
+                    ? holder.etWorkingHours.getText().toString().trim()
+                    : "";
+            double hours = parseHours(hoursValue);
+            if (hours <= 0d) {
+                Toast.makeText(v.getContext(), R.string.enter_valid_working_hours, Toast.LENGTH_SHORT).show();
+                return;
+            }
+
+            int resolvedStatus = hours >= STANDARD_DUTY_HOURS
+                    ? AttendanceStaffItem.STATUS_PRESENT
+                    : AttendanceStaffItem.STATUS_HALF_DAY;
+            clickedItem.setStatus(resolvedStatus);
+            hourlyHoursByWorkerKey.put(clickedWorkerKey, normalizeHoursText(hours));
+            hourlyConfirmedByWorkerKey.put(clickedWorkerKey, true);
+
+            notifyItemChanged(adapterPosition);
+            notifySummary();
+            Toast.makeText(v.getContext(), R.string.hourly_attendance_confirmed, Toast.LENGTH_SHORT).show();
+        });
         holder.btnPayNow.setOnClickListener(v -> {
             WorkerDbHelper dbHelper = new WorkerDbHelper(v.getContext());
             double workerDailyWage = dbHelper.getWorkerDailyWageById(item.getWorkerDbId());
@@ -206,6 +236,7 @@ public class AttendanceManagementAdapter extends RecyclerView.Adapter<Attendance
         setOptionEnabledState(holder.btnPayLater, true);
 
         int mode = resolveUiMode(item, position);
+        bindHourlyRate(holder, item);
         updateSegmentUi(holder, item, position, mode);
         bindHourlyHoursInput(holder, workerKey, mode);
     }
@@ -295,17 +326,34 @@ public class AttendanceManagementAdapter extends RecyclerView.Adapter<Attendance
         applyOptionUi(holder.optionHourly, holder.textHourly, isHourly, blueBg, transparent, white, grey);
 
         holder.hourlyContainer.setVisibility(isHourly ? View.VISIBLE : View.GONE);
+        holder.btnHourlyConfirm.setVisibility(isHourly ? View.VISIBLE : View.GONE);
         boolean showDutyActions = isFull || isHalf;
-        boolean dutyStarted = Boolean.TRUE.equals(dutyStartedByWorkerKey.get(getWorkerKey(item, position)));
-        boolean dutyEnded = Boolean.TRUE.equals(dutyEndedByWorkerKey.get(getWorkerKey(item, position)));
+        long workerKey = getWorkerKey(item, position);
+        boolean dutyStarted = Boolean.TRUE.equals(dutyStartedByWorkerKey.get(workerKey));
+        boolean dutyEnded = Boolean.TRUE.equals(dutyEndedByWorkerKey.get(workerKey));
+        boolean isHourlyConfirmed = Boolean.TRUE.equals(hourlyConfirmedByWorkerKey.get(workerKey));
 
         holder.btnInlineSaveAttendance.setVisibility(showDutyActions && !dutyEnded ? View.VISIBLE : View.GONE);
         holder.paymentActionContainer.setVisibility(showDutyActions && dutyEnded ? View.VISIBLE : View.GONE);
         holder.btnInlineSaveAttendance.setText(dutyStarted ? R.string.end_duty : R.string.start_duty);
+        holder.btnHourlyConfirm.setText(isHourlyConfirmed ? R.string.confirmed : R.string.confirm);
+        holder.btnHourlyConfirm.setEnabled(editable && isHourly);
+        holder.btnHourlyConfirm.setAlpha(editable && isHourly ? 1f : 0.8f);
         holder.btnInlineSaveAttendance.setEnabled(true);
         holder.paymentActionContainer.setEnabled(true);
         holder.btnInlineSaveAttendance.setAlpha(1f);
         holder.paymentActionContainer.setAlpha(1f);
+    }
+
+    private void bindHourlyRate(StaffViewHolder holder, AttendanceStaffItem item) {
+        if (holder.tvRatePerHour == null) return;
+
+        double dailyWage = item != null ? item.getDailyWage() : 0d;
+        double ratePerHour = Math.max(0d, dailyWage) / STANDARD_DUTY_HOURS;
+        holder.tvRatePerHour.setText(holder.itemView.getContext().getString(
+                R.string.rate_per_hour_value,
+                ratePerHour
+        ));
     }
 
     private void bindHourlyHoursInput(StaffViewHolder holder, long workerKey, int mode) {
@@ -332,6 +380,7 @@ public class AttendanceManagementAdapter extends RecyclerView.Adapter<Attendance
                 } else {
                     hourlyHoursByWorkerKey.put(workerKey, value);
                 }
+                hourlyConfirmedByWorkerKey.remove(workerKey);
             }
 
             @Override
@@ -356,6 +405,23 @@ public class AttendanceManagementAdapter extends RecyclerView.Adapter<Attendance
         textView.getPaint().setFakeBoldText(selected);
     }
 
+    private double parseHours(String value) {
+        if (value == null || value.trim().isEmpty()) return 0d;
+        try {
+            return Math.max(0d, Double.parseDouble(value.trim()));
+        } catch (Exception ignored) {
+            return 0d;
+        }
+    }
+
+    private String normalizeHoursText(double hours) {
+        if (hours <= 0d) return "";
+        if (Math.abs(hours - Math.rint(hours)) < 0.0001d) {
+            return String.format(Locale.US, "%.0f", hours);
+        }
+        return String.format(Locale.US, "%.1f", hours);
+    }
+
     @Override
     public int getItemCount() {
         return items.size();
@@ -377,6 +443,8 @@ public class AttendanceManagementAdapter extends RecyclerView.Adapter<Attendance
         final TextView textHourly;
         final View hourlyContainer;
         final EditText etWorkingHours;
+        final TextView tvRatePerHour;
+        final MaterialButton btnHourlyConfirm;
         final MaterialButton btnInlineSaveAttendance;
         final View paymentActionContainer;
         final View btnPayNow;
@@ -400,6 +468,8 @@ public class AttendanceManagementAdapter extends RecyclerView.Adapter<Attendance
             textHourly = itemView.findViewById(R.id.textHourly);
             hourlyContainer = itemView.findViewById(R.id.hourlyContainer);
             etWorkingHours = itemView.findViewById(R.id.etWorkingHours);
+            tvRatePerHour = itemView.findViewById(R.id.tvRatePerHour);
+            btnHourlyConfirm = itemView.findViewById(R.id.btnHourlyConfirm);
             btnInlineSaveAttendance = itemView.findViewById(R.id.btnInlineSaveAttendance);
             paymentActionContainer = itemView.findViewById(R.id.paymentActionContainer);
             btnPayNow = itemView.findViewById(R.id.btnPayNow);

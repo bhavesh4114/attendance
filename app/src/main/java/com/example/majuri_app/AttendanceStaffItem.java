@@ -14,19 +14,25 @@ public class AttendanceStaffItem {
     private final String role;
     private final String workerId;
     private final String initials;
+    private final double dailyWage;
     private int status;
 
     public AttendanceStaffItem(String name, String role, String workerId, int status) {
-        this(-1L, name, role, workerId, status);
+        this(-1L, name, role, workerId, status, 0d);
     }
 
     public AttendanceStaffItem(long workerDbId, String name, String role, String workerId, int status) {
+        this(workerDbId, name, role, workerId, status, 0d);
+    }
+
+    public AttendanceStaffItem(long workerDbId, String name, String role, String workerId, int status, double dailyWage) {
         this.workerDbId = workerDbId;
         this.name = name;
         this.role = role;
         this.workerId = workerId;
         this.status = status;
         this.initials = getInitials(name);
+        this.dailyWage = Math.max(0d, dailyWage);
     }
 
     private static String getInitials(String name) {
@@ -43,6 +49,7 @@ public class AttendanceStaffItem {
     public String getRole() { return role; }
     public String getWorkerId() { return workerId; }
     public String getInitials() { return initials; }
+    public double getDailyWage() { return dailyWage; }
     public int getStatus() { return status; }
     public void setStatus(int status) { this.status = status; }
 }
