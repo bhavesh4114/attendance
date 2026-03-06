@@ -1000,6 +1000,36 @@ public class WorkerDbHelper extends SQLiteOpenHelper {
     }
 
     /**
+     * Returns total amount paid to workers.
+     */
+    public double getTotalWorkerPaymentAmount() {
+        SQLiteDatabase db = getReadableDatabase();
+        Cursor c = db.rawQuery(
+                "SELECT SUM(" + COL_PAYMENT_AMOUNT + ") FROM " + TABLE_PAYMENTS,
+                null
+        );
+        double total = 0d;
+        if (c != null) {
+            if (c.moveToFirst()) {
+                total = c.isNull(0) ? 0d : c.getDouble(0);
+            }
+            c.close();
+        }
+        db.close();
+        return Math.max(0d, total);
+    }
+
+    /**
+     * Returns available wallet balance:
+     * approved fund credits - worker payouts.
+     */
+    public double getAvailableWalletBalance() {
+        double creditedFunds = getTotalApprovedFundAmount();
+        double paidOut = getTotalWorkerPaymentAmount();
+        return Math.max(0d, creditedFunds - paidOut);
+    }
+
+    /**
      * Returns per-worker payment summary for the given month.
      * monthZeroBased follows Calendar.MONTH (0..11).
      */

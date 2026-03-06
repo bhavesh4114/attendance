@@ -149,7 +149,8 @@ public class WorkersListActivity extends AppCompatActivity {
             return true;
         }
         if (id == R.id.nav_user_profile) {
-            Toast.makeText(this, getString(R.string.nav_profile), Toast.LENGTH_SHORT).show();
+            startActivity(new Intent(this, BuilderSettingsActivity.class));
+            finish();
             return true;
         }
         return false;

@@ -1,10 +1,13 @@
 package com.example.majuri_app;
 
 import android.content.Intent;
+import android.text.Editable;
+import android.text.TextWatcher;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.FrameLayout;
+import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -34,6 +37,7 @@ public class AttendanceManagementAdapter extends RecyclerView.Adapter<Attendance
 
     private final List<AttendanceStaffItem> items = new ArrayList<>();
     private final Map<Long, Integer> uiModeByWorkerKey = new HashMap<>();
+    private final Map<Long, String> hourlyHoursByWorkerKey = new HashMap<>();
     private final Map<Long, Boolean> dutyStartedByWorkerKey = new HashMap<>();
     private final Map<Long, Boolean> dutyEndedByWorkerKey = new HashMap<>();
     private OnSummaryChangedListener summaryListener;
@@ -60,6 +64,7 @@ public class AttendanceManagementAdapter extends RecyclerView.Adapter<Attendance
     public void setItems(List<AttendanceStaffItem> list) {
         items.clear();
         uiModeByWorkerKey.clear();
+        hourlyHoursByWorkerKey.clear();
         dutyStartedByWorkerKey.clear();
         dutyEndedByWorkerKey.clear();
         if (list != null) {
@@ -143,6 +148,7 @@ public class AttendanceManagementAdapter extends RecyclerView.Adapter<Attendance
         holder.avatarPlaceholder.setVisibility(View.VISIBLE);
         holder.staffName.setText(item.getName());
         holder.staffSubtitle.setText(item.getRole() + " - " + item.getWorkerId());
+        long workerKey = getWorkerKey(item, position);
 
         holder.optionPresent.setOnClickListener(editable
                 ? v -> setStatusAndMode(holder.getAdapterPosition(), AttendanceStaffItem.STATUS_PRESENT, MODE_FULL_DAY)
@@ -160,8 +166,8 @@ public class AttendanceManagementAdapter extends RecyclerView.Adapter<Attendance
             int adapterPosition = holder.getAdapterPosition();
             if (adapterPosition < 0 || adapterPosition >= items.size()) return;
             AttendanceStaffItem clickedItem = items.get(adapterPosition);
-            long workerKey = getWorkerKey(clickedItem, adapterPosition);
-            boolean started = Boolean.TRUE.equals(dutyStartedByWorkerKey.get(workerKey));
+            long clickedWorkerKey = getWorkerKey(clickedItem, adapterPosition);
+            boolean started = Boolean.TRUE.equals(dutyStartedByWorkerKey.get(clickedWorkerKey));
             if (!started) {
                 if (dutyActionListener != null) {
                     dutyActionListener.onStartDutyRequested(clickedItem, adapterPosition);
@@ -201,6 +207,7 @@ public class AttendanceManagementAdapter extends RecyclerView.Adapter<Attendance
 
         int mode = resolveUiMode(item, position);
         updateSegmentUi(holder, item, position, mode);
+        bindHourlyHoursInput(holder, workerKey, mode);
     }
 
     private void setOptionEnabledState(View option, boolean enabled) {
@@ -301,6 +308,40 @@ public class AttendanceManagementAdapter extends RecyclerView.Adapter<Attendance
         holder.paymentActionContainer.setAlpha(1f);
     }
 
+    private void bindHourlyHoursInput(StaffViewHolder holder, long workerKey, int mode) {
+        if (holder.etWorkingHours == null) return;
+
+        if (holder.hourlyHoursWatcher != null) {
+            holder.etWorkingHours.removeTextChangedListener(holder.hourlyHoursWatcher);
+        }
+
+        String existing = hourlyHoursByWorkerKey.get(workerKey);
+        holder.etWorkingHours.setText(existing != null ? existing : "");
+        holder.etWorkingHours.setEnabled(editable && mode == MODE_HOURLY);
+
+        TextWatcher watcher = new TextWatcher() {
+            @Override
+            public void beforeTextChanged(CharSequence s, int start, int count, int after) {
+            }
+
+            @Override
+            public void onTextChanged(CharSequence s, int start, int before, int count) {
+                String value = s != null ? s.toString().trim() : "";
+                if (value.isEmpty()) {
+                    hourlyHoursByWorkerKey.remove(workerKey);
+                } else {
+                    hourlyHoursByWorkerKey.put(workerKey, value);
+                }
+            }
+
+            @Override
+            public void afterTextChanged(Editable s) {
+            }
+        };
+        holder.hourlyHoursWatcher = watcher;
+        holder.etWorkingHours.addTextChangedListener(watcher);
+    }
+
     private void applyOptionUi(
             FrameLayout optionView,
             TextView textView,
@@ -335,10 +376,12 @@ public class AttendanceManagementAdapter extends RecyclerView.Adapter<Attendance
         final TextView textAbsent;
         final TextView textHourly;
         final View hourlyContainer;
+        final EditText etWorkingHours;
         final MaterialButton btnInlineSaveAttendance;
         final View paymentActionContainer;
         final View btnPayNow;
         final View btnPayLater;
+        TextWatcher hourlyHoursWatcher;
 
         StaffViewHolder(@NonNull View itemView) {
             super(itemView);
@@ -356,6 +399,7 @@ public class AttendanceManagementAdapter extends RecyclerView.Adapter<Attendance
             textAbsent = itemView.findViewById(R.id.textAbsent);
             textHourly = itemView.findViewById(R.id.textHourly);
             hourlyContainer = itemView.findViewById(R.id.hourlyContainer);
+            etWorkingHours = itemView.findViewById(R.id.etWorkingHours);
             btnInlineSaveAttendance = itemView.findViewById(R.id.btnInlineSaveAttendance);
             paymentActionContainer = itemView.findViewById(R.id.paymentActionContainer);
             btnPayNow = itemView.findViewById(R.id.btnPayNow);

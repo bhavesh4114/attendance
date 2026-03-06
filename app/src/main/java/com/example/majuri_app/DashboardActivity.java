@@ -102,7 +102,7 @@ public class DashboardActivity extends AppCompatActivity {
         WorkerDbHelper dbHelper = new WorkerDbHelper(this);
         List<WorkerPaymentSummary> summaries = dbHelper.getWorkerPaymentSummariesForMonth(year, month);
         float attendancePercent = dbHelper.getAttendancePercentageForMonth(year, month);
-        double walletBalance = dbHelper.getTotalApprovedFundAmount();
+        double walletBalance = dbHelper.getAvailableWalletBalance();
         dbHelper.close();
 
         double pendingTotal = 0d;

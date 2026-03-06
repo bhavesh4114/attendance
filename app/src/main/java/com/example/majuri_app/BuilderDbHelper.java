@@ -165,4 +165,77 @@ public class BuilderDbHelper extends SQLiteOpenHelper {
         db.close();
         return sites;
     }
+
+    /**
+     * Returns preferred display name (business name first, then full name) for the login id.
+     * loginId can be mobile number or email.
+     */
+    public String getBuilderDisplayName(String loginId) {
+        if (loginId == null || loginId.trim().isEmpty()) {
+            return "";
+        }
+
+        String trimmed = loginId.trim();
+        String normalizedMobile = normalizeMobile(trimmed);
+        String normalizedEmail = trimmed.toLowerCase();
+
+        SQLiteDatabase db = getReadableDatabase();
+        Cursor cursor = null;
+        try {
+            if (!normalizedMobile.isEmpty()) {
+                cursor = db.query(
+                        TABLE_BUILDERS,
+                        new String[]{COL_BUSINESS_NAME, COL_FULL_NAME},
+                        COL_MOBILE + "=?",
+                        new String[]{normalizedMobile},
+                        null,
+                        null,
+                        COL_ID + " DESC",
+                        "1"
+                );
+            }
+
+            if ((cursor == null || !cursor.moveToFirst()) && normalizedEmail.contains("@")) {
+                if (cursor != null) {
+                    cursor.close();
+                }
+                cursor = db.query(
+                        TABLE_BUILDERS,
+                        new String[]{COL_BUSINESS_NAME, COL_FULL_NAME},
+                        "LOWER(" + COL_EMAIL + ")=?",
+                        new String[]{normalizedEmail},
+                        null,
+                        null,
+                        COL_ID + " DESC",
+                        "1"
+                );
+            }
+
+            if (cursor != null && cursor.moveToFirst()) {
+                String business = safeGet(cursor, COL_BUSINESS_NAME);
+                String fullName = safeGet(cursor, COL_FULL_NAME);
+                if (!business.isEmpty()) return business;
+                return fullName;
+            }
+            return "";
+        } finally {
+            if (cursor != null) cursor.close();
+            db.close();
+        }
+    }
+
+    private String safeGet(Cursor cursor, String column) {
+        if (cursor == null) return "";
+        int index = cursor.getColumnIndex(column);
+        if (index < 0) return "";
+        String value = cursor.getString(index);
+        return value != null ? value.trim() : "";
+    }
+
+    private String normalizeMobile(String value) {
+        if (value == null) return "";
+        String digits = value.replaceAll("[^0-9]", "");
+        if (digits.length() < 10) return "";
+        return digits.substring(digits.length() - 10);
+    }
 }

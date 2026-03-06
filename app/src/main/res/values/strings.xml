@@ -233,6 +233,14 @@
 
     <!-- Settings screen -->
     <string name="settings">Settings</string>
+    <string name="builder_account_settings">Builder Account Settings</string>
+    <string name="builder_name_fallback">Builder Account</string>
+    <string name="builder_id_placeholder">ID: BLD-1024</string>
+    <string name="builder_id_format">ID: BLD-%1$s</string>
+    <string name="edit_profile_action">Edit Profile</string>
+    <string name="language_english_short">English</string>
+    <string name="builder_settings_version">Version 2.4.0 (Build 1024)</string>
+    <string name="account">ACCOUNT</string>
     <string name="settings_subtitle">Manage your labor app preferences</string>
     <string name="account_security_section">ACCOUNT &amp; SECURITY</string>
     <string name="system_section">SYSTEM</string>
