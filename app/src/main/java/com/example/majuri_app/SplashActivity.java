@@ -1,10 +1,13 @@
 package com.example.majuri_app;
 
+import android.Manifest;
 import android.animation.AnimatorSet;
 import android.animation.ObjectAnimator;
 import android.animation.ValueAnimator;
 import android.app.Activity;
 import android.content.Intent;
+import android.content.pm.PackageManager;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
@@ -12,6 +15,8 @@ import android.view.View;
 import android.view.animation.OvershootInterpolator;
 
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.app.ActivityCompat;
+import androidx.core.content.ContextCompat;
 
 /**
  * Premium animated splash screen with logo scale/fade, notification dot pulse,
@@ -28,6 +33,7 @@ public class SplashActivity extends AppCompatActivity {
     private static final int SECURITY_DELAY_MS = 1000;
     private static final int EXIT_DELAY_MS = 2500;
     private static final int EXIT_DURATION_MS = 400;
+    private static final int REQ_POST_NOTIFICATIONS = 1011;
 
     private View splashRoot;
     private View logoContainer;
@@ -43,6 +49,7 @@ public class SplashActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_splash);
+        requestNotificationPermissionIfNeeded();
 
         splashRoot = findViewById(R.id.splashRoot);
         logoContainer = findViewById(R.id.logoContainer);
@@ -55,6 +62,21 @@ public class SplashActivity extends AppCompatActivity {
 
         startEnterAnimations();
         scheduleExit();
+    }
+
+    private void requestNotificationPermissionIfNeeded() {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU) {
+            return;
+        }
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS)
+                == PackageManager.PERMISSION_GRANTED) {
+            return;
+        }
+        ActivityCompat.requestPermissions(
+                this,
+                new String[]{Manifest.permission.POST_NOTIFICATIONS},
+                REQ_POST_NOTIFICATIONS
+        );
     }
 
     private void startEnterAnimations() {
