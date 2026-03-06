@@ -174,7 +174,8 @@
                                     android:fontFamily="sans-serif"
                                     android:text="@string/stats_workers_pct"
                                     android:textColor="@color/success_green"
-                                    android:textSize="14sp" />
+                                    android:textSize="14sp"
+                                    android:visibility="gone" />
                             </LinearLayout>
                         </LinearLayout>
                     </com.google.android.material.card.MaterialCardView>
@@ -240,7 +241,8 @@
                                     android:fontFamily="sans-serif"
                                     android:text="@string/stats_attendance_pct"
                                     android:textColor="@color/success_green"
-                                    android:textSize="14sp" />
+                                    android:textSize="14sp"
+                                    android:visibility="gone" />
                             </LinearLayout>
                         </LinearLayout>
                     </com.google.android.material.card.MaterialCardView>
@@ -314,7 +316,8 @@
                                     android:fontFamily="sans-serif"
                                     android:text="@string/stats_pending_pct"
                                     android:textColor="@color/danger_orange"
-                                    android:textSize="14sp" />
+                                    android:textSize="14sp"
+                                    android:visibility="gone" />
                             </LinearLayout>
                         </LinearLayout>
                     </com.google.android.material.card.MaterialCardView>
@@ -380,7 +383,8 @@
                                     android:fontFamily="sans-serif"
                                     android:text="@string/stats_monthly_pct"
                                     android:textColor="@color/success_green"
-                                    android:textSize="14sp" />
+                                    android:textSize="14sp"
+                                    android:visibility="gone" />
                             </LinearLayout>
                         </LinearLayout>
                     </com.google.android.material.card.MaterialCardView>

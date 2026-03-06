@@ -15,6 +15,7 @@ import com.google.android.material.bottomnavigation.BottomNavigationView;
 import java.util.Calendar;
 import java.util.List;
 import java.util.Locale;
+import java.text.NumberFormat;
 
 public class DashboardActivity extends AppCompatActivity {
     private static final String[] ATTENDANCE_RANGE_OPTIONS = {
@@ -101,14 +102,13 @@ public class DashboardActivity extends AppCompatActivity {
         WorkerDbHelper dbHelper = new WorkerDbHelper(this);
         List<WorkerPaymentSummary> summaries = dbHelper.getWorkerPaymentSummariesForMonth(year, month);
         float attendancePercent = dbHelper.getAttendancePercentageForMonth(year, month);
+        double walletBalance = dbHelper.getTotalApprovedFundAmount();
         dbHelper.close();
 
         double pendingTotal = 0d;
-        double monthlyCostTotal = 0d;
         for (WorkerPaymentSummary summary : summaries) {
             if (summary == null) continue;
             pendingTotal += summary.getPendingAmount();
-            monthlyCostTotal += summary.getGrossAmount();
         }
 
         TextView tvAttendanceValue = findViewById(R.id.tvAttendanceValue);
@@ -123,7 +123,7 @@ public class DashboardActivity extends AppCompatActivity {
 
         TextView tvMonthlyCostValue = findViewById(R.id.tvMonthlyCostValue);
         if (tvMonthlyCostValue != null) {
-            tvMonthlyCostValue.setText(formatCompactCurrencyInr(monthlyCostTotal));
+            tvMonthlyCostValue.setText(formatExactCurrencyInr(walletBalance));
         }
     }
 
@@ -163,6 +163,14 @@ public class DashboardActivity extends AppCompatActivity {
             return "\u20B9" + trimTrailingZero(String.format(Locale.US, "%.1f", safeAmount / 1000d)) + "K";
         }
         return "\u20B9" + String.valueOf(Math.round(safeAmount));
+    }
+
+    private String formatExactCurrencyInr(double amount) {
+        double safeAmount = Math.max(0d, amount);
+        NumberFormat formatter = NumberFormat.getNumberInstance(new Locale("en", "IN"));
+        formatter.setMaximumFractionDigits(0);
+        formatter.setMinimumFractionDigits(0);
+        return "\u20B9" + formatter.format(Math.round(safeAmount));
     }
 
     private String trimTrailingZero(String value) {

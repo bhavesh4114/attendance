@@ -104,6 +104,7 @@
                                     android:textSize="12sp" />
 
                                 <TextView
+                                    android:id="@+id/tvRequestedAmountValue"
                                     android:layout_width="wrap_content"
                                     android:layout_height="wrap_content"
                                     android:layout_marginTop="6dp"
@@ -166,6 +167,7 @@
                                         app:tint="@color/dark_navy" />
 
                                     <TextView
+                                        android:id="@+id/tvContractorValue"
                                         android:layout_width="wrap_content"
                                         android:layout_height="wrap_content"
                                         android:layout_marginStart="6dp"
@@ -203,6 +205,7 @@
                                         app:tint="@color/dark_navy" />
 
                                     <TextView
+                                        android:id="@+id/tvDateRequestedValue"
                                         android:layout_width="wrap_content"
                                         android:layout_height="wrap_content"
                                         android:layout_marginStart="6dp"
@@ -230,6 +233,7 @@
                                 android:textSize="12sp" />
 
                             <TextView
+                                android:id="@+id/tvPaymentNoteValue"
                                 android:layout_width="match_parent"
                                 android:layout_height="wrap_content"
                                 android:layout_marginTop="6dp"
@@ -269,9 +273,10 @@
                 android:paddingEnd="14dp">
 
                 <FrameLayout
+                    android:id="@+id/upiIconContainer"
                     android:layout_width="50dp"
                     android:layout_height="50dp"
-                    android:background="@drawable/bg_soft_circle_green">
+                    android:background="@drawable/bg_soft_blue_circle_reports">
 
                     <ImageView
                         android:layout_width="24dp"
@@ -402,6 +407,7 @@
                 android:textSize="18sp" />
 
             <TextView
+                android:id="@+id/tvTotalPayableValue"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="@string/funds_amount_1500_decimal"
@@ -415,12 +421,12 @@
             android:layout_width="match_parent"
             android:layout_height="56dp"
             android:layout_marginTop="12dp"
-            android:backgroundTint="#19DF52"
+            android:backgroundTint="@color/primary_blue"
             android:drawableStart="@drawable/ic_check_white"
             android:drawablePadding="10dp"
             android:text="@string/confirm_payment"
             android:textAllCaps="false"
-            android:textColor="@color/dark_navy"
+            android:textColor="@color/white"
             android:textSize="16sp"
             android:textStyle="bold"
             app:cornerRadius="14dp" />
