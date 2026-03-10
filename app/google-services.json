@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "437233220207",
+    "project_id": "labourattendanceapp-c4de5",
+    "storage_bucket": "labourattendanceapp-c4de5.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:437233220207:android:f4533f2cbc2e9704edab9a",
+        "android_client_info": {
+          "package_name": "com.example.majuri_app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyB8r-ogRnSzZXuZP7FFwo-RbtkZ0l8Tnaw"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
