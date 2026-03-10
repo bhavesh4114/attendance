@@ -58,10 +58,12 @@ public class WorkersListAdapter extends RecyclerView.Adapter<WorkersListAdapter.
             holder.statusChip.setBackgroundResource(R.drawable.bg_chip_active);
             holder.statusChip.setTextColor(ContextCompat.getColor(holder.itemView.getContext(), R.color.active_green));
             holder.statusChip.setText(R.string.active);
+            if (holder.statusDot != null) holder.statusDot.setVisibility(View.VISIBLE);
         } else {
             holder.statusChip.setBackgroundResource(R.drawable.bg_chip_inactive);
             holder.statusChip.setTextColor(ContextCompat.getColor(holder.itemView.getContext(), R.color.medium_grey));
             holder.statusChip.setText(R.string.inactive);
+            if (holder.statusDot != null) holder.statusDot.setVisibility(View.INVISIBLE);
         }
 
         holder.workerAvatar.setImageDrawable(null);
@@ -81,6 +83,7 @@ public class WorkersListAdapter extends RecyclerView.Adapter<WorkersListAdapter.
 
     static class WorkerListViewHolder extends RecyclerView.ViewHolder {
         final ImageView workerAvatar;
+        final View statusDot;
         final TextView workerName;
         final TextView statusChip;
         final TextView workerRole;
@@ -90,6 +93,7 @@ public class WorkersListAdapter extends RecyclerView.Adapter<WorkersListAdapter.
         WorkerListViewHolder(@NonNull View itemView) {
             super(itemView);
             workerAvatar = itemView.findViewById(R.id.workerAvatar);
+            statusDot = itemView.findViewById(R.id.statusDot);
             workerName = itemView.findViewById(R.id.workerName);
             statusChip = itemView.findViewById(R.id.statusChip);
             workerRole = itemView.findViewById(R.id.workerRole);

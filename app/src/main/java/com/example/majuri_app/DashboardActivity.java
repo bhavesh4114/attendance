@@ -4,6 +4,7 @@ import android.app.Activity;
 import android.content.Intent;
 import android.os.Bundle;
 import android.view.View;
+import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.PopupMenu;
 
@@ -15,13 +16,28 @@ import com.google.android.material.bottomnavigation.BottomNavigationView;
 import java.util.Calendar;
 import java.util.Locale;
 import java.text.NumberFormat;
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.List;
+import java.util.Map;
 
 public class DashboardActivity extends AppCompatActivity {
     private static final String[] ATTENDANCE_RANGE_OPTIONS = {
             "7 Day", "1 Month", "3 Month", "6 Month", "12 Month"
     };
+    private static final int CHART_BAR_COUNT = 7;
+    private static final int[] TREND_DAY_LABEL_IDS = {
+            R.id.tvTrendDay1, R.id.tvTrendDay2, R.id.tvTrendDay3, R.id.tvTrendDay4,
+            R.id.tvTrendDay5, R.id.tvTrendDay6, R.id.tvTrendDay7
+    };
 
     private TextView tvAttendanceRange;
+    private LinearLayout chartBarsContainer;
+    private int selectedAttendanceRangeIndex = 0;
+    private final SimpleDateFormat isoDateFormat = new SimpleDateFormat("yyyy-MM-dd", Locale.US);
+    private final SimpleDateFormat shortWeekDayFormat = new SimpleDateFormat("E", Locale.US);
+    private final SimpleDateFormat shortMonthDayFormat = new SimpleDateFormat("d/M", Locale.US);
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -70,6 +86,7 @@ public class DashboardActivity extends AppCompatActivity {
         updateWelcomeName();
         updateTotalWorkersCount();
         updateDashboardStats();
+        refreshAttendanceTrendChart();
         updateNotificationDot();
     }
 
@@ -122,6 +139,7 @@ public class DashboardActivity extends AppCompatActivity {
 
     private void bindAttendanceRangeSelector() {
         tvAttendanceRange = findViewById(R.id.tvAttendanceRange);
+        chartBarsContainer = findViewById(R.id.chartBarsContainer);
         View selector = findViewById(R.id.attendanceRangeSelector);
 
         if (tvAttendanceRange != null) {
@@ -130,6 +148,8 @@ public class DashboardActivity extends AppCompatActivity {
         if (selector != null) {
             selector.setOnClickListener(this::showAttendanceRangeMenu);
         }
+
+        refreshAttendanceTrendChart();
     }
 
     private void showAttendanceRangeMenu(View anchor) {
@@ -139,12 +159,133 @@ public class DashboardActivity extends AppCompatActivity {
         }
 
         popupMenu.setOnMenuItemClickListener(item -> {
-            if (tvAttendanceRange != null) {
-                tvAttendanceRange.setText(item.getTitle());
-            }
+            selectedAttendanceRangeIndex = item.getItemId();
+            if (tvAttendanceRange != null) tvAttendanceRange.setText(item.getTitle());
+            refreshAttendanceTrendChart();
             return true;
         });
         popupMenu.show();
+    }
+
+    private void refreshAttendanceTrendChart() {
+        List<Calendar> dates = buildRangeDates(getSelectedRangeDays());
+        if (dates.isEmpty()) return;
+
+        String fromDate = isoDateFormat.format(dates.get(0).getTime());
+        String toDate = isoDateFormat.format(dates.get(dates.size() - 1).getTime());
+
+        WorkerDbHelper dbHelper = new WorkerDbHelper(this);
+        Map<String, Float> datePercentMap = dbHelper.getAttendancePercentageByDateRange(fromDate, toDate);
+        dbHelper.close();
+
+        float[] bucketValues = buildBucketValues(dates, datePercentMap, CHART_BAR_COUNT);
+        renderAttendanceTrendChart(bucketValues, dates);
+    }
+
+    private int getSelectedRangeDays() {
+        switch (selectedAttendanceRangeIndex) {
+            case 1: return 30;
+            case 2: return 90;
+            case 3: return 180;
+            case 4: return 365;
+            default: return 7;
+        }
+    }
+
+    private List<Calendar> buildRangeDates(int totalDays) {
+        List<Calendar> dates = new ArrayList<>();
+        int safeDays = Math.max(1, totalDays);
+        Calendar today = Calendar.getInstance();
+        today.set(Calendar.HOUR_OF_DAY, 0);
+        today.set(Calendar.MINUTE, 0);
+        today.set(Calendar.SECOND, 0);
+        today.set(Calendar.MILLISECOND, 0);
+
+        Calendar start = (Calendar) today.clone();
+        start.add(Calendar.DAY_OF_MONTH, -(safeDays - 1));
+
+        for (int i = 0; i < safeDays; i++) {
+            Calendar current = (Calendar) start.clone();
+            current.add(Calendar.DAY_OF_MONTH, i);
+            dates.add(current);
+        }
+        return dates;
+    }
+
+    private float[] buildBucketValues(List<Calendar> dates, Map<String, Float> datePercentMap, int bucketCount) {
+        float[] values = new float[Math.max(1, bucketCount)];
+        if (dates == null || dates.isEmpty()) return values;
+
+        int totalDays = dates.size();
+        for (int i = 0; i < values.length; i++) {
+            int start = (i * totalDays) / values.length;
+            int endExclusive = ((i + 1) * totalDays) / values.length;
+            if (endExclusive <= start) endExclusive = Math.min(totalDays, start + 1);
+
+            float sum = 0f;
+            int count = 0;
+            for (int dayIndex = start; dayIndex < endExclusive; dayIndex++) {
+                String dateKey = isoDateFormat.format(dates.get(dayIndex).getTime());
+                Float value = datePercentMap.get(dateKey);
+                if (value != null) {
+                    sum += Math.max(0f, Math.min(100f, value));
+                    count++;
+                }
+            }
+            values[i] = count > 0 ? (sum / count) : 0f;
+        }
+
+        return values;
+    }
+
+    private void renderAttendanceTrendChart(float[] values, List<Calendar> rangeDates) {
+        if (chartBarsContainer == null) return;
+
+        chartBarsContainer.removeAllViews();
+        float maxValue = 1f;
+        for (float value : values) {
+            maxValue = Math.max(maxValue, value);
+        }
+
+        for (int i = 0; i < values.length; i++) {
+            float ratio = values[i] / maxValue;
+            int barHeightDp = 32 + Math.round(92f * Math.max(0f, Math.min(1f, ratio)));
+
+            View bar = new View(this);
+            LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(0, dp(barHeightDp), 1f);
+            params.leftMargin = dp(5);
+            params.rightMargin = dp(5);
+            bar.setLayoutParams(params);
+            bar.setBackgroundResource(R.drawable.bg_chart_bar_primary);
+            chartBarsContainer.addView(bar);
+        }
+
+        updateTrendDayLabels(rangeDates);
+    }
+
+    private void updateTrendDayLabels(List<Calendar> rangeDates) {
+        if (rangeDates == null || rangeDates.isEmpty()) return;
+        boolean weeklyRange = getSelectedRangeDays() == 7;
+        int total = rangeDates.size();
+
+        for (int i = 0; i < TREND_DAY_LABEL_IDS.length; i++) {
+            TextView dayLabel = findViewById(TREND_DAY_LABEL_IDS[i]);
+            if (dayLabel == null) continue;
+
+            int index = ((i + 1) * total) / TREND_DAY_LABEL_IDS.length - 1;
+            if (index < 0) index = 0;
+            if (index >= total) index = total - 1;
+
+            Date date = rangeDates.get(index).getTime();
+            String raw = weeklyRange ? shortWeekDayFormat.format(date) : shortMonthDayFormat.format(date);
+            if (raw == null || raw.trim().isEmpty()) raw = "-";
+            String label = weeklyRange ? raw.substring(0, 1).toUpperCase(Locale.US) : raw;
+            dayLabel.setText(label);
+        }
+    }
+
+    private int dp(int valueDp) {
+        return Math.round(valueDp * getResources().getDisplayMetrics().density);
     }
 
     private String formatCompactCurrencyInr(double amount) {

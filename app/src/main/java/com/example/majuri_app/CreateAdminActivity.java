@@ -7,6 +7,7 @@ import android.text.Spanned;
 import android.text.method.LinkMovementMethod;
 import android.text.style.ClickableSpan;
 import android.text.style.ForegroundColorSpan;
+import android.util.Patterns;
 import android.view.View;
 import android.widget.CheckBox;
 import android.widget.EditText;
@@ -22,6 +23,8 @@ import com.google.android.material.button.MaterialButton;
 public class CreateAdminActivity extends AppCompatActivity {
 
     private boolean passwordVisible = false;
+    private MaterialButton btnCreateAccount;
+    private CheckBox checkTerms;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -36,10 +39,13 @@ public class CreateAdminActivity extends AppCompatActivity {
             btnTogglePassword.setOnClickListener(v -> togglePasswordVisibility(btnTogglePassword));
         }
 
-        MaterialButton btnCreateAccount = findViewById(R.id.btnCreateAccount);
+        btnCreateAccount = findViewById(R.id.btnCreateAccount);
         if (btnCreateAccount != null) {
             btnCreateAccount.setOnClickListener(v -> onCreateAccountClick());
         }
+
+        checkTerms = findViewById(R.id.checkTerms);
+        bindTermsApprovalControls();
 
         View btnLoginLink = findViewById(R.id.btnLoginLink);
         if (btnLoginLink != null) {
@@ -47,6 +53,30 @@ public class CreateAdminActivity extends AppCompatActivity {
         }
 
         setupTermsClickableSpans();
+    }
+
+    private void bindTermsApprovalControls() {
+        View rowTermsSection = findViewById(R.id.rowTermsSection);
+
+        if (checkTerms != null) {
+            checkTerms.setOnCheckedChangeListener((buttonView, isChecked) -> updateCreateAccountButtonState(isChecked));
+        }
+
+        if (rowTermsSection != null) {
+            rowTermsSection.setOnClickListener(v -> {
+                if (checkTerms != null) {
+                    checkTerms.toggle();
+                }
+            });
+        }
+
+        updateCreateAccountButtonState(checkTerms != null && checkTerms.isChecked());
+    }
+
+    private void updateCreateAccountButtonState(boolean termsApproved) {
+        if (btnCreateAccount == null) return;
+        btnCreateAccount.setEnabled(termsApproved);
+        btnCreateAccount.setAlpha(termsApproved ? 1f : 0.6f);
     }
 
     private void togglePasswordVisibility(ImageView btnTogglePassword) {
@@ -80,9 +110,26 @@ public class CreateAdminActivity extends AppCompatActivity {
         String email = etEmail.getText() != null ? etEmail.getText().toString().trim() : "";
         String password = etPassword.getText() != null ? etPassword.getText().toString() : "";
 
+        etFullName.setError(null);
+        etMobile.setError(null);
+        etBusinessName.setError(null);
+        etEmail.setError(null);
+        etPassword.setError(null);
+
         if (fullName.isEmpty()) {
             etFullName.setError(getString(R.string.hint_full_name));
             etFullName.requestFocus();
+            return;
+        }
+        if (fullName.length() < 3) {
+            etFullName.setError(getString(R.string.error_invalid_full_name));
+            etFullName.requestFocus();
+            return;
+        }
+
+        if (mobile.isEmpty()) {
+            etMobile.setError(getString(R.string.error_enter_mobile));
+            etMobile.requestFocus();
             return;
         }
         String digitsOnly = mobile.replaceAll("[^0-9]", "");
@@ -91,8 +138,31 @@ public class CreateAdminActivity extends AppCompatActivity {
             etMobile.requestFocus();
             return;
         }
+
+        if (businessName.isEmpty()) {
+            etBusinessName.setError(getString(R.string.error_enter_business_name));
+            etBusinessName.requestFocus();
+            return;
+        }
+
+        if (email.isEmpty()) {
+            etEmail.setError(getString(R.string.error_enter_email));
+            etEmail.requestFocus();
+            return;
+        }
+        if (!Patterns.EMAIL_ADDRESS.matcher(email).matches()) {
+            etEmail.setError(getString(R.string.error_invalid_email));
+            etEmail.requestFocus();
+            return;
+        }
+
         if (password.isEmpty()) {
             etPassword.setError(getString(R.string.error_enter_password));
+            etPassword.requestFocus();
+            return;
+        }
+        if (password.length() < 6) {
+            etPassword.setError(getString(R.string.error_password_min_length));
             etPassword.requestFocus();
             return;
         }
@@ -100,11 +170,6 @@ public class CreateAdminActivity extends AppCompatActivity {
             Toast.makeText(this, R.string.agree_terms_hint, Toast.LENGTH_SHORT).show();
             return;
         }
-
-        etFullName.setError(null);
-        etMobile.setError(null);
-        etEmail.setError(null);
-        etPassword.setError(null);
 
         BuilderDbHelper builderDb = new BuilderDbHelper(this);
         boolean exists = builderDb.isBuilderExists(digitsOnly);

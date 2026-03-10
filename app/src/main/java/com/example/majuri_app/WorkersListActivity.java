@@ -17,8 +17,12 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.google.android.material.bottomnavigation.BottomNavigationView;
 
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.List;
+import java.util.Locale;
+import java.util.Set;
 
 public class WorkersListActivity extends AppCompatActivity {
     public static final String EXTRA_FORCE_USER_FLOW = "extra_force_user_flow";
@@ -107,14 +111,36 @@ public class WorkersListActivity extends AppCompatActivity {
 
     private void loadWorkersFromDb() {
         WorkerDbHelper dbHelper = new WorkerDbHelper(this);
-        allItems = dbHelper.getAllWorkers();
+        List<WorkerListItem> workers = dbHelper.getAllWorkers();
+        String todayDate = new SimpleDateFormat("yyyy-MM-dd", Locale.US).format(Calendar.getInstance().getTime());
+        Set<Long> dutyStartedIds = dbHelper.getDutyStartedWorkerIdsForDate(todayDate);
         dbHelper.close();
+
+        List<WorkerListItem> prepared = new ArrayList<>();
+        for (WorkerListItem item : workers) {
+            if (item == null) continue;
+            boolean isActive = dutyStartedIds.contains(item.getId());
+            prepared.add(new WorkerListItem(
+                    item.getId(),
+                    item.getName(),
+                    item.getRole(),
+                    item.getPhone(),
+                    isActive,
+                    item.getDailyWage()
+            ));
+        }
+        allItems = prepared;
+
         if (adapter != null) {
             adapter.setItems(allItems);
         }
         TextView tvCount = findViewById(R.id.tvActiveWorkersCount);
         if (tvCount != null) {
-            tvCount.setText(getString(R.string.active_workers_count_format, allItems != null ? allItems.size() : 0));
+            int activeCount = 0;
+            for (WorkerListItem item : allItems) {
+                if (item != null && item.isActive()) activeCount++;
+            }
+            tvCount.setText(getString(R.string.active_workers_count_format, activeCount));
         }
     }
 

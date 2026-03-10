@@ -11,7 +11,6 @@ import android.location.LocationManager;
 import android.net.ConnectivityManager;
 import android.net.Network;
 import android.net.NetworkCapabilities;
-import android.net.NetworkInfo;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
@@ -21,6 +20,7 @@ import android.text.Editable;
 import android.text.TextWatcher;
 import android.view.View;
 import android.widget.EditText;
+import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -39,7 +39,6 @@ import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.location.Priority;
 import com.google.android.gms.tasks.CancellationTokenSource;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
-
 import java.io.File;
 import java.io.IOException;
 import java.text.SimpleDateFormat;
@@ -59,6 +58,12 @@ public class AttendanceManagementActivity extends AppCompatActivity {
     private static final int DUTY_ACTION_START = 1;
     private static final int DUTY_ACTION_END = 2;
     private static final String UNKNOWN_PLACE_NAME = "Unknown Place";
+    private static final int[] DAY_CONTAINER_IDS = {
+            R.id.dayMon, R.id.dayTue, R.id.dayWed, R.id.dayThu, R.id.dayFri, R.id.daySat, R.id.daySun
+    };
+    private static final int[] DATE_TEXT_IDS = {
+            R.id.dateMon, R.id.dateTue, R.id.dateWed, R.id.dateThu, R.id.dateFri, R.id.dateSat, R.id.dateSun
+    };
 
     private TextView tvMonthYear;
     private TextView summaryPresent;
@@ -66,7 +71,7 @@ public class AttendanceManagementActivity extends AppCompatActivity {
     private TextView summaryHalfDay;
     private TextView tvTotalWorkers;
     private EditText etSearchAttendance;
-    private RecyclerView recyclerStaff;
+    // recyclerStaff used only during setup; keep it local to onCreate.
     private Calendar calendar;
     private AttendanceManagementAdapter adapter;
     private SessionManager sessionManager;
@@ -103,6 +108,7 @@ public class AttendanceManagementActivity extends AppCompatActivity {
 
         updateMonthLabel();
         updateWeekDates();
+        setupWeekDateSelectors();
         setupMonthArrows();
         installBackHandler();
 
@@ -135,7 +141,7 @@ public class AttendanceManagementActivity extends AppCompatActivity {
             }
         });
 
-        recyclerStaff = findViewById(R.id.recyclerStaff);
+        RecyclerView recyclerStaff = findViewById(R.id.recyclerStaff);
         recyclerStaff.setLayoutManager(new LinearLayoutManager(this));
         recyclerStaff.setAdapter(adapter);
         recyclerStaff.setNestedScrollingEnabled(false);
@@ -211,10 +217,67 @@ public class AttendanceManagementActivity extends AppCompatActivity {
         int maxDays = calendar.getActualMaximum(Calendar.DAY_OF_MONTH);
         int startDay = Math.max(1, Math.min(day - 3, Math.max(1, maxDays - 6)));
 
-        int[] ids = {R.id.dateMon, R.id.dateTue, R.id.dateWed, R.id.dateThu, R.id.dateFri, R.id.dateSat, R.id.dateSun};
-        for (int i = 0; i < ids.length; i++) {
+        for (int i = 0; i < DATE_TEXT_IDS.length; i++) {
             int dateNumber = startDay + i;
-            ((TextView) findViewById(ids[i])).setText(String.valueOf(dateNumber));
+            TextView dateView = findViewById(DATE_TEXT_IDS[i]);
+            if (dateView != null) {
+                dateView.setText(String.valueOf(dateNumber));
+            }
+            styleDaySelector(i, dateNumber == day);
+        }
+    }
+
+    private void setupWeekDateSelectors() {
+        for (int i = 0; i < DAY_CONTAINER_IDS.length; i++) {
+            final int dayIndex = i;
+            View dayContainer = findViewById(DAY_CONTAINER_IDS[i]);
+            if (dayContainer == null) continue;
+            dayContainer.setClickable(true);
+            dayContainer.setFocusable(true);
+            dayContainer.setOnClickListener(v -> onWeekDateSelected(dayIndex));
+        }
+    }
+
+    private void onWeekDateSelected(int dayIndex) {
+        if (dayIndex < 0 || dayIndex >= DATE_TEXT_IDS.length) return;
+
+        TextView dateView = findViewById(DATE_TEXT_IDS[dayIndex]);
+        if (dateView == null) return;
+
+        String value = dateView.getText() != null ? dateView.getText().toString().trim() : "";
+        if (value.isEmpty()) return;
+
+        int selectedDay;
+        try {
+            selectedDay = Integer.parseInt(value);
+        } catch (NumberFormatException ignored) {
+            return;
+        }
+
+        int maxDays = calendar.getActualMaximum(Calendar.DAY_OF_MONTH);
+        if (selectedDay < 1 || selectedDay > maxDays) return;
+
+        calendar.set(Calendar.DAY_OF_MONTH, selectedDay);
+        updateWeekDates();
+        loadAttendanceForSelectedDate();
+    }
+
+    private void styleDaySelector(int dayIndex, boolean selected) {
+        if (dayIndex < 0 || dayIndex >= DAY_CONTAINER_IDS.length) return;
+
+        LinearLayout dayContainer = findViewById(DAY_CONTAINER_IDS[dayIndex]);
+        if (dayContainer == null || dayContainer.getChildCount() < 2) return;
+
+        dayContainer.setBackgroundResource(selected ? R.drawable.bg_date_pill_selected : 0);
+
+        TextView dayLabel = (TextView) dayContainer.getChildAt(0);
+        TextView dateValue = (TextView) dayContainer.getChildAt(1);
+        if (selected) {
+            dayLabel.setTextColor(ContextCompat.getColor(this, R.color.white));
+            dateValue.setTextColor(ContextCompat.getColor(this, R.color.white));
+        } else {
+            dayLabel.setTextColor(ContextCompat.getColor(this, R.color.medium_grey));
+            dateValue.setTextColor(ContextCompat.getColor(this, R.color.dark_navy));
         }
     }
 
@@ -236,9 +299,8 @@ public class AttendanceManagementActivity extends AppCompatActivity {
 
         List<AttendanceStaffItem> list = new ArrayList<>();
         for (WorkerListItem worker : workers) {
-            int status = savedStatus.containsKey(worker.getId())
-                    ? savedStatus.get(worker.getId())
-                    : AttendanceStaffItem.STATUS_PRESENT;
+            Integer saved = savedStatus.get(worker.getId());
+            int status = saved != null ? saved : AttendanceStaffItem.STATUS_PRESENT;
             String workerCode = getString(R.string.worker_code_format, Math.max(worker.getId(), 0L));
             list.add(new AttendanceStaffItem(
                     worker.getId(),
@@ -250,11 +312,13 @@ public class AttendanceManagementActivity extends AppCompatActivity {
             ));
         }
 
-        adapter.setItems(list);
-        adapter.setDutyStartedWorkerIds(dutyStartedIds);
-        adapter.setDutyEndedWorkerIds(dutyEndedIds);
-        adapter.setPaymentDoneWorkerIds(paymentDoneIds);
-        adapter.setEditable(!locked);
+        if (adapter != null) {
+            adapter.setItems(list);
+            adapter.setDutyStartedWorkerIds(dutyStartedIds);
+            adapter.setDutyEndedWorkerIds(dutyEndedIds);
+            adapter.setPaymentDoneWorkerIds(paymentDoneIds);
+            adapter.setEditable(!locked);
+        }
 
         if (tvTotalWorkers != null) {
             tvTotalWorkers.setText(getString(R.string.total_workers_with_count, list.size()));
@@ -287,7 +351,9 @@ public class AttendanceManagementActivity extends AppCompatActivity {
         WorkerDbHelper dbHelper = new WorkerDbHelper(this);
         if (dbHelper.isAttendanceLockedForDate(attendanceDate)) {
             dbHelper.close();
-            adapter.setEditable(false);
+            if (adapter != null) {
+                adapter.setEditable(false);
+            }
             updateSaveButtonState(true);
             Toast.makeText(this, R.string.attendance_already_locked, Toast.LENGTH_SHORT).show();
             return;
@@ -297,7 +363,16 @@ public class AttendanceManagementActivity extends AppCompatActivity {
         dbHelper.close();
 
         if (saved) {
-            adapter.setEditable(false);
+            if (adapter != null) {
+                List<AttendanceStaffItem> items = adapter.getItems();
+                for (AttendanceStaffItem item : items) {
+                    if (item == null || item.getWorkerDbId() <= 0L) continue;
+                    FirebaseSyncManager.enqueueAttendanceSync(this, item.getWorkerDbId(), attendanceDate, item.getStatus());
+                }
+            }
+            if (adapter != null) {
+                adapter.setEditable(false);
+            }
             updateSaveButtonState(true);
             NotificationStore.pushNotification(this, "Attendance Saved", "Attendance has been locked for " + attendanceDate + ".");
             Toast.makeText(this, R.string.attendance_saved_locked, Toast.LENGTH_SHORT).show();
@@ -312,6 +387,15 @@ public class AttendanceManagementActivity extends AppCompatActivity {
             btnSaveAttendance.setEnabled(!locked);
             btnSaveAttendance.setAlpha(locked ? 0.6f : 1f);
         }
+    }
+
+    private AttendanceStaffItem findAttendanceItem(long workerId) {
+        if (adapter == null || workerId <= 0L) return null;
+        List<AttendanceStaffItem> items = adapter.getItems();
+        for (AttendanceStaffItem item : items) {
+            if (item != null && item.getWorkerDbId() == workerId) return item;
+        }
+        return null;
     }
 
     private void toggleInlineSearch() {
@@ -576,6 +660,9 @@ public class AttendanceManagementActivity extends AppCompatActivity {
             dbHelper.close();
 
             if (saved) {
+                AttendanceStaffItem item = findAttendanceItem(workerId);
+                int status = item != null ? item.getStatus() : -1;
+                FirebaseSyncManager.enqueueAttendanceSync(AttendanceManagementActivity.this, workerId, attendanceDate, status);
                 adapter.markDutyStarted(workerId, true);
                 Toast.makeText(AttendanceManagementActivity.this, R.string.duty_started_with_proof, Toast.LENGTH_SHORT).show();
                 clearPendingDutyCaptureState(false);
@@ -624,6 +711,9 @@ public class AttendanceManagementActivity extends AppCompatActivity {
                 endDbHelper.close();
 
                 if (saved) {
+                    AttendanceStaffItem item = findAttendanceItem(workerId);
+                    int status = item != null ? item.getStatus() : -1;
+                    FirebaseSyncManager.enqueueAttendanceSync(AttendanceManagementActivity.this, workerId, attendanceDate, status);
                     adapter.markDutyEnded(workerId, true);
                     Toast.makeText(AttendanceManagementActivity.this, R.string.duty_ended_with_proof, Toast.LENGTH_SHORT).show();
                     clearPendingDutyCaptureState(false);
@@ -642,8 +732,8 @@ public class AttendanceManagementActivity extends AppCompatActivity {
     }
 
     private boolean hasLocationPermission() {
-        boolean fineGranted = ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED;
-        boolean coarseGranted = ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED;
+        boolean fineGranted = checkSelfPermission(Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED;
+        boolean coarseGranted = checkSelfPermission(Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED;
         return fineGranted || coarseGranted;
     }
 
@@ -657,10 +747,9 @@ public class AttendanceManagementActivity extends AppCompatActivity {
         }
         if (!isInternetConnected()) {
             if (promptSettingsOnFailure) {
-                Toast.makeText(this, R.string.internet_required_for_duty, Toast.LENGTH_SHORT).show();
-                openInternetSettings();
+                Toast.makeText(this, R.string.internet_optional_for_duty, Toast.LENGTH_SHORT).show();
             }
-            return false;
+            return true;
         }
         return true;
     }
@@ -678,35 +767,17 @@ public class AttendanceManagementActivity extends AppCompatActivity {
     private boolean isInternetConnected() {
         ConnectivityManager connectivityManager = (ConnectivityManager) getSystemService(CONNECTIVITY_SERVICE);
         if (connectivityManager == null) return false;
-
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            Network activeNetwork = connectivityManager.getActiveNetwork();
-            if (activeNetwork == null) return false;
-            NetworkCapabilities capabilities = connectivityManager.getNetworkCapabilities(activeNetwork);
-            if (capabilities == null) return false;
-            return capabilities.hasCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET)
-                    && capabilities.hasCapability(NetworkCapabilities.NET_CAPABILITY_VALIDATED);
-        }
-
-        NetworkInfo info = connectivityManager.getActiveNetworkInfo();
-        return info != null && info.isConnected();
+        Network activeNetwork = connectivityManager.getActiveNetwork();
+        if (activeNetwork == null) return false;
+        NetworkCapabilities capabilities = connectivityManager.getNetworkCapabilities(activeNetwork);
+        if (capabilities == null) return false;
+        return capabilities.hasCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET)
+                && capabilities.hasCapability(NetworkCapabilities.NET_CAPABILITY_VALIDATED);
     }
 
     private void openLocationSettings() {
         try {
             startActivity(new Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS));
-        } catch (Exception ignored) {
-            openGeneralSettings();
-        }
-    }
-
-    private void openInternetSettings() {
-        try {
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-                startActivity(new Intent(Settings.Panel.ACTION_INTERNET_CONNECTIVITY));
-            } else {
-                startActivity(new Intent(Settings.ACTION_WIRELESS_SETTINGS));
-            }
         } catch (Exception ignored) {
             openGeneralSettings();
         }
@@ -721,8 +792,8 @@ public class AttendanceManagementActivity extends AppCompatActivity {
     }
 
     private LocationSnapshot readCurrentLocationSnapshot() {
-        boolean fineGranted = ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED;
-        boolean coarseGranted = ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED;
+        boolean fineGranted = checkSelfPermission(Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED;
+        boolean coarseGranted = checkSelfPermission(Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED;
         if (!fineGranted && !coarseGranted) {
             return null;
         }
@@ -763,7 +834,7 @@ public class AttendanceManagementActivity extends AppCompatActivity {
             fusedLocationClient = LocationServices.getFusedLocationProviderClient(this);
         }
 
-        boolean fineGranted = ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED;
+        boolean fineGranted = checkSelfPermission(Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED;
         int priority = fineGranted ? Priority.PRIORITY_HIGH_ACCURACY : Priority.PRIORITY_BALANCED_POWER_ACCURACY;
 
         AtomicBoolean resolved = new AtomicBoolean(false);
@@ -807,6 +878,13 @@ public class AttendanceManagementActivity extends AppCompatActivity {
     private void requestCurrentLocationSnapshotWithLocationManager(LocationSnapshotCallback callback) {
         if (callback == null || !hasLocationPermission()) {
             if (callback != null) callback.onResult(null);
+            return;
+        }
+
+        boolean fineGranted = checkSelfPermission(Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED;
+        boolean coarseGranted = checkSelfPermission(Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED;
+        if (!fineGranted && !coarseGranted) {
+            callback.onResult(null);
             return;
         }
 

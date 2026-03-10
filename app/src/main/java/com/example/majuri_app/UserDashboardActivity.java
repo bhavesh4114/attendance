@@ -14,6 +14,7 @@ import com.google.android.material.bottomnavigation.BottomNavigationView;
 
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -105,14 +106,29 @@ public class UserDashboardActivity extends AppCompatActivity {
 
     private void bindLoggedInUserName() {
         TextView tvUserName = findViewById(R.id.tvUserName);
+        TextView tvUserDate = findViewById(R.id.tvUserDate);
         if (tvUserName == null) return;
 
         SessionManager sessionManager = new SessionManager(this);
+        String loginId = sessionManager.getLoggedInMobile();
         String userName = sessionManager.getLoggedInUserName();
+
+        BuilderDbHelper builderDbHelper = new BuilderDbHelper(this);
+        String builderDisplay = builderDbHelper.getBuilderDisplayName(loginId);
+        builderDbHelper.close();
+
         if (userName == null || userName.trim().isEmpty()) {
             userName = "Builder";
         }
         tvUserName.setText(userName.trim());
+
+        if (tvUserDate != null) {
+            String companyText = builderDisplay != null ? builderDisplay.trim() : "";
+            if (companyText.isEmpty()) {
+                companyText = "BUILDER PROFILE";
+            }
+            tvUserDate.setText(companyText.toUpperCase(Locale.US));
+        }
     }
 
     private void installBackHandler() {
@@ -155,42 +171,69 @@ public class UserDashboardActivity extends AppCompatActivity {
 
         WorkerDbHelper dbHelper = new WorkerDbHelper(this);
         int totalWorkers = dbHelper.getWorkersCount();
-        int activeSites = dbHelper.getAllSkillTypes().size();
+        List<String> skillTypes = dbHelper.getAllSkillTypes();
+        int activeSites = skillTypes.size();
         List<WorkerPaymentSummary> paymentSummaries = dbHelper.getWorkerPaymentSummariesForMonth(year, month);
         Map<Long, Integer> todayAttendance = dbHelper.getAttendanceStatusByDate(todayDate);
+        int monthlyAttendancePercent = Math.round(dbHelper.getAttendancePercentageForMonth(year, month));
+        int hourlyCount = dbHelper.getOngoingDutyWorkerCountForDate(todayDate);
+        int otCount = dbHelper.getOvertimeWorkerCountForDate(todayDate);
+        double walletBalance = dbHelper.getAvailableWalletBalance();
         dbHelper.close();
+
+        BuilderDbHelper builderDbHelper = new BuilderDbHelper(this);
+        List<String> businessNames = builderDbHelper.getAllBusinessNames();
+        builderDbHelper.close();
 
         int fullDayCount = 0;
         int halfDayCount = 0;
-        int hourlyCount = 0;
         for (Integer status : todayAttendance.values()) {
             if (status == null) continue;
             if (status == AttendanceStaffItem.STATUS_PRESENT) {
                 fullDayCount++;
             } else if (status == AttendanceStaffItem.STATUS_HALF_DAY) {
                 halfDayCount++;
-            } else if (status == AttendanceStaffItem.STATUS_ABSENT) {
-                hourlyCount++;
             }
         }
-        int otCount = 0;
 
         double pendingPay = 0d;
         for (WorkerPaymentSummary summary : paymentSummaries) {
             if (summary == null) continue;
             pendingPay += summary.getPendingAmount();
         }
+        double netPendingPay = Math.max(0d, pendingPay - walletBalance);
 
         int presentEquivalent = (int) Math.round(fullDayCount + (halfDayCount * 0.5d));
 
         setText(R.id.tvTotalWorkersValue, formatIndianNumber(totalWorkers));
         setText(R.id.tvTodayStatus, formatIndianNumber(presentEquivalent));
         setText(R.id.tvActiveSitesValue, formatIndianNumber(activeSites));
-        setText(R.id.tvMyDues, formatCompactCurrencyInr(pendingPay));
+        setText(R.id.tvMyDues, formatCompactCurrencyInr(netPendingPay));
         setText(R.id.tvAttendanceDays, formatIndianNumber(fullDayCount));
         setText(R.id.tvHalfDayCount, formatIndianNumber(halfDayCount));
         setText(R.id.tvHourlyCount, formatIndianNumber(hourlyCount));
         setText(R.id.tvOtCount, formatIndianNumber(otCount));
+
+        bindSiteOverviewFromDb(businessNames, skillTypes, monthlyAttendancePercent);
+    }
+
+    private void bindSiteOverviewFromDb(List<String> businessNames, List<String> skillTypes, int monthlyAttendancePercent) {
+        List<String> safeBusinesses = businessNames != null ? businessNames : new ArrayList<>();
+        List<String> safeSkills = skillTypes != null ? skillTypes : new ArrayList<>();
+
+        String siteName = !safeBusinesses.isEmpty() ? safeBusinesses.get(0) : "Primary Site";
+        String subtitle = !safeSkills.isEmpty()
+                ? safeSkills.size() + " active categories"
+                : "No skill categories added";
+
+        setText(R.id.tvSiteOverviewTitle, siteName);
+        setText(R.id.tvSiteOverviewSubtitle, subtitle);
+
+        int safePercent = Math.max(0, Math.min(100, monthlyAttendancePercent));
+        ProgressBar progressBar = findViewById(R.id.progressSiteOverview);
+        TextView tvPercent = findViewById(R.id.tvSiteProgressPercent);
+        if (progressBar != null) progressBar.setProgress(safePercent);
+        if (tvPercent != null) tvPercent.setText(safePercent + "%");
     }
 
     private void setText(int viewId, String value) {

@@ -63,8 +63,6 @@ public class WorkerReportActivity extends AppCompatActivity {
         );
 
         findViewById(R.id.btnBack).setOnClickListener(v -> finish());
-        findViewById(R.id.btnShare).setOnClickListener(v ->
-                Toast.makeText(this, getString(R.string.menu), Toast.LENGTH_SHORT).show());
         findViewById(R.id.btnDownload).setOnClickListener(v -> onDownloadPdfClicked());
 
         bindWorkerReport();

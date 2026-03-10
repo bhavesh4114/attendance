@@ -5,6 +5,7 @@ import android.content.Context;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
+import android.text.TextUtils;
 
 import androidx.annotation.Nullable;
 
@@ -237,5 +238,87 @@ public class BuilderDbHelper extends SQLiteOpenHelper {
         String digits = value.replaceAll("[^0-9]", "");
         if (digits.length() < 10) return "";
         return digits.substring(digits.length() - 10);
+    }
+
+    /**
+     * Verifies builder password for current logged-in login id (mobile or email).
+     */
+    public boolean isBuilderPasswordValid(String loginId, String password) {
+        if (TextUtils.isEmpty(loginId) || TextUtils.isEmpty(password)) return false;
+
+        String trimmed = loginId.trim();
+        String normalizedMobile = normalizeMobile(trimmed);
+        String normalizedEmail = trimmed.toLowerCase();
+
+        SQLiteDatabase db = getReadableDatabase();
+        Cursor cursor = null;
+        try {
+            if (!normalizedMobile.isEmpty()) {
+                cursor = db.query(
+                        TABLE_BUILDERS,
+                        new String[]{COL_ID},
+                        COL_MOBILE + "=? AND " + COL_PASSWORD + "=?",
+                        new String[]{normalizedMobile, password},
+                        null,
+                        null,
+                        null,
+                        "1"
+                );
+                if (cursor != null && cursor.moveToFirst()) {
+                    return true;
+                }
+            }
+
+            if (cursor != null) {
+                cursor.close();
+            }
+            cursor = db.query(
+                    TABLE_BUILDERS,
+                    new String[]{COL_ID},
+                    "LOWER(" + COL_EMAIL + ")=? AND " + COL_PASSWORD + "=?",
+                    new String[]{normalizedEmail, password},
+                    null,
+                    null,
+                    null,
+                    "1"
+            );
+            return cursor != null && cursor.moveToFirst();
+        } finally {
+            if (cursor != null) cursor.close();
+            db.close();
+        }
+    }
+
+    /**
+     * Updates builder password for current logged-in login id (mobile or email).
+     */
+    public boolean updateBuilderPassword(String loginId, String newPassword) {
+        if (TextUtils.isEmpty(loginId) || TextUtils.isEmpty(newPassword)) return false;
+
+        String trimmed = loginId.trim();
+        String normalizedMobile = normalizeMobile(trimmed);
+        String normalizedEmail = trimmed.toLowerCase();
+
+        SQLiteDatabase db = getWritableDatabase();
+        try {
+            ContentValues cv = new ContentValues();
+            cv.put(COL_PASSWORD, newPassword);
+
+            int updated = 0;
+            if (!normalizedMobile.isEmpty()) {
+                updated = db.update(TABLE_BUILDERS, cv, COL_MOBILE + "=?", new String[]{normalizedMobile});
+            }
+            if (updated <= 0) {
+                updated = db.update(
+                        TABLE_BUILDERS,
+                        cv,
+                        "LOWER(" + COL_EMAIL + ")=?",
+                        new String[]{normalizedEmail}
+                );
+            }
+            return updated > 0;
+        } finally {
+            db.close();
+        }
     }
 }

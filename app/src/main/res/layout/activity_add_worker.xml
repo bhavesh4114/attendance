@@ -175,7 +175,7 @@
                 android:layout_height="@dimen/form_input_height"
                 android:layout_marginTop="@dimen/spacing_16"
                 android:background="@drawable/bg_input_rounded_24"
-                android:drawableStart="@drawable/ic_money"
+                android:drawableStart="@drawable/ic_rupee_grey"
                 android:drawablePadding="12dp"
                 android:gravity="center_vertical"
                 android:hint="@string/hint_amount_rupee"

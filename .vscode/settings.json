@@ -1,0 +1,20 @@
+{
+  "java.jdt.ls.java.home": "C:\\Program Files\\Android\\Android Studio\\jbr",
+  "java.import.gradle.java.home": "C:\\Program Files\\Android\\Android Studio\\jbr",
+  "java.import.gradle.enabled": true,
+  "java.import.gradle.wrapper.enabled": true,
+  "java.project.sourcePaths": [
+    "app/src/main/java",
+    "app/src/test/java",
+    "app/src/androidTest/java"
+  ],
+  "java.project.outputPath": "build/vscode-java",
+  "java.configuration.runtimes": [
+    {
+      "name": "JavaSE-21",
+      "path": "C:\\Program Files\\Android\\Android Studio\\jbr",
+      "default": true
+    }
+  ],
+  "java.autobuild.enabled": true
+}

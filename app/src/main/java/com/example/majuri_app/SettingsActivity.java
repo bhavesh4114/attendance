@@ -26,9 +26,7 @@ public class SettingsActivity extends AppCompatActivity {
         setContentView(R.layout.activity_settings);
 
         findViewById(R.id.rowChangePassword).setOnClickListener(v ->
-                Toast.makeText(this, R.string.change_password, Toast.LENGTH_SHORT).show());
-        findViewById(R.id.rowBackupData).setOnClickListener(v ->
-                Toast.makeText(this, R.string.backup_data, Toast.LENGTH_SHORT).show());
+                ChangePasswordHelper.showChangePasswordDialog(this));
         findViewById(R.id.rowLanguage).setOnClickListener(v ->
                 Toast.makeText(this, R.string.language, Toast.LENGTH_SHORT).show());
         findViewById(R.id.btnRequestFund).setOnClickListener(v ->

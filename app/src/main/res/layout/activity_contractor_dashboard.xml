@@ -347,7 +347,7 @@
                                     android:layout_width="24dp"
                                     android:layout_height="24dp"
                                     android:layout_gravity="center"
-                                    android:src="@drawable/ic_money_indigo" />
+                                    android:src="@drawable/ic_rupee_indigo" />
                             </FrameLayout>
 
                             <TextView
@@ -594,17 +594,18 @@
                         android:layout_marginTop="16dp"
                         android:background="@drawable/bg_chart_placeholder">
 
-                        <ImageView
+                        <LinearLayout
+                            android:id="@+id/chartBarsContainer"
                             android:layout_width="match_parent"
                             android:layout_height="match_parent"
                             android:layout_gravity="top"
+                            android:gravity="bottom|center"
+                            android:orientation="horizontal"
                             android:paddingTop="8dp"
                             android:paddingBottom="32dp"
                             android:paddingStart="16dp"
                             android:paddingEnd="16dp"
-                            android:scaleType="fitCenter"
-                            android:contentDescription="@string/attendance_trends"
-                            android:src="@drawable/bg_attendance_trends_bars" />
+                            android:contentDescription="@string/attendance_trends" />
 
                         <LinearLayout
                             android:layout_width="match_parent"
@@ -617,6 +618,7 @@
                             android:paddingRight="8dp">
 
                             <TextView
+                                android:id="@+id/tvTrendDay1"
                                 android:layout_width="0dp"
                                 android:layout_height="wrap_content"
                                 android:layout_weight="1"
@@ -627,6 +629,7 @@
                                 android:textSize="12sp" />
 
                             <TextView
+                                android:id="@+id/tvTrendDay2"
                                 android:layout_width="0dp"
                                 android:layout_height="wrap_content"
                                 android:layout_weight="1"
@@ -637,6 +640,7 @@
                                 android:textSize="12sp" />
 
                             <TextView
+                                android:id="@+id/tvTrendDay3"
                                 android:layout_width="0dp"
                                 android:layout_height="wrap_content"
                                 android:layout_weight="1"
@@ -647,6 +651,7 @@
                                 android:textSize="12sp" />
 
                             <TextView
+                                android:id="@+id/tvTrendDay4"
                                 android:layout_width="0dp"
                                 android:layout_height="wrap_content"
                                 android:layout_weight="1"
@@ -658,6 +663,7 @@
                                 android:textStyle="bold" />
 
                             <TextView
+                                android:id="@+id/tvTrendDay5"
                                 android:layout_width="0dp"
                                 android:layout_height="wrap_content"
                                 android:layout_weight="1"
@@ -668,6 +674,7 @@
                                 android:textSize="12sp" />
 
                             <TextView
+                                android:id="@+id/tvTrendDay6"
                                 android:layout_width="0dp"
                                 android:layout_height="wrap_content"
                                 android:layout_weight="1"
@@ -678,6 +685,7 @@
                                 android:textSize="12sp" />
 
                             <TextView
+                                android:id="@+id/tvTrendDay7"
                                 android:layout_width="0dp"
                                 android:layout_height="wrap_content"
                                 android:layout_weight="1"

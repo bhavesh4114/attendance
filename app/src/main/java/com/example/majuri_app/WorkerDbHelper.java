@@ -5,7 +5,8 @@ import android.content.Context;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
-
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.FirebaseDatabase;
 import androidx.annotation.Nullable;
 
 import java.util.ArrayList;
@@ -17,20 +18,22 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import java.text.SimpleDateFormat;
-
+import java.util.HashMap;
+import java.util.Map;
 /**
  * SQLite helper for saving workers and payroll-related data.
  */
 public class WorkerDbHelper extends SQLiteOpenHelper {
 
     private static final String DB_NAME = "majuri_workers.db";
-    private static final int DB_VERSION = 8;
+    private static final int DB_VERSION = 9;
 
     private static final String TABLE_WORKERS = "workers";
     private static final String TABLE_ATTENDANCE = "attendance_records";
     private static final String TABLE_ADVANCES = "payment_advances";
     private static final String TABLE_PAYMENTS = "payment_records";
     private static final String TABLE_DUTY_START_PROOFS = "duty_start_proofs";
+    private static final String TABLE_ATTENDANCE_SYNC_QUEUE = "attendance_sync_queue";
     private static final String TABLE_FUND_REQUESTS = "fund_requests";
 
     public static final String COL_ID = "id";
@@ -58,6 +61,7 @@ public class WorkerDbHelper extends SQLiteOpenHelper {
     private static final String COL_DUTY_END_LAT = "end_lat";
     private static final String COL_DUTY_END_LNG = "end_lng";
     private static final String COL_DUTY_END_PLACE = "end_place_name";
+    private static final String COL_SYNC_UPDATED_AT = "updated_at";
 
     private static final String COL_ADVANCE_WORKER_ID = "worker_id";
     private static final String COL_ADVANCE_AMOUNT = "amount";
@@ -72,6 +76,84 @@ public class WorkerDbHelper extends SQLiteOpenHelper {
     private static final double STANDARD_DUTY_HOURS = 8d;
     private static final double OVERTIME_RATE_MULTIPLIER = 1.5d;
     private static final double OVERTIME_BONUS_MULTIPLIER = OVERTIME_RATE_MULTIPLIER - 1d;
+
+    public static class DutyProof {
+        public final String dutyStartTime;
+        public final String dutyEndTime;
+        public final double startLat;
+        public final double startLng;
+        public final double endLat;
+        public final double endLng;
+        public final String location;
+
+        public DutyProof(
+                String dutyStartTime,
+                String dutyEndTime,
+                double startLat,
+                double startLng,
+                double endLat,
+                double endLng,
+                String location
+        ) {
+            this.dutyStartTime = dutyStartTime != null ? dutyStartTime : "";
+            this.dutyEndTime = dutyEndTime != null ? dutyEndTime : "";
+            this.startLat = startLat;
+            this.startLng = startLng;
+            this.endLat = endLat;
+            this.endLng = endLng;
+            this.location = location != null ? location : "";
+        }
+    }
+
+    public static class AttendanceSyncRecord {
+        public final long workerId;
+        public final String attendanceDate;
+        public final int status;
+        public final String dutyStartTime;
+        public final String dutyEndTime;
+        public final double startLat;
+        public final double startLng;
+        public final double endLat;
+        public final double endLng;
+        public final String location;
+
+        public AttendanceSyncRecord(
+                long workerId,
+                String attendanceDate,
+                int status,
+                String dutyStartTime,
+                String dutyEndTime,
+                double startLat,
+                double startLng,
+                double endLat,
+                double endLng,
+                String location
+        ) {
+            this.workerId = workerId;
+            this.attendanceDate = attendanceDate != null ? attendanceDate : "";
+            this.status = status;
+            this.dutyStartTime = dutyStartTime != null ? dutyStartTime : "";
+            this.dutyEndTime = dutyEndTime != null ? dutyEndTime : "";
+            this.startLat = startLat;
+            this.startLng = startLng;
+            this.endLat = endLat;
+            this.endLng = endLng;
+            this.location = location != null ? location : "";
+        }
+
+        public Map<String, Object> toMap() {
+            Map<String, Object> payload = new HashMap<>();
+            payload.put("status", status);
+            payload.put("duty_start_time", dutyStartTime);
+            payload.put("duty_end_time", dutyEndTime);
+            payload.put("start_lat", startLat);
+            payload.put("start_lng", startLng);
+            payload.put("end_lat", endLat);
+            payload.put("end_lng", endLng);
+            payload.put("location", location);
+            return payload;
+        }
+    }
 
     private static final String COL_FUND_CONTRACTOR_ID = "contractor_id";
     private static final String COL_FUND_COMPANY_NAME = "company_name";
@@ -94,6 +176,7 @@ public class WorkerDbHelper extends SQLiteOpenHelper {
         createAdvancesTable(db);
         createPaymentsTable(db);
         createDutyStartProofsTable(db);
+        createAttendanceSyncQueueTable(db);
         createFundRequestsTable(db);
         migrateAdvancesToPayments(db);
     }
@@ -122,6 +205,9 @@ public class WorkerDbHelper extends SQLiteOpenHelper {
         }
         if (oldVersion < 8) {
             addFundPaymentColumnsIfMissing(db);
+        }
+        if (oldVersion < 9) {
+            createAttendanceSyncQueueTable(db);
         }
     }
 
@@ -185,6 +271,24 @@ public class WorkerDbHelper extends SQLiteOpenHelper {
                 + COL_DUTY_END_LNG + " REAL, "
                 + COL_DUTY_END_PLACE + " TEXT, "
                 + "UNIQUE(" + COL_DUTY_WORKER_ID + ", " + COL_DUTY_ATTENDANCE_DATE + "))";
+        db.execSQL(sql);
+    }
+
+    private void createAttendanceSyncQueueTable(SQLiteDatabase db) {
+        String sql = "CREATE TABLE IF NOT EXISTS " + TABLE_ATTENDANCE_SYNC_QUEUE + " ("
+                + COL_ID + " INTEGER PRIMARY KEY AUTOINCREMENT, "
+                + COL_ATTENDANCE_WORKER_ID + " INTEGER NOT NULL, "
+                + COL_ATTENDANCE_DATE + " TEXT NOT NULL, "
+                + COL_ATTENDANCE_STATUS + " INTEGER NOT NULL, "
+                + COL_DUTY_START_TIME + " TEXT, "
+                + COL_DUTY_END_TIME + " TEXT, "
+                + COL_DUTY_START_LAT + " REAL, "
+                + COL_DUTY_START_LNG + " REAL, "
+                + COL_DUTY_END_LAT + " REAL, "
+                + COL_DUTY_END_LNG + " REAL, "
+                + COL_DUTY_LOCATION + " TEXT, "
+                + COL_SYNC_UPDATED_AT + " INTEGER NOT NULL, "
+                + "UNIQUE(" + COL_ATTENDANCE_WORKER_ID + ", " + COL_ATTENDANCE_DATE + "))";
         db.execSQL(sql);
     }
 
@@ -414,16 +518,20 @@ public class WorkerDbHelper extends SQLiteOpenHelper {
                 String name = iName >= 0 ? c.getString(iName) : "";
                 String mobile = iMobile >= 0 ? c.getString(iMobile) : "";
                 String skill = iSkill >= 0 ? c.getString(iSkill) : "";
+                String joinDate = resolveWorkerJoinDate(db, id);
+                String address = resolveLatestWorkerAddress(db, id);
+                String documents = resolveWorkerDocumentsSummary(db, id);
+                boolean active = isWorkerDutyActiveToday(db, id);
                 profile = new WorkerProfile(
                         id,
                         name,
                         skill,
                         mobile,
                         "",
-                        true,
-                        "",
-                        "",
-                        "",
+                        active,
+                        joinDate,
+                        address,
+                        documents,
                         ""
                 );
             }
@@ -431,6 +539,93 @@ public class WorkerDbHelper extends SQLiteOpenHelper {
         }
         db.close();
         return profile;
+    }
+
+    private String resolveWorkerJoinDate(SQLiteDatabase db, long workerId) {
+        if (db == null || workerId <= 0L) return "";
+
+        String attendanceSql = "SELECT MIN(" + COL_ATTENDANCE_DATE + ") FROM " + TABLE_ATTENDANCE
+                + " WHERE " + COL_ATTENDANCE_WORKER_ID + "=?";
+        Cursor attendanceCursor = db.rawQuery(attendanceSql, new String[]{String.valueOf(workerId)});
+        String joinDate = "";
+        if (attendanceCursor != null) {
+            if (attendanceCursor.moveToFirst()) {
+                joinDate = attendanceCursor.isNull(0) ? "" : attendanceCursor.getString(0);
+            }
+            attendanceCursor.close();
+        }
+        if (joinDate != null && !joinDate.trim().isEmpty()) return joinDate.trim();
+
+        String dutySql = "SELECT MIN(" + COL_DUTY_ATTENDANCE_DATE + ") FROM " + TABLE_DUTY_START_PROOFS
+                + " WHERE " + COL_DUTY_WORKER_ID + "=?";
+        Cursor dutyCursor = db.rawQuery(dutySql, new String[]{String.valueOf(workerId)});
+        String fallback = "";
+        if (dutyCursor != null) {
+            if (dutyCursor.moveToFirst()) {
+                fallback = dutyCursor.isNull(0) ? "" : dutyCursor.getString(0);
+            }
+            dutyCursor.close();
+        }
+        return fallback != null ? fallback.trim() : "";
+    }
+
+    private String resolveLatestWorkerAddress(SQLiteDatabase db, long workerId) {
+        if (db == null || workerId <= 0L) return "";
+        String sql = "SELECT "
+                + "COALESCE(NULLIF(TRIM(" + COL_DUTY_START_PLACE + "),''), "
+                + "NULLIF(TRIM(" + COL_DUTY_LOCATION + "),''), "
+                + "NULLIF(TRIM(" + COL_DUTY_END_PLACE + "),''), "
+                + "NULLIF(TRIM(" + COL_DUTY_END_LOCATION + "),''), '') AS best_location "
+                + "FROM " + TABLE_DUTY_START_PROOFS + " "
+                + "WHERE " + COL_DUTY_WORKER_ID + "=? "
+                + "ORDER BY " + COL_DUTY_ATTENDANCE_DATE + " DESC LIMIT 1";
+        Cursor c = db.rawQuery(sql, new String[]{String.valueOf(workerId)});
+        String location = "";
+        if (c != null) {
+            if (c.moveToFirst()) {
+                location = c.isNull(0) ? "" : c.getString(0);
+            }
+            c.close();
+        }
+        return location != null ? location.trim() : "";
+    }
+
+    private String resolveWorkerDocumentsSummary(SQLiteDatabase db, long workerId) {
+        if (db == null || workerId <= 0L) return "";
+        String sql = "SELECT "
+                + "SUM(CASE WHEN " + COL_DUTY_IMAGE_PATH + " IS NOT NULL AND TRIM(" + COL_DUTY_IMAGE_PATH + ")!='' THEN 1 ELSE 0 END) "
+                + "+ SUM(CASE WHEN " + COL_DUTY_END_IMAGE_PATH + " IS NOT NULL AND TRIM(" + COL_DUTY_END_IMAGE_PATH + ")!='' THEN 1 ELSE 0 END) "
+                + "AS docs_count "
+                + "FROM " + TABLE_DUTY_START_PROOFS + " WHERE " + COL_DUTY_WORKER_ID + "=?";
+        Cursor c = db.rawQuery(sql, new String[]{String.valueOf(workerId)});
+        int count = 0;
+        if (c != null) {
+            if (c.moveToFirst()) {
+                count = c.isNull(0) ? 0 : c.getInt(0);
+            }
+            c.close();
+        }
+        if (count <= 0) return "";
+        return count + " proof document(s)";
+    }
+
+    private boolean isWorkerDutyActiveToday(SQLiteDatabase db, long workerId) {
+        if (db == null || workerId <= 0L) return false;
+        String today = new SimpleDateFormat("yyyy-MM-dd", Locale.US).format(new Date());
+        String sql = "SELECT COUNT(1) FROM " + TABLE_DUTY_START_PROOFS + " "
+                + "WHERE " + COL_DUTY_WORKER_ID + "=? "
+                + "AND " + COL_DUTY_ATTENDANCE_DATE + "=? "
+                + "AND " + COL_DUTY_START_TIME + " IS NOT NULL AND TRIM(" + COL_DUTY_START_TIME + ")!='' "
+                + "AND (" + COL_DUTY_END_TIME + " IS NULL OR TRIM(" + COL_DUTY_END_TIME + ")='')";
+        Cursor c = db.rawQuery(sql, new String[]{String.valueOf(workerId), today});
+        boolean active = false;
+        if (c != null) {
+            if (c.moveToFirst()) {
+                active = c.getInt(0) > 0;
+            }
+            c.close();
+        }
+        return active;
     }
 
     /**
@@ -711,6 +906,193 @@ public class WorkerDbHelper extends SQLiteOpenHelper {
         db.close();
         if (path == null || path.trim().isEmpty()) return null;
         return path.trim();
+    }
+
+    /**
+     * Returns duty proof details for one worker/date, or null.
+     */
+    @Nullable
+    public DutyProof getDutyProofForDate(long workerId, String attendanceDate) {
+        if (workerId <= 0L) return null;
+        if (attendanceDate == null || attendanceDate.trim().isEmpty()) return null;
+
+        SQLiteDatabase db = getReadableDatabase();
+        Cursor c = db.query(
+                TABLE_DUTY_START_PROOFS,
+                new String[]{
+                        COL_DUTY_START_TIME,
+                        COL_DUTY_END_TIME,
+                        COL_DUTY_START_LAT,
+                        COL_DUTY_START_LNG,
+                        COL_DUTY_END_LAT,
+                        COL_DUTY_END_LNG,
+                        COL_DUTY_START_PLACE,
+                        COL_DUTY_LOCATION,
+                        COL_DUTY_END_PLACE,
+                        COL_DUTY_END_LOCATION
+                },
+                COL_DUTY_WORKER_ID + "=? AND " + COL_DUTY_ATTENDANCE_DATE + "=?",
+                new String[]{String.valueOf(workerId), attendanceDate.trim()},
+                null,
+                null,
+                null,
+                "1"
+        );
+        try {
+            if (c != null && c.moveToFirst()) {
+                int iStartTime = c.getColumnIndex(COL_DUTY_START_TIME);
+                int iEndTime = c.getColumnIndex(COL_DUTY_END_TIME);
+                int iStartLat = c.getColumnIndex(COL_DUTY_START_LAT);
+                int iStartLng = c.getColumnIndex(COL_DUTY_START_LNG);
+                int iEndLat = c.getColumnIndex(COL_DUTY_END_LAT);
+                int iEndLng = c.getColumnIndex(COL_DUTY_END_LNG);
+                int iStartPlace = c.getColumnIndex(COL_DUTY_START_PLACE);
+                int iStartLocation = c.getColumnIndex(COL_DUTY_LOCATION);
+                int iEndPlace = c.getColumnIndex(COL_DUTY_END_PLACE);
+                int iEndLocation = c.getColumnIndex(COL_DUTY_END_LOCATION);
+
+                String dutyStartTime = iStartTime >= 0 ? c.getString(iStartTime) : "";
+                String dutyEndTime = iEndTime >= 0 ? c.getString(iEndTime) : "";
+                double startLat = iStartLat >= 0 && !c.isNull(iStartLat) ? c.getDouble(iStartLat) : 0d;
+                double startLng = iStartLng >= 0 && !c.isNull(iStartLng) ? c.getDouble(iStartLng) : 0d;
+                double endLat = iEndLat >= 0 && !c.isNull(iEndLat) ? c.getDouble(iEndLat) : 0d;
+                double endLng = iEndLng >= 0 && !c.isNull(iEndLng) ? c.getDouble(iEndLng) : 0d;
+                String startPlace = iStartPlace >= 0 ? c.getString(iStartPlace) : "";
+                String startLocation = iStartLocation >= 0 ? c.getString(iStartLocation) : "";
+                String endPlace = iEndPlace >= 0 ? c.getString(iEndPlace) : "";
+                String endLocation = iEndLocation >= 0 ? c.getString(iEndLocation) : "";
+
+                String location = firstNonEmpty(startPlace, startLocation, endPlace, endLocation);
+                return new DutyProof(dutyStartTime, dutyEndTime, startLat, startLng, endLat, endLng, location);
+            }
+        } finally {
+            if (c != null) c.close();
+            db.close();
+        }
+        return null;
+    }
+
+    private static String firstNonEmpty(String... values) {
+        if (values == null) return "";
+        for (String value : values) {
+            if (value != null && !value.trim().isEmpty()) return value.trim();
+        }
+        return "";
+    }
+
+    public void upsertAttendanceSyncQueue(long workerId, String attendanceDate, int status, @Nullable DutyProof proof) {
+        if (workerId <= 0L) return;
+        if (attendanceDate == null || attendanceDate.trim().isEmpty()) return;
+
+        SQLiteDatabase db = getWritableDatabase();
+        try {
+            ContentValues cv = new ContentValues();
+            cv.put(COL_ATTENDANCE_WORKER_ID, workerId);
+            cv.put(COL_ATTENDANCE_DATE, attendanceDate.trim());
+            cv.put(COL_ATTENDANCE_STATUS, status);
+            cv.put(COL_DUTY_START_TIME, proof != null ? proof.dutyStartTime : "");
+            cv.put(COL_DUTY_END_TIME, proof != null ? proof.dutyEndTime : "");
+            cv.put(COL_DUTY_START_LAT, proof != null ? proof.startLat : 0d);
+            cv.put(COL_DUTY_START_LNG, proof != null ? proof.startLng : 0d);
+            cv.put(COL_DUTY_END_LAT, proof != null ? proof.endLat : 0d);
+            cv.put(COL_DUTY_END_LNG, proof != null ? proof.endLng : 0d);
+            cv.put(COL_DUTY_LOCATION, proof != null ? proof.location : "");
+            cv.put(COL_SYNC_UPDATED_AT, System.currentTimeMillis());
+
+            db.insertWithOnConflict(
+                    TABLE_ATTENDANCE_SYNC_QUEUE,
+                    null,
+                    cv,
+                    SQLiteDatabase.CONFLICT_REPLACE
+            );
+        } finally {
+            db.close();
+        }
+    }
+
+    public List<AttendanceSyncRecord> getPendingAttendanceSync(int limit) {
+        List<AttendanceSyncRecord> records = new ArrayList<>();
+        SQLiteDatabase db = getReadableDatabase();
+        Cursor c = db.query(
+                TABLE_ATTENDANCE_SYNC_QUEUE,
+                new String[]{
+                        COL_ATTENDANCE_WORKER_ID,
+                        COL_ATTENDANCE_DATE,
+                        COL_ATTENDANCE_STATUS,
+                        COL_DUTY_START_TIME,
+                        COL_DUTY_END_TIME,
+                        COL_DUTY_START_LAT,
+                        COL_DUTY_START_LNG,
+                        COL_DUTY_END_LAT,
+                        COL_DUTY_END_LNG,
+                        COL_DUTY_LOCATION
+                },
+                null,
+                null,
+                null,
+                null,
+                COL_SYNC_UPDATED_AT + " ASC",
+                String.valueOf(Math.max(1, limit))
+        );
+        try {
+            if (c != null) {
+                int iWorkerId = c.getColumnIndex(COL_ATTENDANCE_WORKER_ID);
+                int iDate = c.getColumnIndex(COL_ATTENDANCE_DATE);
+                int iStatus = c.getColumnIndex(COL_ATTENDANCE_STATUS);
+                int iStartTime = c.getColumnIndex(COL_DUTY_START_TIME);
+                int iEndTime = c.getColumnIndex(COL_DUTY_END_TIME);
+                int iStartLat = c.getColumnIndex(COL_DUTY_START_LAT);
+                int iStartLng = c.getColumnIndex(COL_DUTY_START_LNG);
+                int iEndLat = c.getColumnIndex(COL_DUTY_END_LAT);
+                int iEndLng = c.getColumnIndex(COL_DUTY_END_LNG);
+                int iLocation = c.getColumnIndex(COL_DUTY_LOCATION);
+                while (c.moveToNext()) {
+                    long workerId = iWorkerId >= 0 ? c.getLong(iWorkerId) : -1L;
+                    String date = iDate >= 0 ? c.getString(iDate) : "";
+                    int status = iStatus >= 0 ? c.getInt(iStatus) : -1;
+                    String dutyStart = iStartTime >= 0 ? c.getString(iStartTime) : "";
+                    String dutyEnd = iEndTime >= 0 ? c.getString(iEndTime) : "";
+                    double startLat = iStartLat >= 0 && !c.isNull(iStartLat) ? c.getDouble(iStartLat) : 0d;
+                    double startLng = iStartLng >= 0 && !c.isNull(iStartLng) ? c.getDouble(iStartLng) : 0d;
+                    double endLat = iEndLat >= 0 && !c.isNull(iEndLat) ? c.getDouble(iEndLat) : 0d;
+                    double endLng = iEndLng >= 0 && !c.isNull(iEndLng) ? c.getDouble(iEndLng) : 0d;
+                    String location = iLocation >= 0 ? c.getString(iLocation) : "";
+                    if (workerId > 0L && date != null && !date.trim().isEmpty()) {
+                        records.add(new AttendanceSyncRecord(
+                                workerId,
+                                date,
+                                status,
+                                dutyStart,
+                                dutyEnd,
+                                startLat,
+                                startLng,
+                                endLat,
+                                endLng,
+                                location
+                        ));
+                    }
+                }
+            }
+        } finally {
+            if (c != null) c.close();
+            db.close();
+        }
+        return records;
+    }
+
+    public void deleteAttendanceSyncRecord(long workerId, String attendanceDate) {
+        if (workerId <= 0L) return;
+        if (attendanceDate == null || attendanceDate.trim().isEmpty()) return;
+        SQLiteDatabase db = getWritableDatabase();
+        try {
+            db.delete(
+                    TABLE_ATTENDANCE_SYNC_QUEUE,
+                    COL_ATTENDANCE_WORKER_ID + "=? AND " + COL_ATTENDANCE_DATE + "=?",
+                    new String[]{String.valueOf(workerId), attendanceDate.trim()}
+            );
+        } finally {
+            db.close();
+        }
     }
 
     /**
@@ -1331,6 +1713,90 @@ public class WorkerDbHelper extends SQLiteOpenHelper {
             return 0f;
         }
         return (float) ((presentEquivalent * 100d) / totalEntries);
+    }
+
+    /**
+     * Returns attendance percentage (0..100) grouped by date for an inclusive date range.
+     * Key format is yyyy-MM-dd.
+     */
+    public Map<String, Float> getAttendancePercentageByDateRange(String fromDateIso, String toDateIso) {
+        Map<String, Float> result = new HashMap<>();
+        if (fromDateIso == null || fromDateIso.trim().isEmpty()
+                || toDateIso == null || toDateIso.trim().isEmpty()) {
+            return result;
+        }
+
+        SQLiteDatabase db = getReadableDatabase();
+        String sql = "SELECT " + COL_ATTENDANCE_DATE + ", "
+                + "SUM(CASE " + COL_ATTENDANCE_STATUS
+                + " WHEN " + AttendanceStaffItem.STATUS_PRESENT + " THEN 1.0"
+                + " WHEN " + AttendanceStaffItem.STATUS_HALF_DAY + " THEN 0.5"
+                + " ELSE 0.0 END) AS present_equivalent, "
+                + "COUNT(1) AS total_entries "
+                + "FROM " + TABLE_ATTENDANCE + " "
+                + "WHERE " + COL_ATTENDANCE_DATE + " BETWEEN ? AND ? "
+                + "AND " + COL_ATTENDANCE_LOCKED + "=1 "
+                + "GROUP BY " + COL_ATTENDANCE_DATE;
+
+        Cursor c = db.rawQuery(sql, new String[]{fromDateIso.trim(), toDateIso.trim()});
+        if (c != null) {
+            int iDate = c.getColumnIndex(COL_ATTENDANCE_DATE);
+            while (c.moveToNext()) {
+                String date = iDate >= 0 ? c.getString(iDate) : null;
+                double presentEquivalent = c.isNull(1) ? 0d : c.getDouble(1);
+                int totalEntries = c.getInt(2);
+                if (date == null || date.trim().isEmpty() || totalEntries <= 0) continue;
+                float percent = (float) ((presentEquivalent * 100d) / totalEntries);
+                result.put(date.trim(), Math.max(0f, percent));
+            }
+            c.close();
+        }
+        db.close();
+
+        return result;
+    }
+
+    /**
+     * Returns count of workers whose duty has started but not ended for a date.
+     */
+    public int getOngoingDutyWorkerCountForDate(String attendanceDate) {
+        if (attendanceDate == null || attendanceDate.trim().isEmpty()) return 0;
+        SQLiteDatabase db = getReadableDatabase();
+        String sql = "SELECT COUNT(1) FROM " + TABLE_DUTY_START_PROOFS + " "
+                + "WHERE " + COL_DUTY_ATTENDANCE_DATE + "=? "
+                + "AND " + COL_DUTY_START_TIME + " IS NOT NULL AND TRIM(" + COL_DUTY_START_TIME + ")!='' "
+                + "AND (" + COL_DUTY_END_TIME + " IS NULL OR TRIM(" + COL_DUTY_END_TIME + ")='')";
+        Cursor c = db.rawQuery(sql, new String[]{attendanceDate.trim()});
+        int count = 0;
+        if (c != null) {
+            if (c.moveToFirst()) count = c.getInt(0);
+            c.close();
+        }
+        db.close();
+        return Math.max(0, count);
+    }
+
+    /**
+     * Returns count of workers with completed duty duration greater than standard duty hours for a date.
+     */
+    public int getOvertimeWorkerCountForDate(String attendanceDate) {
+        if (attendanceDate == null || attendanceDate.trim().isEmpty()) return 0;
+        SQLiteDatabase db = getReadableDatabase();
+        String dutyHoursExpr = "((julianday(" + COL_DUTY_END_TIME + ") - julianday(" + COL_DUTY_START_TIME + ")) * 24.0)";
+        String sql = "SELECT COUNT(1) FROM " + TABLE_DUTY_START_PROOFS + " "
+                + "WHERE " + COL_DUTY_ATTENDANCE_DATE + "=? "
+                + "AND " + COL_DUTY_START_TIME + " IS NOT NULL AND TRIM(" + COL_DUTY_START_TIME + ")!='' "
+                + "AND " + COL_DUTY_END_TIME + " IS NOT NULL AND TRIM(" + COL_DUTY_END_TIME + ")!='' "
+                + "AND julianday(" + COL_DUTY_END_TIME + ") > julianday(" + COL_DUTY_START_TIME + ") "
+                + "AND " + dutyHoursExpr + " > " + STANDARD_DUTY_HOURS;
+        Cursor c = db.rawQuery(sql, new String[]{attendanceDate.trim()});
+        int count = 0;
+        if (c != null) {
+            if (c.moveToFirst()) count = c.getInt(0);
+            c.close();
+        }
+        db.close();
+        return Math.max(0, count);
     }
 
     private Map<Long, Double> readWorkedDaysMap(SQLiteDatabase db, String monthPrefixLike) {

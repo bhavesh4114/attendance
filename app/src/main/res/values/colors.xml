@@ -20,7 +20,8 @@
     <color name="create_admin_bg_start">#F1F5F9</color>
     <color name="create_admin_bg_end">#E2E8F0</color>
     <color name="create_admin_card_bg">#E0E7FF</color>
-    <color name="admin_icon_container_bg">#2563EB</color>
+    <color name="admin_icon_container_bg">#4F8DFD</color>
+    <color name="register_button_blue">#4A86F0</color>
 
     <!-- Worker Management -->
     <color name="worker_mgmt_bg">#F1F5F9</color>

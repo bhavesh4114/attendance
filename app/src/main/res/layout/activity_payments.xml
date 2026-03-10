@@ -43,7 +43,7 @@
                         android:layout_height="24dp"
                         android:layout_gravity="center"
                         android:contentDescription="@string/payments"
-                        android:src="@drawable/ic_money_blue" />
+                        android:src="@drawable/ic_rupee_black" />
                 </FrameLayout>
 
                 <TextView

@@ -64,7 +64,7 @@ public class BuilderSettingsActivity extends AppCompatActivity {
         findViewById(R.id.tvEditProfile).setOnClickListener(v ->
                 Toast.makeText(this, R.string.edit, Toast.LENGTH_SHORT).show());
         findViewById(R.id.rowChangePassword).setOnClickListener(v ->
-                Toast.makeText(this, R.string.change_password, Toast.LENGTH_SHORT).show());
+                ChangePasswordHelper.showChangePasswordDialog(this));
         findViewById(R.id.rowLanguage).setOnClickListener(v ->
                 Toast.makeText(this, R.string.language, Toast.LENGTH_SHORT).show());
         findViewById(R.id.rowNotifications).setOnClickListener(v ->

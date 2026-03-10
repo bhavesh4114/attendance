@@ -16,7 +16,7 @@
     <string name="subtitle">Track your daily attendance easily</string>
     <string name="login">Login</string>
     <string name="mobile_number">Mobile Number</string>
-    <string name="hint_mobile">e.g. 9876543210</string>
+    <string name="hint_mobile">Enter your mobile number</string>
     <string name="password">Password</string>
     <string name="show">Show</string>
     <string name="hide_password">Hide</string>
@@ -47,8 +47,26 @@
     <string name="agree_terms_hint">Please agree to the Terms of Service and Privacy Policy</string>
     <string name="error_enter_mobile">Please enter mobile number</string>
     <string name="error_enter_password">Please enter password</string>
+    <string name="error_enter_business_name">Please enter company name</string>
+    <string name="error_enter_email">Please enter email address</string>
     <string name="error_invalid_mobile">Enter valid 10-digit mobile number</string>
+    <string name="error_invalid_email">Enter valid email address</string>
+    <string name="error_invalid_full_name">Enter at least 3 characters</string>
+    <string name="error_password_min_length">Password must be at least 6 characters</string>
     <string name="error_invalid_credentials">Invalid mobile or password</string>
+    <string name="current_password">Current Password</string>
+    <string name="new_password">New Password</string>
+    <string name="confirm_new_password">Confirm New Password</string>
+    <string name="update_password">Update Password</string>
+    <string name="cancel">Cancel</string>
+    <string name="error_enter_current_password">Please enter current password</string>
+    <string name="error_enter_new_password">Please enter new password</string>
+    <string name="error_password_mismatch">New password and confirm password do not match</string>
+    <string name="error_current_password_incorrect">Current password is incorrect</string>
+    <string name="error_new_password_same_as_current">New password must be different from current password</string>
+    <string name="password_updated_success">Password updated successfully</string>
+    <string name="password_updated_failed">Unable to update password</string>
+    <string name="password_change_session_missing">Session not found. Please login again.</string>
     <string name="no_account_sign_up">No account found. Please sign up first.</string>
     <string name="login_success">Login successful</string>
     <string name="account_created">Account created. Logging you in…</string>
@@ -142,6 +160,7 @@
     <string name="location_permission_required_for_duty">Location permission is required for duty attendance.</string>
     <string name="enable_device_location_for_duty">Enable device location to continue duty attendance.</string>
     <string name="internet_required_for_duty">Internet is required for duty attendance. Please turn it on.</string>
+    <string name="internet_optional_for_duty">No internet. Duty will be saved offline and synced later.</string>
     <string name="location_capture_failed">Unable to capture exact location for attendance.</string>
     <string name="location_unavailable">Location unavailable</string>
     <string name="location_permission_denied">Location permission denied</string>
@@ -161,7 +180,7 @@
     <string name="total_workers_with_count">Total: %1$d Workers</string>
     <string name="confirm">Confirm</string>
     <string name="confirmed">Confirmed</string>
-    <string name="rate_per_hour_value">Rs %1$.2f</string>
+    <string name="rate_per_hour_value">₹%1$.2f</string>
     <string name="enter_valid_working_hours">Please enter valid working hours.</string>
     <string name="hourly_attendance_confirmed">Hourly attendance confirmed.</string>
     <string name="month_year_format">%1$s %2$d</string>
@@ -346,7 +365,7 @@
     <string name="payment_paid_5000">₹5,000 Payment Paid</string>
     <string name="yesterday_645">Yesterday, 6:45 PM</string>
     <string name="worker_phone">(123) 456-7890</string>
-    <string name="worker_salary">$100/day</string>
+    <string name="worker_salary">₹100/day</string>
 
     <!-- User Dashboard (worker view) -->
     <string name="user_dashboard_title">My Dashboard</string>

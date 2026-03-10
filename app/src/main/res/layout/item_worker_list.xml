@@ -30,6 +30,7 @@
                 android:scaleType="centerCrop" />
 
             <View
+                android:id="@+id/statusDot"
                 android:layout_width="12dp"
                 android:layout_height="12dp"
                 android:layout_gravity="bottom|end"

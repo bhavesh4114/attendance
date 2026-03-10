@@ -60,7 +60,6 @@ public class WorkerProfileActivity extends AppCompatActivity {
         setText(R.id.tvWorkerName, worker.getFullName());
         setText(R.id.tvWorkerRole, worker.getRole());
         setText(R.id.tvWorkerPhone, worker.getPhone());
-        setText(R.id.tvWorkerEmail, emptyAsDash(worker.getEmail()));
         setText(R.id.tvWorkerStatus, worker.isActive() ? getString(R.string.active) : getString(R.string.inactive));
         setText(R.id.tvWorkerJoinDate, emptyAsDash(worker.getJoinDate()));
         setText(R.id.tvWorkerAddress, emptyAsDash(worker.getAddress()));
