@@ -22,6 +22,9 @@
     <color name="create_admin_card_bg">#E0E7FF</color>
     <color name="admin_icon_container_bg">#4F8DFD</color>
     <color name="register_button_blue">#4A86F0</color>
+    <color name="signup_card_stroke">#E2E8F0</color>
+    <color name="signup_input_bg">#EEF2F7</color>
+    <color name="signup_input_stroke">#D9E2EC</color>
 
     <!-- Worker Management -->
     <color name="worker_mgmt_bg">#F1F5F9</color>

@@ -18,7 +18,7 @@ import java.util.List;
 public class BuilderDbHelper extends SQLiteOpenHelper {
 
     private static final String DB_NAME = "majuri_builders.db";
-    private static final int DB_VERSION = 4;
+    private static final int DB_VERSION = 5;
     private static final String TABLE_BUILDERS = "builders";
 
     private static final String COL_ID = "id";
@@ -26,6 +26,9 @@ public class BuilderDbHelper extends SQLiteOpenHelper {
     private static final String COL_MOBILE = "mobile";
     private static final String COL_BUSINESS_NAME = "business_name";
     private static final String COL_EMAIL = "email";
+    private static final String COL_SITE_NAME = "site_name";
+    private static final String COL_SITE_ADDRESS = "site_address";
+    private static final String COL_CITY = "city";
     private static final String COL_PASSWORD = "password";
 
     public BuilderDbHelper(@Nullable Context context) {
@@ -40,6 +43,9 @@ public class BuilderDbHelper extends SQLiteOpenHelper {
                 + COL_MOBILE + " TEXT NOT NULL, "
                 + COL_BUSINESS_NAME + " TEXT, "
                 + COL_EMAIL + " TEXT, "
+                + COL_SITE_NAME + " TEXT, "
+                + COL_SITE_ADDRESS + " TEXT, "
+                + COL_CITY + " TEXT, "
                 + COL_PASSWORD + " TEXT NOT NULL)";
         db.execSQL(sql);
     }
@@ -53,18 +59,46 @@ public class BuilderDbHelper extends SQLiteOpenHelper {
                 // Column may already exist on some installs.
             }
         }
+        if (oldVersion < 5) {
+            try {
+                db.execSQL("ALTER TABLE " + TABLE_BUILDERS + " ADD COLUMN " + COL_SITE_NAME + " TEXT");
+            } catch (Exception ignored) {
+                // Column may already exist on some installs.
+            }
+            try {
+                db.execSQL("ALTER TABLE " + TABLE_BUILDERS + " ADD COLUMN " + COL_SITE_ADDRESS + " TEXT");
+            } catch (Exception ignored) {
+                // Column may already exist on some installs.
+            }
+            try {
+                db.execSQL("ALTER TABLE " + TABLE_BUILDERS + " ADD COLUMN " + COL_CITY + " TEXT");
+            } catch (Exception ignored) {
+                // Column may already exist on some installs.
+            }
+        }
     }
 
     /**
      * Insert builder registration. Returns row id or -1 on error.
      */
     public long insertBuilder(String fullName, String mobile, String businessName, String email, String password) {
+        return insertBuilder(fullName, mobile, businessName, email, "", "", "", password);
+    }
+
+    /**
+     * Insert builder registration with site details. Returns row id or -1 on error.
+     */
+    public long insertBuilder(String fullName, String mobile, String businessName, String email,
+                              String siteName, String siteAddress, String city, String password) {
         SQLiteDatabase db = getWritableDatabase();
         ContentValues cv = new ContentValues();
         cv.put(COL_FULL_NAME, fullName != null ? fullName : "");
         cv.put(COL_MOBILE, mobile != null ? mobile : "");
         cv.put(COL_BUSINESS_NAME, businessName != null ? businessName : "");
         cv.put(COL_EMAIL, email != null ? email.trim().toLowerCase() : "");
+        cv.put(COL_SITE_NAME, siteName != null ? siteName.trim() : "");
+        cv.put(COL_SITE_ADDRESS, siteAddress != null ? siteAddress.trim() : "");
+        cv.put(COL_CITY, city != null ? city.trim() : "");
         cv.put(COL_PASSWORD, password != null ? password : "");
         long id = db.insert(TABLE_BUILDERS, null, cv);
         db.close();

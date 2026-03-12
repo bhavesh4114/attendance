@@ -2,128 +2,90 @@ package com.example.majuri_app;
 
 import android.content.Intent;
 import android.os.Bundle;
-import android.text.SpannableString;
-import android.text.Spanned;
-import android.text.method.LinkMovementMethod;
-import android.text.style.ClickableSpan;
-import android.text.style.ForegroundColorSpan;
 import android.util.Patterns;
-import android.view.View;
-import android.widget.CheckBox;
 import android.widget.EditText;
 import android.widget.ImageButton;
-import android.widget.ImageView;
+import android.widget.TextView;
 import android.widget.Toast;
 
-import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 
 import com.google.android.material.button.MaterialButton;
 
 public class CreateAdminActivity extends AppCompatActivity {
 
-    private boolean passwordVisible = false;
+    private EditText etCompanyName;
+    private EditText etBuilderFullName;
+    private EditText etMobile;
+    private EditText etEmail;
+    private EditText etSiteName;
+    private EditText etSiteAddress;
+    private EditText etCity;
+    private EditText etPassword;
+    private EditText etConfirmPassword;
     private MaterialButton btnCreateAccount;
-    private CheckBox checkTerms;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_create_admin);
 
-        ImageButton btnBack = findViewById(R.id.btnBack);
-        btnBack.setOnClickListener(v -> finish());
+        bindViews();
 
-        ImageView btnTogglePassword = findViewById(R.id.btnTogglePassword);
-        if (btnTogglePassword != null) {
-            btnTogglePassword.setOnClickListener(v -> togglePasswordVisibility(btnTogglePassword));
+        ImageButton btnBack = findViewById(R.id.btnBack);
+        if (btnBack != null) {
+            btnBack.setOnClickListener(v -> finish());
         }
 
-        btnCreateAccount = findViewById(R.id.btnCreateAccount);
         if (btnCreateAccount != null) {
             btnCreateAccount.setOnClickListener(v -> onCreateAccountClick());
         }
 
-        checkTerms = findViewById(R.id.checkTerms);
-        bindTermsApprovalControls();
-
-        View btnLoginLink = findViewById(R.id.btnLoginLink);
+        TextView btnLoginLink = findViewById(R.id.btnLoginLink);
         if (btnLoginLink != null) {
             btnLoginLink.setOnClickListener(v -> goToLogin());
         }
-
-        setupTermsClickableSpans();
     }
 
-    private void bindTermsApprovalControls() {
-        View rowTermsSection = findViewById(R.id.rowTermsSection);
-
-        if (checkTerms != null) {
-            checkTerms.setOnCheckedChangeListener((buttonView, isChecked) -> updateCreateAccountButtonState(isChecked));
-        }
-
-        if (rowTermsSection != null) {
-            rowTermsSection.setOnClickListener(v -> {
-                if (checkTerms != null) {
-                    checkTerms.toggle();
-                }
-            });
-        }
-
-        updateCreateAccountButtonState(checkTerms != null && checkTerms.isChecked());
-    }
-
-    private void updateCreateAccountButtonState(boolean termsApproved) {
-        if (btnCreateAccount == null) return;
-        btnCreateAccount.setEnabled(termsApproved);
-        btnCreateAccount.setAlpha(termsApproved ? 1f : 0.6f);
-    }
-
-    private void togglePasswordVisibility(ImageView btnTogglePassword) {
-        passwordVisible = !passwordVisible;
-        View parent = (View) btnTogglePassword.getParent();
-        if (parent != null) {
-            EditText etPassword = parent.findViewById(R.id.etPassword);
-            if (etPassword != null) {
-                if (passwordVisible) {
-                    etPassword.setInputType(android.text.InputType.TYPE_CLASS_TEXT | android.text.InputType.TYPE_TEXT_VARIATION_VISIBLE_PASSWORD);
-                    btnTogglePassword.setImageResource(R.drawable.ic_eye);
-                } else {
-                    etPassword.setInputType(android.text.InputType.TYPE_CLASS_TEXT | android.text.InputType.TYPE_TEXT_VARIATION_PASSWORD);
-                    btnTogglePassword.setImageResource(R.drawable.ic_eye_off);
-                }
-            }
-        }
+    private void bindViews() {
+        etCompanyName = findViewById(R.id.etCompanyName);
+        etBuilderFullName = findViewById(R.id.etBuilderFullName);
+        etMobile = findViewById(R.id.etMobile);
+        etEmail = findViewById(R.id.etEmail);
+        etSiteName = findViewById(R.id.etSiteName);
+        etSiteAddress = findViewById(R.id.etSiteAddress);
+        etCity = findViewById(R.id.etCity);
+        etPassword = findViewById(R.id.etPassword);
+        etConfirmPassword = findViewById(R.id.etConfirmPassword);
+        btnCreateAccount = findViewById(R.id.btnCreateAccount);
     }
 
     private void onCreateAccountClick() {
-        EditText etFullName = findViewById(R.id.etFullName);
-        EditText etMobile = findViewById(R.id.etMobile);
-        EditText etBusinessName = findViewById(R.id.etBusinessName);
-        EditText etEmail = findViewById(R.id.etEmail);
-        EditText etPassword = findViewById(R.id.etPassword);
-        CheckBox checkTerms = findViewById(R.id.checkTerms);
+        String companyName = readTrim(etCompanyName);
+        String builderFullName = readTrim(etBuilderFullName);
+        String mobile = readTrim(etMobile);
+        String email = readTrim(etEmail);
+        String siteName = readTrim(etSiteName);
+        String siteAddress = readTrim(etSiteAddress);
+        String city = readTrim(etCity);
+        String password = readRaw(etPassword);
+        String confirmPassword = readRaw(etConfirmPassword);
 
-        String fullName = etFullName.getText() != null ? etFullName.getText().toString().trim() : "";
-        String mobile = etMobile.getText() != null ? etMobile.getText().toString().trim() : "";
-        String businessName = etBusinessName.getText() != null ? etBusinessName.getText().toString().trim() : "";
-        String email = etEmail.getText() != null ? etEmail.getText().toString().trim() : "";
-        String password = etPassword.getText() != null ? etPassword.getText().toString() : "";
+        clearErrors();
 
-        etFullName.setError(null);
-        etMobile.setError(null);
-        etBusinessName.setError(null);
-        etEmail.setError(null);
-        etPassword.setError(null);
-
-        if (fullName.isEmpty()) {
-            etFullName.setError(getString(R.string.hint_full_name));
-            etFullName.requestFocus();
+        if (companyName.isEmpty()) {
+            etCompanyName.setError(getString(R.string.error_enter_company_name));
+            etCompanyName.requestFocus();
             return;
         }
-        if (fullName.length() < 3) {
-            etFullName.setError(getString(R.string.error_invalid_full_name));
-            etFullName.requestFocus();
+        if (builderFullName.isEmpty()) {
+            etBuilderFullName.setError(getString(R.string.error_enter_builder_name));
+            etBuilderFullName.requestFocus();
+            return;
+        }
+        if (builderFullName.length() < 3) {
+            etBuilderFullName.setError(getString(R.string.error_invalid_full_name));
+            etBuilderFullName.requestFocus();
             return;
         }
 
@@ -139,12 +101,6 @@ public class CreateAdminActivity extends AppCompatActivity {
             return;
         }
 
-        if (businessName.isEmpty()) {
-            etBusinessName.setError(getString(R.string.error_enter_business_name));
-            etBusinessName.requestFocus();
-            return;
-        }
-
         if (email.isEmpty()) {
             etEmail.setError(getString(R.string.error_enter_email));
             etEmail.requestFocus();
@@ -153,6 +109,24 @@ public class CreateAdminActivity extends AppCompatActivity {
         if (!Patterns.EMAIL_ADDRESS.matcher(email).matches()) {
             etEmail.setError(getString(R.string.error_invalid_email));
             etEmail.requestFocus();
+            return;
+        }
+
+        if (siteName.isEmpty()) {
+            etSiteName.setError(getString(R.string.error_enter_site_name));
+            etSiteName.requestFocus();
+            return;
+        }
+
+        if (siteAddress.isEmpty()) {
+            etSiteAddress.setError(getString(R.string.error_enter_site_address));
+            etSiteAddress.requestFocus();
+            return;
+        }
+
+        if (city.isEmpty()) {
+            etCity.setError(getString(R.string.error_enter_city));
+            etCity.requestFocus();
             return;
         }
 
@@ -166,8 +140,15 @@ public class CreateAdminActivity extends AppCompatActivity {
             etPassword.requestFocus();
             return;
         }
-        if (checkTerms == null || !checkTerms.isChecked()) {
-            Toast.makeText(this, R.string.agree_terms_hint, Toast.LENGTH_SHORT).show();
+
+        if (confirmPassword.isEmpty()) {
+            etConfirmPassword.setError(getString(R.string.error_enter_confirm_password));
+            etConfirmPassword.requestFocus();
+            return;
+        }
+        if (!password.equals(confirmPassword)) {
+            etConfirmPassword.setError(getString(R.string.error_password_confirm_mismatch));
+            etConfirmPassword.requestFocus();
             return;
         }
 
@@ -180,55 +161,50 @@ public class CreateAdminActivity extends AppCompatActivity {
             return;
         }
 
-        builderDb.insertBuilder(fullName, digitsOnly, businessName, email, password);
+        long rowId = builderDb.insertBuilder(
+                builderFullName,
+                digitsOnly,
+                companyName,
+                email,
+                siteName,
+                siteAddress,
+                city,
+                password
+        );
         builderDb.close();
+
+        if (rowId <= 0) {
+            Toast.makeText(this, R.string.error_registration_failed, Toast.LENGTH_SHORT).show();
+            return;
+        }
 
         Toast.makeText(this, R.string.registration_successful, Toast.LENGTH_SHORT).show();
         startActivity(new Intent(this, LoginActivity.class));
         finish();
     }
 
+    private void clearErrors() {
+        etCompanyName.setError(null);
+        etBuilderFullName.setError(null);
+        etMobile.setError(null);
+        etEmail.setError(null);
+        etSiteName.setError(null);
+        etSiteAddress.setError(null);
+        etCity.setError(null);
+        etPassword.setError(null);
+        etConfirmPassword.setError(null);
+    }
+
+    private String readTrim(EditText input) {
+        return input != null && input.getText() != null ? input.getText().toString().trim() : "";
+    }
+
+    private String readRaw(EditText input) {
+        return input != null && input.getText() != null ? input.getText().toString() : "";
+    }
+
     private void goToLogin() {
         startActivity(new Intent(this, LoginActivity.class));
         finish();
-    }
-
-    private void setupTermsClickableSpans() {
-        android.widget.TextView tvTerms = findViewById(R.id.tvTerms);
-        if (tvTerms == null) return;
-
-        String fullText = getString(R.string.terms_text);
-        String terms = "Terms of Service";
-        String privacy = "Privacy Policy";
-
-        SpannableString spannable = new SpannableString(fullText);
-        int color = getResources().getColor(R.color.light_blue_text, getTheme());
-
-        int termsStart = fullText.indexOf(terms);
-        if (termsStart >= 0) {
-            int termsEnd = termsStart + terms.length();
-            spannable.setSpan(new ForegroundColorSpan(color), termsStart, termsEnd, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
-            spannable.setSpan(new ClickableSpan() {
-                @Override
-                public void onClick(@NonNull View widget) {
-                    Toast.makeText(CreateAdminActivity.this, "Terms of Service", Toast.LENGTH_SHORT).show();
-                }
-            }, termsStart, termsEnd, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
-        }
-
-        int privacyStart = fullText.indexOf(privacy);
-        if (privacyStart >= 0) {
-            int privacyEnd = privacyStart + privacy.length();
-            spannable.setSpan(new ForegroundColorSpan(color), privacyStart, privacyEnd, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
-            spannable.setSpan(new ClickableSpan() {
-                @Override
-                public void onClick(@NonNull View widget) {
-                    Toast.makeText(CreateAdminActivity.this, "Privacy Policy", Toast.LENGTH_SHORT).show();
-                }
-            }, privacyStart, privacyEnd, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
-        }
-
-        tvTerms.setText(spannable);
-        tvTerms.setMovementMethod(LinkMovementMethod.getInstance());
     }
 }

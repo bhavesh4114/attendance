@@ -29,11 +29,36 @@
 
     <!-- Create Admin screen -->
     <string name="back">Back</string>
-    <string name="create_admin_account">Create Contractor Account</string>
+    <string name="create_admin_account">Create Builder Account</string>
     <string name="admin_icon">Builder</string>
     <string name="welcome_admin">Welcome, Builder</string>
     <string name="welcome_builder_format">Welcome, %1$s</string>
     <string name="welcome_admin_subtitle">Set up your profile to start managing your workforce and attendance efficiently.</string>
+    <string name="builder_registration_title">Builder Registration</string>
+    <string name="builder_registration_subtitle">Create your builder account to manage sites and contractors</string>
+    <string name="builder_information">Builder Information</string>
+    <string name="builder_company_name">BUILDER / COMPANY NAME</string>
+    <string name="hint_builder_company_name">Enter company or builder name</string>
+    <string name="builder_full_name">BUILDER FULL NAME</string>
+    <string name="hint_builder_full_name">Enter builder full name</string>
+    <string name="hint_builder_mobile">Enter mobile number</string>
+    <string name="hint_builder_email">Enter email</string>
+    <string name="site_information">Site Information</string>
+    <string name="site_name">SITE NAME</string>
+    <string name="hint_site_name">Example: Site A / Tower Project</string>
+    <string name="site_address">SITE ADDRESS</string>
+    <string name="hint_site_address">Enter complete site address</string>
+    <string name="city">CITY</string>
+    <string name="hint_city">Enter city</string>
+    <string name="create_password_title">Create Password</string>
+    <string name="hint_create_password">Create your password</string>
+    <string name="confirm_password">CONFIRM PASSWORD</string>
+    <string name="hint_confirm_password">Confirm your password</string>
+    <string name="create_builder_account">Create Builder Account</string>
+    <string name="password_rule_min_length">Password must contain at least 6 characters</string>
+    <string name="already_have_account_plain">Already have an account? </string>
+    <string name="shram_track">Shram Track</string>
+    <string name="labour_attendance_management">Labour Attendance Management</string>
     <string name="full_name">Full Name</string>
     <string name="hint_full_name">Enter your full name</string>
     <string name="country_code">+91</string>
@@ -48,11 +73,18 @@
     <string name="error_enter_mobile">Please enter mobile number</string>
     <string name="error_enter_password">Please enter password</string>
     <string name="error_enter_business_name">Please enter company name</string>
+    <string name="error_enter_company_name">Please enter company or builder name</string>
+    <string name="error_enter_builder_name">Please enter builder full name</string>
     <string name="error_enter_email">Please enter email address</string>
+    <string name="error_enter_site_name">Please enter site name</string>
+    <string name="error_enter_site_address">Please enter site address</string>
+    <string name="error_enter_city">Please enter city</string>
     <string name="error_invalid_mobile">Enter valid 10-digit mobile number</string>
     <string name="error_invalid_email">Enter valid email address</string>
     <string name="error_invalid_full_name">Enter at least 3 characters</string>
     <string name="error_password_min_length">Password must be at least 6 characters</string>
+    <string name="error_enter_confirm_password">Please confirm password</string>
+    <string name="error_password_confirm_mismatch">Password and confirm password must match</string>
     <string name="error_invalid_credentials">Invalid mobile or password</string>
     <string name="current_password">Current Password</string>
     <string name="new_password">New Password</string>
@@ -71,6 +103,7 @@
     <string name="login_success">Login successful</string>
     <string name="account_created">Account created. Logging you in…</string>
     <string name="registration_successful">Registration successful</string>
+    <string name="error_registration_failed">Registration failed. Please try again.</string>
     <string name="mobile_already_registered">This mobile number is already registered. Please login.</string>
 
     <!-- Worker Management -->
